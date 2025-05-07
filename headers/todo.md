@@ -23,8 +23,9 @@
 * All types of pointers (pointers, double pointers, pointers to non POD, function pointers)
 * typedefs
 * C struct typedefs
-
 * Namespaces
+
+* Ignore non POD types
 * fixed width types
 * Enums
 * c++11 enums
@@ -32,7 +33,6 @@
 * Anonnymous inner structs and unions
 * bitfields
 * packing (#pragma pack)
-* Ignore non POD types
 * Static constants
 * Constant macros (?)
 * wide characters

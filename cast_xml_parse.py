@@ -1,17 +1,21 @@
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from data import *
+import data_helpers
 
 class CastXmlParse:
 
     CHAR_BITS = 8  # Number of bits in a byte (standard for most platforms)
 
 
-    def __init__(self, use_bool=False):
+    def __init__(self, use_bool=False, skip_failed_parsing=False, remove_unknown=True, verbose=False):
         """
         Initialize the parser with an optional configuration dictionary.
         """
         self.use_bool = use_bool
+        self.skip_failed_parsing = skip_failed_parsing
+        self.remove_unknown = remove_unknown
+        self.verbose = verbose
         self.xml_root = None
         self.data = None  # This will hold parsed data after _parse
 
@@ -64,6 +68,40 @@ class CastXmlParse:
 
         return typename
 
+           
+    def _remove_unknown(self):
+        """
+        Removes ClassDefinition and TypedefDefinition instances that refer to unknown types.
+        A type is considered known if it's in builtin_types, or defined in self.data.
+        """
+        known_types = set(data_helpers.builtin_types)
+
+        # Add all defined types (Class, Union, Enum, Typedef names)
+        for d in self.data:
+            if hasattr(d, "name") and isinstance(d.name, str):
+                known_types.add(d.name)
+
+        filtered = []
+        for d in self.data:
+            if isinstance(d, ClassDefinition):
+                if all(f.c_type in known_types for f in d.fields):
+                    filtered.append(d)
+            elif isinstance(d, TypedefDefinition):
+                if d.definition in known_types:
+                    filtered.append(d)
+            else:
+                filtered.append(d)  # keep Enums, Unions, Constants, etc.
+        former_length = len(self.data)
+        self.data = filtered
+        if len(filtered) != former_length:
+            if self.verbose:
+                print(f"Warning: Removed {former_length - len(filtered)} unknown types.")
+            self._remove_unknown()
+
+    
+    def _build_id_map(self):
+        self._id_map = {elem.get("id"): elem for elem in self.xml_root.findall(".//*[@id]")}
+
     def _parse(self):
         """
         Extracts all definitions and delegates parsing to _parse_*().
@@ -72,16 +110,23 @@ class CastXmlParse:
         if self.xml_root is None:
             raise RuntimeError("XML root is not loaded.")
 
+        # cache by id
+        self._build_id_map()
+        
         self.data = []
         for elem in self.xml_root.findall(".//"):
+            
             if elem.tag in ("Struct", "Class"):
-                struct_def = self._parse_struct(elem)
+                struct_def = self._parse_struct_wrapper(elem)
                 if struct_def:
                     self.data.append(struct_def)
             elif elem.tag in ("Typedef") and elem.get("name"):
-                typedef_def = self._parse_typedef(elem)
+                typedef_def = self._parse_typedef_wrapper(elem)
                 if typedef_def:
                     self.data.append(typedef_def)
+        
+        if self.remove_unknown:
+            self._remove_unknown()
         return self.data
 
     def _get_raw_type(self, type_id):
@@ -89,7 +134,7 @@ class CastXmlParse:
         Recursively resolves a type ID to its base type name, size, align, and array dimensions.
         Returns: (type_name: str, size: int, align: int, elements: List[int])
         """
-        elem = self.xml_root.find(f".//*[@id='{type_id}']")
+        elem = self._id_map.get(type_id, None)
         if elem is None:
             raise ValueError(f"Type element with id '{type_id}' not found")
 
@@ -147,7 +192,7 @@ class CastXmlParse:
         if not file_id or not line:
             raise ValueError(f"Element {elem.tag} missing 'file' or 'line' attribute")
 
-        file_elem = self.xml_root.find(f".//File[@id='{file_id}']")
+        file_elem = self._id_map.get(file_id, None)
         if file_elem is None:
             raise ValueError(f"File element with id '{file_id}' not found in XML")
 
@@ -169,7 +214,7 @@ class CastXmlParse:
         parts = [name] if name else []
 
         while context_id:
-            context_elem = self.xml_root.find(f".//*[@id='{context_id}']")
+            context_elem = self._id_map.get(context_id, None) 
             if context_elem is None:
                 break
 
@@ -207,7 +252,27 @@ class CastXmlParse:
             definition=resolved_type,
             elements=elements
         )
-                    
+    def _parse_typedef_wrapper(self, elem):
+        try:
+            return self._parse_typedef(elem)
+        except Exception as e:
+            if not self.skip_failed_parsing:
+                raise
+            else:
+                if self.verbose:
+                    print(f"Warning: Failed to parse typedef '{elem.get('name')}' - {e}")
+        return None
+       
+    def _parse_struct_wrapper(self, struct_elem):
+        try:
+            return self._parse_struct(struct_elem)
+        except Exception as e:
+            if not self.skip_failed_parsing:
+                raise
+            elif self.verbose:
+                print(f"Warning: Failed to parse struct '{struct_elem.get('name')}' - {e}")
+        return None
+
     def _parse_struct(self, struct_elem):
         """
         Parses a <Struct> element and returns a ClassDefinition object.
@@ -228,7 +293,8 @@ class CastXmlParse:
 
         align_attr = struct_elem.get("align")
         if align_attr is None:
-            print(f"Warning: Struct '{name}' has no 'align' attribute, defaulting to 0")
+            if self.verbose:
+                print(f"Warning: Struct '{name}' has no 'align' attribute, defaulting to 0")
             alignment = 0
         else:
             alignment = int(align_attr)
@@ -244,7 +310,7 @@ class CastXmlParse:
 
         member_ids = struct_elem.get("members", "").split()
         for member_id in member_ids:
-            member_elem = self.xml_root.find(f".//*[@id='{member_id}']")
+            member_elem = self._id_map.get(member_id, None)  
             if member_elem is not None and member_elem.tag == "Field":
                 field = self._parse_field(member_elem)
                 class_def.fields.append(field)
@@ -256,6 +322,8 @@ class CastXmlParse:
         Parses a <Field> element and returns a Field object.
         """
         name = field_elem.get("name")
+        if name == '':
+            name = field_elem.get("id")
         
         c_type = field_elem.get("type")
         if not c_type:

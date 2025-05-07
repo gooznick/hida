@@ -302,3 +302,25 @@ def test_namespaces():
     assert agg.fields[1].c_type == "Outer::Inner::B"
     assert agg.fields[2].c_type.endswith("::C") 
     validate_definitions(result)
+
+def test_std_types_pointers():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'std_types_pointers.xml'), skip_failed_parsing=True, remove_unknown=True)
+
+    assert isinstance(result, list), "Expected list of class definitions"
+    validate_definitions(result)
+
+    struct_a = find_type_by_name(result, "A")
+    assert struct_a is not None, "Struct A not found"
+
+    expected_fields = [
+        ("v", "void*"),
+        ("s", "void*"),
+    ]
+
+    assert len(struct_a.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
+
+    for idx, (name, c_type) in enumerate(expected_fields):
+        field = struct_a.fields[idx]
+        assert field.name == name, f"Expected field '{name}', got '{field.name}'"
+        assert field.c_type == c_type, f"Field '{name}' expected type '{c_type}', got '{field.c_type}'"
+        assert field.elements == [], f"Field '{name}' should not be an array"
