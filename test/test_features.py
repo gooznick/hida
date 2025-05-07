@@ -525,3 +525,61 @@ def test_bitfields():
         assert f.c_type == c_type, f"Field '{name}' expected type '{c_type}', got '{f.c_type}'"
         assert f.size_in_bits == size_in_bits, f"Field '{name}' expected size {size_in_bits}, got {f.size_in_bits}"
         assert f.bitfield == bitfield, f"Field '{name}' expected bitfield={bitfield}, got {f.bitfield}"
+
+
+def test_bitfields_complex():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'bitfields.xml'))
+
+    assert isinstance(result, list), "Expected list of class definitions"
+    validate_definitions(result)
+
+    # --- StatusFlags ---
+    status = find_type_by_name(result, "StatusFlags")
+    assert status is not None and len(status.fields) == 3
+    assert [(f.name, f.c_type, f.size_in_bits, f.bitfield) for f in status.fields] == [
+        ("ready", "uint32_t", 1, True),
+        ("error", "uint32_t", 1, True),
+        ("reserved", "uint32_t", 6, True),
+    ]
+
+    # --- ControlRegister ---
+    ctrl = find_type_by_name(result, "ControlRegister")
+    assert ctrl is not None and len(ctrl.fields) == 4
+    assert [(f.name, f.c_type, f.size_in_bits, f.bitfield) for f in ctrl.fields] == [
+        ("mode", "uint32_t", 3, True),
+        ("speed", "int32_t", 5, True),
+        ("enable", "uint32_t", 1, True),
+        ("reserved", "uint32_t", 23, True),
+    ]
+
+    # --- Packed32 ---
+    packed = find_type_by_name(result, "Packed32")
+    assert packed is not None and len(packed.fields) == 4
+    assert [(f.name, f.size_in_bits) for f in packed.fields] == [
+        ("a", 8), ("b", 8), ("c", 8), ("d", 8)
+    ]
+
+    # --- Nested ---
+    nested = find_type_by_name(result, "Nested")
+    assert nested is not None
+    outer_field = next((f for f in nested.fields if f.name == "outer"), None)
+    inner_field = next((f for f in nested.fields if f.name == "inner"), None)
+    assert outer_field is not None and outer_field.size_in_bits == 4 and outer_field.bitfield
+
+    # --- Flat ---
+    flat = find_type_by_name(result, "Flat")
+    assert flat is not None
+    field_names = set(f.name for f in flat.fields)
+    assert "top" in field_names
+    nested = find_type_by_name(result, flat.fields[1].c_type)
+    assert nested, "Nested struct not found"
+    assert nested.fields[1].name == "raw", "Nested raw field not found"
+    nested2 = find_type_by_name(result, nested.fields[0].c_type)
+    assert nested2, "Nested inner struct not found"
+    assert nested2.fields[0].name == "u1"
+    assert nested2.fields[0].bitfield == True
+    assert nested2.fields[0].size_in_bits == 3
+    assert nested2.fields[1].name == "u2"
+    assert nested2.fields[1].bitfield == True
+    assert nested2.fields[1].size_in_bits == 5
+
