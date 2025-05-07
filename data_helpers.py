@@ -57,6 +57,30 @@ def validate_class_definition(cls: ClassDefinition):
             if dim == 0 and field.elements != [0]:
                 raise ValueError(f"Field '{field.name}' in class '{cls.name}' has dimension 0 not as [0] exactly")
 
+def validate_typedef_definition(td: TypedefDefinition):
+    """
+    Validates a TypedefDefinition instance.
+    Raises ValueError if any condition is violated.
+    """
+    if not isinstance(td.name, str) or not td.name:
+        raise ValueError("TypedefDefinition name must be a non-empty string")
+
+    if not isinstance(td.source, str) or not td.source:
+        raise ValueError(f"Typedef '{td.name}': source must be a non-empty string")
+
+    if not isinstance(td.definition, str) or not td.definition:
+        raise ValueError(f"Typedef '{td.name}': definition must be a non-empty string")
+
+    if not isinstance(td.elements, list):
+        raise ValueError(f"Typedef '{td.name}': elements must be a list")
+
+    for dim in td.elements:
+        if not isinstance(dim, int) or dim < 0:
+            raise ValueError(f"Typedef '{td.name}': invalid array dimension {dim}")
+        if dim == 0 and td.elements != [0]:
+            raise ValueError(f"Typedef '{td.name}': dimension 0 must appear only as [0]")
+
+
 def validate_definitions(definitions):
     """
     Validates that 'definitions' is a list of known definition dataclasses,
@@ -73,3 +97,5 @@ def validate_definitions(definitions):
 
         if isinstance(defn, ClassDefinition):
             validate_class_definition(defn)
+        if isinstance(defn, TypedefDefinition):
+            validate_typedef_definition(defn)

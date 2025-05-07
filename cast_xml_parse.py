@@ -66,15 +66,15 @@ class CastXmlParse:
 
     def _parse(self):
         """
-        Extracts all <Struct> definitions and delegates parsing to _parse_struct().
-        Populates self.data with a list of ClassDefinition instances.
+        Extracts all definitions and delegates parsing to _parse_*().
+        Populates self.data with a list of *Definition instances.
         """
         if self.xml_root is None:
             raise RuntimeError("XML root is not loaded.")
 
         self.data = []
         for elem in self.xml_root.findall(".//"):
-            if elem.tag in ("Struct", "Class") and elem.get("name"):
+            if elem.tag in ("Struct", "Class"):
                 struct_def = self._parse_struct(elem)
                 if struct_def:
                     self.data.append(struct_def)
@@ -125,6 +125,8 @@ class CastXmlParse:
 
         elif tag in ("Struct", "Class", "Union", "Enumeration"):
             name = elem.get("name")
+            if name == "":
+                name = elem.get("id")
             size = int(elem.get("size"))
             align = int(elem.get("align"))
             return name, size, align, []
@@ -188,8 +190,8 @@ class CastXmlParse:
         """
         struct_id = struct_elem.get("id")
         name = struct_elem.get("name")
-        if not name:
-            raise ValueError(f"Struct element {struct_id} missing name")
+        if name =="":
+            name = struct_id
 
         size_attr = struct_elem.get("size")
         if size_attr is None:

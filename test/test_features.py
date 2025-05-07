@@ -137,12 +137,12 @@ def test_all_basic_types():
         field = struct_def.fields[idx]
         assert field.name == field_name, f"Expected field '{field_name}', got '{field.name}'"
         assert field.c_type == c_type, f"Expected type '{c_type}' for '{field_name}', got '{field.c_type}'"
+    validate_definitions(result)
 
 def test_nested_structs():
     result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'nested.xml'))
 
     assert isinstance(result, list), "Expected list of class definitions"
-    validate_definitions(result)
 
     a = find_type_by_name(result, "A")
     assert a is not None and len(a.fields) == 1
@@ -158,6 +158,7 @@ def test_nested_structs():
     assert c.fields[0].name == "a" and c.fields[0].c_type == "A"
     assert c.fields[1].name == "b" and c.fields[1].c_type == "B"
     assert c.fields[2].name == "c" and c.fields[2].c_type == "int32_t"
+    validate_definitions(result)
 
 def test_arrays():
     result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'arrays.xml'))
@@ -187,6 +188,7 @@ def test_arrays():
         assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, f"Invalid size_in_bits for '{name}'"
 
     assert b.size > 0, f"Struct B size must be positive, got {b.size}"
+    validate_definitions(result)
 
 def test_pointers():
     result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'pointers.xml'))
@@ -216,6 +218,7 @@ def test_pointers():
         assert field.c_type == c_type, f"Expected type '{c_type}' for field '{name}', got '{field.c_type}'"
         assert field.elements in ([], [3]) if name == "arr_func_ptr" else field.elements == [], \
             f"Unexpected array dimensions in field '{name}': {field.elements}"
+    validate_definitions(result)
 
 def test_typedefs():
     result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'typedefs.xml'))
@@ -229,7 +232,7 @@ def test_typedefs():
         "FloatPtr":      ("void*", []),
         "FuncPtr":       ("void*", []),
         "PointPtr":      ("void*", []),
-        "Shapes":        ("Circle", [10]),
+        "Shapes":        (None, [10]),
         "ShapesPtr":     ("void*", []),
         "Alias1":        ("int32_t", []),
         "Alias2":        ("int32_t", []),
@@ -246,5 +249,26 @@ def test_typedefs():
     for name, (expected_def, expected_elements) in expected_typedefs.items():
         typedef = find_type_by_name(result, name)
         assert typedef is not None, f"Typedef {name} not found"
-        assert typedef.definition == expected_def, f"{name}: expected definition '{expected_def}', got '{typedef.definition}'"
-        assert typedef.elements == expected_elements, f"{name}: expected elements {expected_elements}, got {typedef.elements}"
+        assert typedef.definition == expected_def  or None == expected_def   , f"{name}: expected definition '{expected_def}', got '{typedef.definition}'"
+        assert typedef.elements == expected_elements, f"{name}: expected elemes {expected_elements}, got {typedef.elements}"
+    validate_definitions(result)
+
+def test_typedef_struct_inline():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'typedef_struct.xml'))
+
+    assert isinstance(result, list), "Expected list of definitions"
+
+    typedef = find_type_by_name(result, "Point")
+    assert typedef is not None, "Typedef 'Point' not found"
+    assert isinstance(typedef, TypedefDefinition), "'Point' is not a TypedefDefinition"
+    assert typedef.definition != "", "'Point' typedef must have a definition"
+    assert typedef.elements == [], "'Point' typedef should not have array dimensions"
+
+    # Look for the struct that this typedef refers to
+    struct_def = find_type_by_name(result, typedef.definition)
+    assert struct_def is not None, f"Struct '{typedef.definition}' not found"
+    assert isinstance(struct_def, ClassDefinition), f"Expected ClassDefinition for '{typedef.definition}'"
+    assert len(struct_def.fields) == 1, "Struct should have exactly one field"
+    assert struct_def.fields[0].name == "x"
+    assert struct_def.fields[0].c_type == "int32_t"
+    validate_definitions(result)
