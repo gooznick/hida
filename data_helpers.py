@@ -242,6 +242,46 @@ def validate_constant_definition(cd: ConstantDefinition, types):
         raise ValueError(f"Constant '{cd.name}': value must be int, float, or str")
 
 
+def verify_size(definitions):
+    """
+    Verifies memory layout of structs and unions:
+    - For structs: fields must not overlap, size must be enough
+    - For unions: all fields start at 0, and total size must cover largest field
+    """
+    for d in definitions:
+        if isinstance(d, ClassDefinition):
+            prev_end = 0
+            for field in d.fields:
+                count = 1
+                for dim in field.elements:
+                    count *= dim
+                total_bits = field.size_in_bits * count
+
+                if field.bitoffset < prev_end:
+                    raise ValueError(f"{d.name}: Field '{field.name}' overlaps previous field at bit offset {field.bitoffset}")
+                prev_end = field.bitoffset + total_bits
+
+            if d.size * 8 < prev_end:
+                raise ValueError(f"{d.name}: Struct size too small ({d.size} bytes) for last field ending at bit {prev_end}")
+
+        elif isinstance(d, UnionDefinition):
+            max_bits = 0
+            for field in d.fields:
+                if field.bitoffset != 0:
+                    raise ValueError(f"{d.name}: Union field '{field.name}' must start at bit offset 0")
+
+                count = 1
+                for dim in field.elements:
+                    count *= dim
+                total_bits = field.size_in_bits * count
+
+                if total_bits > max_bits:
+                    max_bits = total_bits
+
+            if d.size * 8 < max_bits:
+                raise ValueError(f"{d.name}: Union size too small ({d.size} bytes) for largest field ({max_bits} bits)")
+
+
 def validate_definitions(definitions):
     """
     Validates that 'definitions' is a list of known definition dataclasses,
@@ -274,3 +314,4 @@ def validate_definitions(definitions):
             validate_union_definition(defn, types)
         if isinstance(defn, ConstantDefinition):
             validate_constant_definition(defn, types)
+    verify_size(definitions)

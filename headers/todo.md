@@ -31,10 +31,10 @@
 * bitfields
 * Static constants
 * packing (#pragma pack)
+* wide characters
 
 * Ignore non POD types
 * Anonnymous inner structs and unions
-* wide characters
 
 ## Manipulators
 
