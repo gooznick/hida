@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<CastXML format="1.2.1">
+  <Namespace id="_1" name="::" members="_2 _3 _4 _5 _6 _7 _8 _9"/>
+  <Typedef id="_2" name="__int128_t" type="_10" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_3" name="__uint128_t" type="_11" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_4" name="__NSConstantString" type="_12" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_5" name="__builtin_ms_va_list" type="_13" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_6" name="__builtin_va_list" type="_14" context="_1" location="f0:0" file="f0" line="0"/>
+  <Struct id="_7" name="A" context="_1" location="f1:1" file="f1" line="1" members="_15 _16 _17 _18 _19 _20" size="64" align="32"/>
+  <Struct id="_8" name="B" context="_1" location="f1:7" file="f1" line="7" members="_21 _22 _23 _24 _25 _26" size="128" align="64"/>
+  <Class id="_9" name="C" context="_1" location="f1:13" file="f1" line="13" members="_27 _28 _29 _30 _31 _32 _33" size="48" align="16"/>
+  <FundamentalType id="_10" name="__int128" size="128" align="128"/>
+  <FundamentalType id="_11" name="unsigned __int128" size="128" align="128"/>
+  <Struct id="_12" name="__NSConstantString_tag" context="_1" location="f0:0" file="f0" line="0" members="_34 _35 _36 _37" size="256" align="64"/>
+  <PointerType id="_13" type="_38" size="64" align="64"/>
+  <ArrayType id="_14" min="0" max="0" type="_39"/>
+  <Field id="_15" name="i" type="_40" context="_7" access="public" location="f1:3" file="f1" line="3" offset="0"/>
+  <Field id="_16" name="f" type="_41" context="_7" access="public" location="f1:4" file="f1" line="4" offset="32"/>
+  <Constructor id="_17" name="A" context="_7" access="public" location="f1:1" file="f1" line="1" inline="1" artificial="1"/>
+  <Constructor id="_18" name="A" context="_7" access="public" location="f1:1" file="f1" line="1" inline="1" artificial="1">
+    <Argument type="_42" location="f1:1" file="f1" line="1"/>
+  </Constructor>
+  <OperatorMethod id="_19" name="=" returns="_43" context="_7" access="public" location="f1:1" file="f1" line="1" inline="1" artificial="1" mangled="_ZN1AaSERKS_">
+    <Argument type="_42" location="f1:1" file="f1" line="1"/>
+  </OperatorMethod>
+  <Destructor id="_20" name="A" context="_7" access="public" location="f1:1" file="f1" line="1" inline="1" artificial="1"/>
+  <Field id="_21" name="i" type="_38" context="_8" access="public" location="f1:9" file="f1" line="9" offset="0"/>
+  <Field id="_22" name="d" type="_44" context="_8" access="public" location="f1:10" file="f1" line="10" offset="64"/>
+  <Constructor id="_23" name="B" context="_8" access="public" location="f1:7" file="f1" line="7" inline="1" artificial="1"/>
+  <Constructor id="_24" name="B" context="_8" access="public" location="f1:7" file="f1" line="7" inline="1" artificial="1">
+    <Argument type="_45" location="f1:7" file="f1" line="7"/>
+  </Constructor>
+  <OperatorMethod id="_25" name="=" returns="_46" context="_8" access="public" location="f1:7" file="f1" line="7" inline="1" artificial="1" mangled="_ZN1BaSERKS_">
+    <Argument type="_45" location="f1:7" file="f1" line="7"/>
+  </OperatorMethod>
+  <Destructor id="_26" name="B" context="_8" access="public" location="f1:7" file="f1" line="7" inline="1" artificial="1"/>
+  <Field id="_27" name="i" type="_38" context="_9" access="private" location="f1:15" file="f1" line="15" offset="0"/>
+  <Field id="_28" name="us" type="_47" context="_9" access="private" location="f1:16" file="f1" line="16" offset="16"/>
+  <Field id="_29" name="s" type="_48" context="_9" access="private" location="f1:17" file="f1" line="17" offset="32"/>
+  <Constructor id="_30" name="C" context="_9" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1"/>
+  <Constructor id="_31" name="C" context="_9" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1">
+    <Argument type="_49" location="f1:13" file="f1" line="13"/>
+  </Constructor>
+  <OperatorMethod id="_32" name="=" returns="_50" context="_9" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1" mangled="_ZN1CaSERKS_">
+    <Argument type="_49" location="f1:13" file="f1" line="13"/>
+  </OperatorMethod>
+  <Destructor id="_33" name="C" context="_9" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1"/>
+  <Field id="_34" name="isa" type="_51" context="_12" access="public" offset="0"/>
+  <Field id="_35" name="flags" type="_40" context="_12" access="public" offset="64"/>
+  <Field id="_36" name="str" type="_52" context="_12" access="public" offset="128"/>
+  <Field id="_37" name="length" type="_53" context="_12" access="public" offset="192"/>
+  <FundamentalType id="_38" name="char" size="8" align="8"/>
+  <Struct id="_39" name="__va_list_tag" context="_1" location="f0:0" file="f0" line="0" members="_54 _55 _56 _57" size="192" align="64"/>
+  <FundamentalType id="_40" name="int" size="32" align="32"/>
+  <FundamentalType id="_41" name="float" size="32" align="32"/>
+  <ReferenceType id="_42" type="_7c" size="64" align="64"/>
+  <CvQualifiedType id="_7c" type="_7" const="1"/>
+  <ReferenceType id="_43" type="_7" size="64" align="64"/>
+  <FundamentalType id="_44" name="double" size="64" align="64"/>
+  <ReferenceType id="_45" type="_8c" size="64" align="64"/>
+  <CvQualifiedType id="_8c" type="_8" const="1"/>
+  <ReferenceType id="_46" type="_8" size="64" align="64"/>
+  <FundamentalType id="_47" name="short unsigned int" size="16" align="16"/>
+  <FundamentalType id="_48" name="short int" size="16" align="16"/>
+  <ReferenceType id="_49" type="_9c" size="64" align="64"/>
+  <CvQualifiedType id="_9c" type="_9" const="1"/>
+  <ReferenceType id="_50" type="_9" size="64" align="64"/>
+  <PointerType id="_51" type="_40c" size="64" align="64"/>
+  <CvQualifiedType id="_40c" type="_40" const="1"/>
+  <PointerType id="_52" type="_38c" size="64" align="64"/>
+  <CvQualifiedType id="_38c" type="_38" const="1"/>
+  <FundamentalType id="_53" name="long int" size="64" align="64"/>
+  <Field id="_54" name="gp_offset" type="_58" context="_39" access="public" offset="0"/>
+  <Field id="_55" name="fp_offset" type="_58" context="_39" access="public" offset="32"/>
+  <Field id="_56" name="overflow_arg_area" type="_59" context="_39" access="public" offset="64"/>
+  <Field id="_57" name="reg_save_area" type="_59" context="_39" access="public" offset="128"/>
+  <FundamentalType id="_58" name="unsigned int" size="32" align="32"/>
+  <PointerType id="_59" type="_60" size="64" align="64"/>
+  <FundamentalType id="_60" name="void" size="0" align="8"/>
+  <File id="f0" name="&lt;builtin&gt;"/>
+  <File id="f1" name="/home/eranbu/projects/castxml/headers/basics.h"/>
+</CastXML>
