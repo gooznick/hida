@@ -77,7 +77,7 @@ def validate_class_definition(cls: ClassDefinition, types):
             if dim == 0 and field.elements != [0]:
                 raise ValueError(f"Field '{field.name}' in class '{cls.name}' has dimension 0 not as [0] exactly")
 
-def validate_typedef_definition(td: TypedefDefinition):
+def validate_typedef_definition(td: TypedefDefinition, types):
     """
     Validates a TypedefDefinition instance.
     Raises ValueError if any condition is violated.
@@ -91,6 +91,9 @@ def validate_typedef_definition(td: TypedefDefinition):
     if not isinstance(td.definition, str) or not td.definition:
         raise ValueError(f"Typedef '{td.name}': definition must be a non-empty string")
 
+    if not td.definition in types and not td.definition in builtin_types:
+        raise ValueError(f"Typedef '{td.name}': unknown type '{td.definition}'")
+           
     if not isinstance(td.elements, list):
         raise ValueError(f"Typedef '{td.name}': elements must be a list")
 
@@ -120,4 +123,4 @@ def validate_definitions(definitions):
         if isinstance(defn, ClassDefinition):
             validate_class_definition(defn, types)
         if isinstance(defn, TypedefDefinition):
-            validate_typedef_definition(defn)
+            validate_typedef_definition(defn, types)
