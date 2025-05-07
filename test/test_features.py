@@ -460,3 +460,43 @@ def test_enums():
         assert match.size == enum_data["size"], f"Enum '{match.name}' has incorrect size"
         parsed = {e.name: e.value for e in match.enums}
         assert parsed == enum_data["values"], f"Enum '{match.name}' values do not match"
+
+def test_unions():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'unions.xml'))
+
+    assert isinstance(result, list), "Expected list of class and union definitions"
+    validate_definitions(result)
+
+    # Test simple union
+    u = find_type_by_name(result, "IntOrFloat")
+    assert u is not None, "Union IntOrFloat not found"
+    assert isinstance(u, UnionDefinition)
+    assert len(u.fields) == 2
+    assert set(f.name for f in u.fields) == {"i", "f"}
+
+    # Test struct with named union
+    packet = find_type_by_name(result, "Packet")
+    assert packet is not None, "Struct Packet not found"
+    assert isinstance(packet, ClassDefinition)
+    assert any(f.name == "data" for f in packet.fields), "Expected union field 'data' in Packet"
+
+    # Test struct with anonymous union
+    mixed = find_type_by_name(result, "Mixed")
+    assert mixed is not None, "Struct Mixed not found"
+    assert isinstance(mixed, ClassDefinition)
+    anon = find_type_by_name(result, mixed.fields[1].c_type)
+    assert anon is not None, "Mixed anon union not found"
+
+    assert set(f.name for f in anon.fields).intersection({"d", "l"}), "Missing anonymous union fields in Mixed"
+
+    # Test nested union
+    nested_union = find_type_by_name(result, "NestedUnion")
+    assert nested_union is not None, "NestedUnion not found"
+    assert isinstance(nested_union, UnionDefinition)
+    assert any("nested" in f.name for f in nested_union.fields), "Missing nested struct in NestedUnion"
+
+    # Test deep union
+    deep = find_type_by_name(result, "DeepUnion")
+    assert deep is not None, "DeepUnion not found"
+    assert isinstance(deep, UnionDefinition)
+    assert any("structured" in f.name for f in deep.fields), "Missing structured field in DeepUnion"
