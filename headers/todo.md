@@ -21,11 +21,11 @@
 * Arrays 1-4D
 * bool
 * All types of pointers (pointers, double pointers, pointers to non POD, function pointers)
+* typedefs
+* C struct typedefs
 
 * Namespaces
 * fixed width types
-* typedefs
-* C struct typedefs
 * Enums
 * c++11 enums
 * Unions

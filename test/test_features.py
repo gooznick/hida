@@ -272,3 +272,33 @@ def test_typedef_struct_inline():
     assert struct_def.fields[0].name == "x"
     assert struct_def.fields[0].c_type == "int32_t"
     validate_definitions(result)
+
+def test_namespaces():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'namespaces.xml'))
+
+    assert isinstance(result, list), "Expected list of class definitions"
+
+    # Top-level namespace
+    a = find_type_by_name(result, "TopLevel::A")
+    assert a is not None, "Struct TopLevel::A not found"
+    assert len(a.fields) == 1 and a.fields[0].name == "x" and a.fields[0].c_type == "int32_t"
+
+    # Nested namespace
+    b = find_type_by_name(result, "Outer::Inner::B")
+    assert b is not None, "Struct Outer::Inner::B not found"
+    assert len(b.fields) == 1 and b.fields[0].name == "y" and b.fields[0].c_type == "float"
+
+    # Anonymous namespace
+    C_anon_struct = [s for s in result if s.name.endswith("::C")]
+    assert len(C_anon_struct) == 1, "Struct C (in anonymous namespace) not found"
+    c = C_anon_struct[0]
+    assert len(c.fields) == 1 and c.fields[0].name == "z" and c.fields[0].c_type == "double"
+
+    # AllNamespaces aggregates them all
+    agg = find_type_by_name(result, "AllNamespaces")
+    assert agg is not None, "Struct AllNamespaces not found"
+    assert [f.name for f in agg.fields] == ["a", "b", "c"]
+    assert agg.fields[0].c_type == "TopLevel::A"
+    assert agg.fields[1].c_type == "Outer::Inner::B"
+    assert agg.fields[2].c_type.endswith("::C") 
+    validate_definitions(result)

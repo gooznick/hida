@@ -95,14 +95,14 @@ class CastXmlParse:
 
         tag = elem.tag
         if tag == "FundamentalType":
-            name = elem.get("name")
+            name = self._add_namespace(elem)
             size = int(elem.get("size"))
             align = int(elem.get("align"))
             return name, size, align, []
 
         elif tag == "Typedef":
             base_type, size, align, elements = self._get_raw_type(elem.get("type"))
-            name = elem.get("name", "")
+            name = self._add_namespace(elem)
             return base_type if base_type!="" else name, size, align, elements
         elif tag == "ElaboratedType":
             return self._get_raw_type(elem.get("type"))
@@ -124,9 +124,7 @@ class CastXmlParse:
 
 
         elif tag in ("Struct", "Class", "Union", "Enumeration"):
-            name = elem.get("name")
-            if name == "":
-                name = elem.get("id")
+            name = self._add_namespace(elem)  
             size = int(elem.get("size"))
             align = int(elem.get("align"))
             return name, size, align, []
@@ -158,15 +156,41 @@ class CastXmlParse:
             raise ValueError(f"File element '{file_id}' missing 'name' attribute")
 
         return f"{file_path}:{line}"
-                    
+
+    def _add_namespace(self, elem):
+        """
+        Recursively resolves the full namespace-qualified name of an element,
+        based on its 'context' chain. Anonymous namespaces are represented by their ID.
+        """
+        name = elem.get("name")
+        if name == "":
+            name = elem.get("id")
+        context_id = elem.get("context")
+        parts = [name] if name else []
+
+        while context_id:
+            context_elem = self.xml_root.find(f".//*[@id='{context_id}']")
+            if context_elem is None:
+                break
+
+            if context_elem.tag == "Namespace":
+                ns_name = context_elem.get("name")
+                if not ns_name:  # anonymous namespace
+                    ns_name = f"<anon@{context_elem.get('id')}>"
+                parts.insert(0, ns_name)
+
+            context_id = context_elem.get("context")
+        if parts and parts[0] == "::":
+            del parts[0] # Global namespace removal
+        return "::".join(parts)
+       
     def _parse_typedef(self, typedef_elem):
         """
         Parses a <Typedef> element and returns a TypedefDefinition object.
         If the typedef refers to a pointer, the definition is always 'void*'.
         """
-        name = typedef_elem.get("name")
-        if not name:
-            raise ValueError("Typedef element missing 'name' attribute")
+        name = self._add_namespace(typedef_elem)
+
 
         type_id = typedef_elem.get("type")
         if not type_id:
@@ -189,9 +213,7 @@ class CastXmlParse:
         Parses a <Struct> element and returns a ClassDefinition object.
         """
         struct_id = struct_elem.get("id")
-        name = struct_elem.get("name")
-        if name =="":
-            name = struct_id
+        name = self._add_namespace(struct_elem)
 
         size_attr = struct_elem.get("size")
         if size_attr is None:
@@ -234,9 +256,7 @@ class CastXmlParse:
         Parses a <Field> element and returns a Field object.
         """
         name = field_elem.get("name")
-        if not name:
-            raise ValueError("Field element missing 'name' attribute")
-
+        
         c_type = field_elem.get("type")
         if not c_type:
             raise ValueError(f"Field '{name}' missing 'type' attribute")
