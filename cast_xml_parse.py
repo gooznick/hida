@@ -3,11 +3,11 @@ from pathlib import Path
 from data import *
 
 class CastXmlParse:
-    def __init__(self, config=None):
+    def __init__(self, use_bool=False):
         """
         Initialize the parser with an optional configuration dictionary.
         """
-        self.config = config or {}
+        self.use_bool = use_bool
         self.xml_root = None
         self.data = None  # This will hold parsed data after _parse
 
@@ -29,6 +29,36 @@ class CastXmlParse:
 
         return self.data
 
+    @staticmethod
+    def _normalize_integral_type(typename: str, size_in_bits: int, use_bool = False) -> str:
+        """
+        Converts basic integral types to fixed-width types like uint32_t or int16_t.
+        Leaves non-integral types unchanged.
+        """
+        normalized = " ".join(sorted(typename.split()))  # normalize order
+
+        is_unsigned = "unsigned" in normalized
+
+        if "double" in normalized:
+            return typename
+        if "bool" in normalized:
+            if use_bool:
+                return typename
+            else:
+                is_unsigned = True
+        if any(word in normalized for word in ("char", "short", "long", "signed", "int", "bool")):
+            width_map = {
+                8: "int8_t",
+                16: "int16_t",
+                32: "int32_t",
+                64: "int64_t",
+                128: "int128_t",
+            }
+            base = width_map.get(size_in_bits)
+            if base:
+                return f"u{base}" if is_unsigned else base
+
+        return typename
 
     def _parse(self):
         """
@@ -40,7 +70,7 @@ class CastXmlParse:
 
         self.data = []
         for elem in self.xml_root.findall(".//"):
-            if elem.tag == "Struct" and elem.get("name"):
+            if elem.tag in ("Struct", "Class") and elem.get("name"):
                 struct_def = self._parse_struct(elem)
                 if struct_def:
                     self.data.append(struct_def)
@@ -164,6 +194,7 @@ class CastXmlParse:
         offset = int(offset_attr)
 
         type_name, size, align, elements = self._get_type(c_type)
+        type_name = CastXmlParse._normalize_integral_type(type_name, size, self.use_bool)
         return Field(
             name=name,
             c_type=type_name,
@@ -176,5 +207,5 @@ def parse(xml_path: str, **kwargs):
     """
     Helper function to parse a CastXML XML file with optional configuration parameters.
     """
-    parser = CastXmlParse(config=kwargs)
+    parser = CastXmlParse(**kwargs)
     return parser.parse_xml(Path(xml_path))

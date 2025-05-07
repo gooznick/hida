@@ -34,6 +34,7 @@
 * Ignore non POD types
 * Static constants
 * Constant macros (?)
+* wide characters
 
 ## Manipulators
 
