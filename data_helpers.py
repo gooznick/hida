@@ -1,5 +1,22 @@
 from data import *
 
+builtin_types = {
+        "int8_t",
+        "uint8_t",
+        "int16_t",
+        "uint16_t",
+        "int32_t",
+        "uint32_t",
+        "int64_t",
+        "uint64_t",
+        "int128_t",
+        "uint128_t",
+        "float",
+        "double",
+        "long double",
+        "bool",
+        "void*"
+    }
 
 def find_type_by_name(data_structs, name):
     """
@@ -12,7 +29,7 @@ def find_type_by_name(data_structs, name):
             return item
     return None
 
-def validate_class_definition(cls: ClassDefinition):
+def validate_class_definition(cls: ClassDefinition, types):
     """
     Validates the integrity of a ClassDefinition instance.
     Raises ValueError if any condition is violated.
@@ -39,6 +56,9 @@ def validate_class_definition(cls: ClassDefinition):
         if not isinstance(field.c_type, str) or not field.c_type:
             raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid or empty c_type")
 
+        if not field.c_type in types and not field.c_type in builtin_types:
+            raise ValueError(f"Field '{field.name}' in class '{cls.name}' has unknown type '{field.c_type}'")
+                 
         if not isinstance(field.bitoffset, int) or field.bitoffset < 0:
             raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid bitoffset")
 
@@ -91,11 +111,13 @@ def validate_definitions(definitions):
 
     allowed_types = (ClassDefinition, UnionDefinition, EnumDefinition, TypedefDefinition, ConstantDefinition)
 
+    types = {defn.name for defn in definitions}
+
     for defn in definitions:
         if not isinstance(defn, allowed_types):
             raise ValueError(f"Invalid definition type: {type(defn).__name__}")
 
         if isinstance(defn, ClassDefinition):
-            validate_class_definition(defn)
+            validate_class_definition(defn, types)
         if isinstance(defn, TypedefDefinition):
             validate_typedef_definition(defn)
