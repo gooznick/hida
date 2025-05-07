@@ -410,9 +410,8 @@ class CastXmlParse:
         for member_id in member_ids:
             member_elem = self._id_map.get(member_id, None)  
             if member_elem is not None and member_elem.tag == "Field":
-                field = self._parse_field(member_elem)
+                field= self._parse_field(member_elem)
                 class_def.fields.append(field)
-
         return [class_def]
 
     def _parse_field(self, field_elem):
@@ -432,13 +431,18 @@ class CastXmlParse:
             raise ValueError(f"Field '{name}' missing required 'offset' attribute")
         offset = int(offset_attr)
 
-        type_name, size, align, elements = self._get_type(c_type)
+        type_name, size_in_bits, align, elements = self._get_type(c_type)
+        bits = field_elem.get("bits", None)
+        if bits:
+            size_in_bits = int(bits)
+            
         return Field(
             name=name,
             c_type=type_name,
             elements=elements,
-            size_in_bits=size,
-            bitoffset=offset
+            size_in_bits=size_in_bits,
+            bitoffset=offset,
+            bitfield=bool(bits)
         )
 
 def parse(xml_path: str, **kwargs):

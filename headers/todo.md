@@ -25,11 +25,11 @@
 * C struct typedefs
 * Namespaces
 * fixed width types
-
-* Ignore non POD types
 * Enums
 * c++11 enums
 * Unions
+
+* Ignore non POD types
 * Anonnymous inner structs and unions
 * bitfields
 * packing (#pragma pack)

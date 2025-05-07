@@ -56,14 +56,14 @@ def validate_class_definition(cls: ClassDefinition, types):
         if not isinstance(field.c_type, str) or not field.c_type:
             raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid or empty c_type")
 
-        if not field.c_type in types and not field.c_type in builtin_types:
+        if types != None and (not field.c_type in types and not field.c_type in builtin_types):
             raise ValueError(f"Field '{field.name}' in class '{cls.name}' has unknown type '{field.c_type}'")
                  
         if not isinstance(field.bitoffset, int) or field.bitoffset < 0:
             raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid bitoffset")
 
         if not isinstance(field.size_in_bits, int) or field.size_in_bits < 0:
-            raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid size_in_bits")
+            raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid size_in_bits ({field.size_in_bits})")
 
         if not isinstance(field.bitfield, bool):
             raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid bitfield flag")
@@ -91,7 +91,7 @@ def validate_typedef_definition(td: TypedefDefinition, types):
     if not isinstance(td.definition, str) or not td.definition:
         raise ValueError(f"Typedef '{td.name}': definition must be a non-empty string")
 
-    if not td.definition in types and not td.definition in builtin_types:
+    if types != None and (not td.definition in types and not td.definition in builtin_types):
         raise ValueError(f"Typedef '{td.name}': unknown type '{td.definition}'")
            
     if not isinstance(td.elements, list):
@@ -153,12 +153,12 @@ def validate_union_definition(u: UnionDefinition, types):
             raise ValueError(f"Union '{u.name}': field has invalid or empty name")
         if not isinstance(field.c_type, str) or not field.c_type:
             raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid or empty c_type")
-        if field.c_type not in types and field.c_type not in builtin_types:
+        if types != None and (field.c_type not in types and field.c_type not in builtin_types):
             raise ValueError(f"Union '{u.name}': field '{field.name}' has unknown type '{field.c_type}'")
         if not isinstance(field.bitoffset, int) or field.bitoffset < 0:
             raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid bitoffset")
         if not isinstance(field.size_in_bits, int) or field.size_in_bits <= 0:
-            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid size_in_bits")
+            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid size_in_bits ({field.size_in_bits})")
         if not isinstance(field.bitfield, bool):
             raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid bitfield flag")
         if not isinstance(field.elements, list):

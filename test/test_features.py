@@ -500,3 +500,28 @@ def test_unions():
     assert deep is not None, "DeepUnion not found"
     assert isinstance(deep, UnionDefinition)
     assert any("structured" in f.name for f in deep.fields), "Missing structured field in DeepUnion"
+
+def test_bitfields():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'bitfields_basic.xml'))
+
+    assert isinstance(result, list), "Expected list of class definitions"
+    validate_definitions(result)
+
+    s = find_type_by_name(result, "StatusFlags")
+    assert s is not None, "Struct StatusFlags not found"
+    assert isinstance(s, ClassDefinition)
+
+    expected_fields = [
+        ("ready", "uint32_t", 1, True),
+        ("error", "uint32_t", 1, True),
+        ("reserved", "uint32_t", 6, True),
+    ]
+
+    assert len(s.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
+
+    for idx, (name, c_type, size_in_bits, bitfield) in enumerate(expected_fields):
+        f = s.fields[idx]
+        assert f.name == name, f"Field {idx} expected name '{name}', got '{f.name}'"
+        assert f.c_type == c_type, f"Field '{name}' expected type '{c_type}', got '{f.c_type}'"
+        assert f.size_in_bits == size_in_bits, f"Field '{name}' expected size {size_in_bits}, got {f.size_in_bits}"
+        assert f.bitfield == bitfield, f"Field '{name}' expected bitfield={bitfield}, got {f.bitfield}"
