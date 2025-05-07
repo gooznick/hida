@@ -281,6 +281,116 @@ def verify_size(definitions):
             if d.size * 8 < max_bits:
                 raise ValueError(f"{d.name}: Union size too small ({d.size} bytes) for largest field ({max_bits} bits)")
 
+def find_struct_holes(definitions):
+    """
+    For each struct, return a list of (start_bit, size_in_bits, after_field_name) tuples
+    representing padding holes between fields or at the end.
+    """
+    result = {}
+
+    for d in definitions:
+        if not isinstance(d, ClassDefinition):
+            continue
+
+        holes = []
+        regions = []
+
+        for field in d.fields:
+            count = 1
+            for dim in field.elements:
+                count *= dim
+            size = field.size_in_bits * count
+            start = field.bitoffset
+            end = start + size
+            regions.append((start, end, field.name))
+
+        regions.sort()
+
+        prev_end = 0
+        prev_name = None
+        for start, end, name in regions:
+            if start > prev_end:
+                if prev_name is not None:
+                    holes.append((prev_end, start - prev_end, prev_name))
+            prev_end = max(prev_end, end)
+            prev_name = name
+
+        struct_end = d.size * 8
+        if prev_name is not None and prev_end < struct_end:
+            holes.append((prev_end, struct_end - prev_end, prev_name))
+
+        if holes:
+            result[d.name] = holes
+
+    return result
+
+
+def add_padding_fields(definitions):
+    """
+    Return a new list of definitions where holes in structs/unions
+    are filled with padding fields named pad0, pad1, etc.
+    """
+    padded_defs = []
+    
+    for d in definitions:
+        if not isinstance(d, (ClassDefinition)):
+            padded_defs.append(d)
+            continue
+
+        holes = find_struct_holes([d]).get(d.name, [])
+        new_fields = list(d.fields)  # copy original fields
+        pad_index = 0
+
+        for start_bit, size_bits, _ in holes:
+            pad_field = Field(
+                name=f"pad{pad_index}",
+                c_type="uint8_t",  # dummy type
+                elements=[],
+                bitoffset=start_bit,
+                size_in_bits=size_bits,
+                bitfield=True
+            )
+            new_fields.append(pad_field)
+            pad_index += 1
+
+        # sort fields by bitoffset again
+        new_fields.sort(key=lambda f: f.bitoffset)
+
+        if isinstance(d, ClassDefinition):
+            new_def = ClassDefinition(
+                name=d.name,
+                source=d.source,
+                alignment=d.alignment,
+                size=d.size,
+                fields=new_fields
+            )
+
+
+        padded_defs.append(new_def)
+
+    return padded_defs
+
+def remove_typedefs(definitions):
+    """
+    Replaces all typedef usage with their original type name
+    and removes TypedefDefinition objects from the definitions list.
+    """
+    # 1. Build typedef mapping: typedef_name → actual_type
+    typedef_map = {
+        td.name: td.definition
+        for td in definitions
+        if isinstance(td, TypedefDefinition)
+    }
+
+    # 2. Replace typedefs in fields
+    for d in definitions:
+        if isinstance(d, (ClassDefinition, UnionDefinition)):
+            for field in d.fields:
+                while field.c_type in typedef_map:
+                    field.c_type = typedef_map[field.c_type]
+
+    # 3. Remove TypedefDefinition instances
+    return [d for d in definitions if not isinstance(d, TypedefDefinition)]
 
 def validate_definitions(definitions):
     """
@@ -315,3 +425,5 @@ def validate_definitions(definitions):
         if isinstance(defn, ConstantDefinition):
             validate_constant_definition(defn, types)
     verify_size(definitions)
+    
+
