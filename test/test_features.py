@@ -351,3 +351,54 @@ def test_remove_unknown_behavior():
                                     remove_unknown=False)
     names = {d.name for d in result if hasattr(d, "name")}
     assert "B" in names, "Struct B should be present in skip_failed mode"
+
+
+def test_fixed_width_structs():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'fixed_width.xml'))
+
+    assert isinstance(result, list), "Expected list of class definitions"
+    validate_definitions(result)
+
+    expected_structs = {
+        "A": [
+            ("a1", "int8_t", []),
+            ("a2", "int16_t", []),
+            ("a3", "int32_t", []),
+            ("a4", "int64_t", []),
+            ("a5", "uint8_t", []),
+            ("a6", "uint16_t", []),
+            ("a7", "uint32_t", []),
+            ("a8", "uint64_t", []),
+        ],
+        "B": [
+            ("b1", "int8_t", []),
+            ("b2", "int16_t", []),
+            ("b3", "int32_t", []),
+            ("b4", "int64_t", []),
+            ("b5", "uint8_t", []),
+            ("b6", "uint16_t", []),
+            ("b7", "uint32_t", []),
+            ("b8", "uint64_t", []),
+        ],
+        "C": [
+            ("arr1", "int32_t", [4]),
+            ("arr2", "uint64_t", [2, 3]),
+        ],
+        "D": [
+            ("d1", "uint16_t", [5, 6]),
+            ("d2", "int8_t", [0]),
+        ],
+    }
+
+    for struct_name, expected_fields in expected_structs.items():
+        s = find_type_by_name(result, struct_name)
+        assert s is not None, f"Struct {struct_name} not found"
+        assert len(s.fields) == len(expected_fields), f"{struct_name}: Expected {len(expected_fields)} fields"
+
+        for idx, (name, c_type, elements) in enumerate(expected_fields):
+            field = s.fields[idx]
+            assert field.name == name, f"{struct_name}.{name}: expected name '{name}', got '{field.name}'"
+            assert field.c_type == c_type, f"{struct_name}.{name}: expected type '{c_type}', got '{field.c_type}'"
+            assert field.elements == elements, f"{struct_name}.{name}: expected elements {elements}, got {field.elements}"
+            assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, f"{struct_name}.{name}: invalid size_in_bits"
+        assert s.size > 0, f"{struct_name}: size must be positive"
