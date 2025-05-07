@@ -170,6 +170,27 @@ def validate_union_definition(u: UnionDefinition, types):
                 raise ValueError(f"Union '{u.name}': field '{field.name}' has dimension 0 not as [0]")
 
 
+def validate_constant_definition(cd: ConstantDefinition, types):
+    """
+    Validates a ConstantDefinition instance.
+    Raises ValueError if any condition is violated.
+    """
+    if not isinstance(cd.name, str) or not cd.name:
+        raise ValueError("ConstantDefinition name must be a non-empty string")
+
+    if not isinstance(cd.source, str) or not cd.source:
+        raise ValueError(f"Constant '{cd.name}': source must be a non-empty string")
+
+    if not isinstance(cd.c_type, str) or not cd.c_type:
+        raise ValueError(f"Constant '{cd.name}': c_type must be a non-empty string")
+
+    if cd.c_type not in types and cd.c_type not in builtin_types:
+        raise ValueError(f"Constant '{cd.name}': unknown type '{cd.c_type}'")
+
+    if not isinstance(cd.value, (int, float, str)):
+        raise ValueError(f"Constant '{cd.name}': value must be int, float, or str")
+
+
 def validate_definitions(definitions):
     """
     Validates that 'definitions' is a list of known definition dataclasses,
@@ -194,3 +215,5 @@ def validate_definitions(definitions):
             validate_enum_definition(defn)
         if isinstance(defn, UnionDefinition):
             validate_union_definition(defn, types)
+        if isinstance(defn, ConstantDefinition):
+            validate_constant_definition(defn, types)

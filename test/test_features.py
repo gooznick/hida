@@ -583,3 +583,24 @@ def test_bitfields_complex():
     assert nested2.fields[1].bitfield == True
     assert nested2.fields[1].size_in_bits == 5
 
+def test_constants():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'constants.xml'))
+
+    assert isinstance(result, list), "Expected list of definitions"
+    validate_definitions(result)
+
+    expected_constants = {
+        "buffer_size":      ("int32_t", 256),
+        "max_address":      ("uint64_t", 281474976710655),
+        "newline":          ("int8_t", "\n"),
+        "pi":               ("float", 3.14159012),
+        "e":                ("double", 2.7182818279999998),
+        "null_ptr":         ("void*", 0),
+    }
+
+    for name, (c_type, expected_value) in expected_constants.items():
+        const = find_type_by_name(result, name)
+        assert const is not None, f"Constant '{name}' not found"
+        assert isinstance(const, ConstantDefinition), f"{name} is not a ConstantDefinition"
+        assert const.c_type == c_type, f"{name}: expected c_type '{c_type}', got '{const.c_type}'"
+        assert const.value == expected_value, f"{name}: expected value '{expected_value}', got '{const.value}'"

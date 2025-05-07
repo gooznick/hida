@@ -124,6 +124,8 @@ class CastXmlParse:
                 new_def = self._parse_enum_wrapper(elem)
             elif elem.tag in ("Union") :
                 new_def = self._parse_union_wrapper(elem)
+            elif elem.tag in ("Variable") and elem.get("init"):
+                new_def = self._parse_constant_wrapper(elem)
             self.data = self.data + new_def 
                           
         if self.remove_unknown:
@@ -444,6 +446,73 @@ class CastXmlParse:
             bitoffset=offset,
             bitfield=bool(bits)
         )
+        
+    def _parse_init_value(self, init_str):
+        """
+        Converts a CastXML 'init' attribute string to a Python value.
+        Handles numeric literals and char literals.
+        """
+        try:
+            # Character literal e.g., '\'' or '\n'
+            if init_str.startswith("'") or init_str.startswith("&apos;"):
+                return bytes(init_str.strip("'&apos;"), "utf-8").decode("unicode_escape")
+
+            # Unsigned long long literal with ULL suffix
+            if init_str.endswith("ULL") or init_str.endswith("ull"):
+                return int(init_str.rstrip("ULL").rstrip("ull"))
+
+            # Float literal with 'F'
+            if init_str.endswith("F") or init_str.endswith("f"):
+                return float(init_str.rstrip("Ff"))
+
+            # Integer literal
+            if init_str.isdigit():
+                return int(init_str)
+
+            # Float without suffix
+            return float(init_str)
+
+        except Exception as e:
+            raise ValueError(f"Failed to parse init value '{init_str}': {e}")
+
+    def _parse_constant(self, var_elem):
+        """
+        Parses a <Variable> element and returns a ConstantDefinition.
+        Assumes the variable is a top-level const with an initializer.
+        """
+        name = self._add_namespace(var_elem)
+
+        init = var_elem.get("init")
+        if init is None:
+            raise ValueError(f"Constant '{name}' has no initializer")
+
+        type_id = var_elem.get("type")
+        if not type_id:
+            raise ValueError(f"Constant '{name}' missing type reference")
+
+        c_type, _, _, _ = self._get_type(type_id)
+        source = self._get_source_info(var_elem)
+
+        # Convert init to typed Python value
+        value = self._parse_init_value(init)
+
+        return [ConstantDefinition(
+            name=name,
+            source=source,
+            c_type=c_type,
+            value=value
+        )]
+
+
+    def _parse_constant_wrapper(self, elem):
+        try:
+            return self._parse_constant(elem)
+        except Exception as e:
+            if not getattr(self, "skip_failed_parsing", False):
+                raise
+            if getattr(self, "verbose", False):
+                print(f"Warning: Failed to parse constant '{elem.get('name')}' - {e}")
+        return []
 
 def parse(xml_path: str, **kwargs):
     """
