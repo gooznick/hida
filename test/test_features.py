@@ -9,6 +9,9 @@ from cast_xml_parse import CastXmlParse, parse
 from data import *
 from data_helpers import *
 
+import platform
+
+windows = platform.system() == "Windows"
 
 def test_basic():
     result = parse(os.path.join(here, os.pardir, "headers", "castxml", "basic.xml"))
@@ -134,14 +137,15 @@ def test_all_basic_types():
         ("us", "uint16_t"),
         ("i", "int32_t"),
         ("ui", "uint32_t"),
-        ("l", "int64_t"),
-        ("ul", "uint64_t"),
+        ("l", "int32_t" if windows else "int64_t"),
+        ("ul", "uint32_t" if windows else "uint64_t"),
         ("ll", "int64_t"),
         ("ull", "uint64_t"),
         ("f", "float"),
         ("d", "double"),
         ("ld", "long double"),
     ]
+    
 
     assert len(struct_def.fields) == len(expected_fields)
 
@@ -263,7 +267,7 @@ def test_typedefs():
 
     expected_typedefs = {
         "MyInt": ("int32_t", []),
-        "MyULong": ("uint64_t", []),
+        "MyULong": ("uint32_t" if windows else "uint64_t", []),
         "FloatPtr": ("void*", []),
         "FuncPtr": ("void*", []),
         "PointPtr": ("void*", []),
@@ -767,7 +771,7 @@ def test_all_basic_types_struct():
         ("ch", "int8_t"),
         ("sch", "int8_t"),
         ("uch", "uint8_t"),
-        ("wch", ("int32_t", "uint32_t")),
+        ("wch", ("int32_t", "uint32_t", "int16_t")),
         ("ch16", ("int16_t", "uint16_t")),
         ("ch32", ("int32_t", "uint32_t")),
         ("b2", "uint8_t"),
@@ -775,8 +779,8 @@ def test_all_basic_types_struct():
         ("us", "uint16_t"),
         ("i", "int32_t"),
         ("ui", "uint32_t"),
-        ("l", "int64_t"),
-        ("ul", "uint64_t"),
+        ("l", "int32_t" if windows else "int64_t"),
+        ("ul", "uint32_t" if windows else "uint64_t"),
         ("ll", "int64_t"),
         ("ull", "uint64_t"),
         ("i8", "int8_t"),

@@ -9,6 +9,9 @@ from cast_xml_parse import CastXmlParse, parse
 from data import *
 from data_helpers import *
 
+import platform
+
+windows = platform.system() == "Windows"
 
 def test_complicated():
     result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'complicated.xml'),
@@ -30,7 +33,8 @@ def test_complicated():
         "u64": "uint64_t",
 
         # Wide chars
-        "wch": ("int32_t", "uint32_t"),
+        "wch": ("int32_t", "uint32_t", "int16_t"),
+
         "ch16": ("int16_t", "uint16_t"),
         "ch32": ("int32_t", "uint32_t"),
 
@@ -53,7 +57,7 @@ def test_complicated():
 
         # Typedefs
         "my_i": "int32_t",
-        "my_ul": "uint64_t",
+        "my_ul": "uint32_t" if windows else "uint64_t",
         "fp": "void*",
         "pt": "void*",
         #"pts": ("Point", [5]),
