@@ -18,12 +18,12 @@
 ## Should support
 
 * basic types 
+* Arrays 1-4D
+* bool
+* All types of pointers (pointers, double pointers, pointers to non POD, function pointers)
 
 * Namespaces
-* All types of pointers (pointers, double pointers, pointers to non POD, function pointers)
 * fixed width types
-* bool, double, float
-* Arrays 1-4D
 * typedefs
 * C struct typedefs
 * Enums

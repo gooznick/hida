@@ -100,8 +100,9 @@ class CastXmlParse:
             return self._get_type(elem.get("type"))
 
         elif tag == "PointerType":
-            base_type, size, align, elements = self._get_type(elem.get("type"))
-            return "void*", size, align, elements
+            size = int(elem.get("size"))
+            align = int(elem.get("align"))
+            return "void*", size, align, []
         
         elif tag == "CvQualifiedType":
             base_type, size, align, elements = self._get_type(elem.get("type"))

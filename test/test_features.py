@@ -187,3 +187,32 @@ def test_arrays():
         assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, f"Invalid size_in_bits for '{name}'"
 
     assert b.size > 0, f"Struct B size must be positive, got {b.size}"
+
+def test_pointers():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'pointers.xml'))
+
+    assert isinstance(result, list), "Expected list of class definitions"
+    validate_definitions(result)
+
+    struct_def = find_type_by_name(result, "Pointers")
+    assert struct_def is not None, "Struct Pointers not found"
+
+    expected_fields = [
+        ("p_int", "void*"),
+        ("pp_float", "void*"),
+        ("p_void", "void*"),
+        ("p_char", "void*"),
+        ("p_const_double", "void*"),
+        ("func_ptr", "void*"),
+        ("void_func_ptr", "void*"),
+        ("arr_func_ptr", "void*"),
+    ]
+
+    assert len(struct_def.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
+
+    for idx, (name, c_type) in enumerate(expected_fields):
+        field = struct_def.fields[idx]
+        assert field.name == name, f"Expected field name '{name}', got '{field.name}'"
+        assert field.c_type == c_type, f"Expected type '{c_type}' for field '{name}', got '{field.c_type}'"
+        assert field.elements in ([], [3]) if name == "arr_func_ptr" else field.elements == [], \
+            f"Unexpected array dimensions in field '{name}': {field.elements}"
