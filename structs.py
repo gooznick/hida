@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Union
 from enum import Enum, auto
 
+
 class NumericType(Enum):
     BOOL = auto()
     FLOAT = auto()
@@ -14,6 +15,7 @@ class NumericType(Enum):
 class CTypeInfo:
     numeric_type: Union[NumericType, None]
     bits: int
+
 
 @dataclass
 class Field:

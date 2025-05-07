@@ -3,12 +3,17 @@ from pathlib import Path
 from data import *
 import data_helpers
 
-class CastXmlParse:
 
+class CastXmlParse:
     CHAR_BITS = 8  # Number of bits in a byte (standard for most platforms)
 
-
-    def __init__(self, use_bool=False, skip_failed_parsing=False, remove_unknown=True, verbose=False):
+    def __init__(
+        self,
+        use_bool=False,
+        skip_failed_parsing=False,
+        remove_unknown=True,
+        verbose=False,
+    ):
         """
         Initialize the parser with an optional configuration dictionary.
         """
@@ -38,7 +43,9 @@ class CastXmlParse:
         return self.data
 
     @staticmethod
-    def _normalize_integral_type(typename: str, size_in_bits: int, use_bool = False) -> str:
+    def _normalize_integral_type(
+        typename: str, size_in_bits: int, use_bool=False
+    ) -> str:
         """
         Converts basic integral types to fixed-width types like uint32_t or int16_t.
         Leaves non-integral types unchanged.
@@ -54,7 +61,10 @@ class CastXmlParse:
                 return typename
             else:
                 is_unsigned = True
-        if any(word in normalized for word in ("char", "short", "long", "signed", "int", "bool")):
+        if any(
+            word in normalized
+            for word in ("char", "short", "long", "signed", "int", "bool")
+        ):
             width_map = {
                 8: "int8_t",
                 16: "int16_t",
@@ -68,7 +78,6 @@ class CastXmlParse:
 
         return typename
 
-           
     def _remove_unknown(self):
         """
         Removes ClassDefinition and TypedefDefinition instances that refer to unknown types.
@@ -95,12 +104,15 @@ class CastXmlParse:
         self.data = filtered
         if len(filtered) != former_length:
             if self.verbose:
-                print(f"Warning: Removed {former_length - len(filtered)} unknown types.")
+                print(
+                    f"Warning: Removed {former_length - len(filtered)} unknown types."
+                )
             self._remove_unknown()
 
-    
     def _build_id_map(self):
-        self._id_map = {elem.get("id"): elem for elem in self.xml_root.findall(".//*[@id]")}
+        self._id_map = {
+            elem.get("id"): elem for elem in self.xml_root.findall(".//*[@id]")
+        }
 
     def _parse(self):
         """
@@ -112,7 +124,7 @@ class CastXmlParse:
 
         # cache by id
         self._build_id_map()
-        
+
         self.data = []
         for elem in self.xml_root.findall(".//"):
             new_def = []
@@ -120,14 +132,14 @@ class CastXmlParse:
                 new_def = self._parse_struct_wrapper(elem)
             elif elem.tag in ("Typedef") and elem.get("name"):
                 new_def = self._parse_typedef_wrapper(elem)
-            elif elem.tag in ("Enumeration") :
+            elif elem.tag in ("Enumeration"):
                 new_def = self._parse_enum_wrapper(elem)
-            elif elem.tag in ("Union") :
+            elif elem.tag in ("Union"):
                 new_def = self._parse_union_wrapper(elem)
             elif elem.tag in ("Variable") and elem.get("init"):
                 new_def = self._parse_constant_wrapper(elem)
-            self.data = self.data + new_def 
-                          
+            self.data = self.data + new_def
+
         if self.remove_unknown:
             self._remove_unknown()
         return self.data
@@ -151,16 +163,15 @@ class CastXmlParse:
         elif tag == "Typedef":
             base_type, size, align, elements = self._get_raw_type(elem.get("type"))
             name = self._add_namespace(elem)
-            return base_type if base_type!="" else name, size, align, elements
+            return base_type if base_type != "" else name, size, align, elements
         elif tag == "ElaboratedType":
             return self._get_raw_type(elem.get("type"))
-
 
         elif tag == "PointerType":
             size = int(elem.get("size"))
             align = int(elem.get("align")) // self.CHAR_BITS
             return "void*", size, align, []
-        
+
         elif tag == "CvQualifiedType":
             base_type, size, align, elements = self._get_raw_type(elem.get("type"))
             return base_type, size, align, elements
@@ -170,22 +181,25 @@ class CastXmlParse:
             base_type, size, align, elements = self._get_raw_type(elem.get("type"))
             return base_type, size, align, [dim] + elements
 
-
         elif tag in ("Struct", "Class", "Union", "Enumeration"):
-            name = self._add_namespace(elem)  
+            name = self._add_namespace(elem)
             size = int(elem.get("size"))
             align = int(elem.get("align")) // self.CHAR_BITS
             return name, size, align, []
 
         raise NotImplementedError(f"Type resolution not implemented for tag: {tag}")
-    
+
     def _get_type(self, type_id):
-        type_name, size, align, elements = self._get_raw_type( type_id)
-        base_type = CastXmlParse._normalize_integral_type(type_name, size, self.use_bool)
+        type_name, size, align, elements = self._get_raw_type(type_id)
+        base_type = CastXmlParse._normalize_integral_type(
+            type_name, size, self.use_bool
+        )
         if base_type == None or base_type == "":
-            import ipdb; ipdb.set_trace()
+            import ipdb
+
+            ipdb.set_trace()
         return base_type, size, align, elements
-    
+
     def _get_source_info(self, elem):
         """
         Extracts a human-readable source location from a tag using 'file' and 'line' attributes.
@@ -218,7 +232,7 @@ class CastXmlParse:
         parts = [name]
 
         while context_id:
-            context_elem = self._id_map.get(context_id, None) 
+            context_elem = self._id_map.get(context_id, None)
             if context_elem is None:
                 break
 
@@ -230,9 +244,9 @@ class CastXmlParse:
 
             context_id = context_elem.get("context")
         if parts and parts[0] == "::":
-            del parts[0] # Global namespace removal
+            del parts[0]  # Global namespace removal
         return "::".join(parts)
-    
+
     def _parse_enum(self, enum_elem):
         """
         Parses a <Enumeration> element and returns an EnumDefinition object.
@@ -245,7 +259,9 @@ class CastXmlParse:
 
         size_bits = int(size_attr)
         if size_bits % self.CHAR_BITS != 0:
-            raise ValueError(f"Enum '{name}' size {size_bits} is not a multiple of CHAR_BITS")
+            raise ValueError(
+                f"Enum '{name}' size {size_bits} is not a multiple of CHAR_BITS"
+            )
 
         size = size_bits // self.CHAR_BITS
         source = self._get_source_info(enum_elem)
@@ -255,15 +271,12 @@ class CastXmlParse:
             val_name = val.get("name")
             val_init = val.get("init")
             if val_name is None or val_init is None:
-                raise ValueError(f"Enum '{name}' has EnumValue with missing 'name' or 'init'")
+                raise ValueError(
+                    f"Enum '{name}' has EnumValue with missing 'name' or 'init'"
+                )
             enum_values.append(EnumName(name=val_name, value=int(val_init)))
 
-        return [EnumDefinition(
-            name=name,
-            source=source,
-            size=size,
-            enums=enum_values
-        )]
+        return [EnumDefinition(name=name, source=source, size=size, enums=enum_values)]
 
     def _parse_enum_wrapper(self, elem):
         """
@@ -277,7 +290,7 @@ class CastXmlParse:
             if getattr(self, "verbose", False):
                 print(f"Warning: Failed to parse enum '{elem.get('name')}' - {e}")
         return []
-    
+
     def _parse_union(self, union_elem):
         """
         Parses a <Union> element and returns a UnionDefinition object.
@@ -290,10 +303,12 @@ class CastXmlParse:
         size_bits = int(size_attr)
 
         if size_bits % self.CHAR_BITS != 0:
-            raise ValueError(f"Union '{name}' size {size_bits} is not a multiple of CHAR_BITS")
+            raise ValueError(
+                f"Union '{name}' size {size_bits} is not a multiple of CHAR_BITS"
+            )
         size = size_bits // self.CHAR_BITS
 
-        align_attr = union_elem.get("align", None) 
+        align_attr = union_elem.get("align", None)
         alignment = int(align_attr) // self.CHAR_BITS if align_attr else 0
         if align_attr is None and self.verbose:
             print(f"Warning: Union '{name}' has no alignment information, assuming 0.")
@@ -311,14 +326,11 @@ class CastXmlParse:
                 field = self._parse_field(member_elem)
                 fields.append(field)
 
-        return [UnionDefinition(
-            name=name,
-            source=source,
-            alignment=alignment,
-            size=size,
-            fields=fields
-        )]
-
+        return [
+            UnionDefinition(
+                name=name, source=source, alignment=alignment, size=size, fields=fields
+            )
+        ]
 
     def _parse_union_wrapper(self, elem):
         try:
@@ -337,7 +349,6 @@ class CastXmlParse:
         """
         name = self._add_namespace(typedef_elem)
 
-
         type_id = typedef_elem.get("type")
         if not type_id:
             raise ValueError(f"Typedef '{name}' missing 'type' attribute")
@@ -347,12 +358,12 @@ class CastXmlParse:
         # Resolve type
         resolved_type, _, _, elements = self._get_type(type_id)
 
-        return [TypedefDefinition(
-            name=name,
-            source=source,
-            definition=resolved_type,
-            elements=elements
-        )]
+        return [
+            TypedefDefinition(
+                name=name, source=source, definition=resolved_type, elements=elements
+            )
+        ]
+
     def _parse_typedef_wrapper(self, elem):
         try:
             return self._parse_typedef(elem)
@@ -361,9 +372,11 @@ class CastXmlParse:
                 raise
             else:
                 if self.verbose:
-                    print(f"Warning: Failed to parse typedef '{elem.get('name')}' - {e}")
+                    print(
+                        f"Warning: Failed to parse typedef '{elem.get('name')}' - {e}"
+                    )
         return []
-       
+
     def _parse_struct_wrapper(self, struct_elem):
         try:
             return self._parse_struct(struct_elem)
@@ -371,7 +384,9 @@ class CastXmlParse:
             if not self.skip_failed_parsing:
                 raise
             elif self.verbose:
-                print(f"Warning: Failed to parse struct '{struct_elem.get('name')}' - {e}")
+                print(
+                    f"Warning: Failed to parse struct '{struct_elem.get('name')}' - {e}"
+                )
         return []
 
     def _parse_struct(self, struct_elem):
@@ -386,15 +401,18 @@ class CastXmlParse:
         size_bits = int(size_attr)
 
         if size_bits % self.CHAR_BITS != 0:
-            raise ValueError(f"Struct '{name}' size {size_bits} is not a multiple of CHAR_BITS ({self.CHAR_BITS})")
+            raise ValueError(
+                f"Struct '{name}' size {size_bits} is not a multiple of CHAR_BITS ({self.CHAR_BITS})"
+            )
 
         size = size_bits // self.CHAR_BITS
-
 
         align_attr = struct_elem.get("align", None)
         if align_attr is None:
             if self.verbose:
-                print(f"Warning: Struct '{name}' has no 'align' attribute, defaulting to 0")
+                print(
+                    f"Warning: Struct '{name}' has no 'align' attribute, defaulting to 0"
+                )
             alignment = 0
         else:
             alignment = int(align_attr) // self.CHAR_BITS
@@ -402,17 +420,14 @@ class CastXmlParse:
         source = self._get_source_info(struct_elem)
 
         class_def = ClassDefinition(
-            name=name,
-            source=source,
-            alignment=alignment,
-            size=size
+            name=name, source=source, alignment=alignment, size=size
         )
 
         member_ids = struct_elem.get("members", "").split()
         for member_id in member_ids:
-            member_elem = self._id_map.get(member_id, None)  
+            member_elem = self._id_map.get(member_id, None)
             if member_elem is not None and member_elem.tag == "Field":
-                field= self._parse_field(member_elem)
+                field = self._parse_field(member_elem)
                 class_def.fields.append(field)
         return [class_def]
 
@@ -421,9 +436,9 @@ class CastXmlParse:
         Parses a <Field> element and returns a Field object.
         """
         name = field_elem.get("name")
-        if name == '':
+        if name == "":
             name = field_elem.get("id")
-        
+
         c_type = field_elem.get("type")
         if not c_type:
             raise ValueError(f"Field '{name}' missing 'type' attribute")
@@ -437,16 +452,16 @@ class CastXmlParse:
         bits = field_elem.get("bits", None)
         if bits:
             size_in_bits = int(bits)
-            
+
         return Field(
             name=name,
             c_type=type_name,
             elements=elements,
             size_in_bits=size_in_bits,
             bitoffset=offset,
-            bitfield=bool(bits)
+            bitfield=bool(bits),
         )
-        
+
     def _parse_init_value(self, init_str):
         """
         Converts a CastXML 'init' attribute string to a Python value.
@@ -455,7 +470,9 @@ class CastXmlParse:
         try:
             # Character literal e.g., '\'' or '\n'
             if init_str.startswith("'") or init_str.startswith("&apos;"):
-                return bytes(init_str.strip("'&apos;"), "utf-8").decode("unicode_escape")
+                return bytes(init_str.strip("'&apos;"), "utf-8").decode(
+                    "unicode_escape"
+                )
 
             # Unsigned long long literal with ULL suffix
             if init_str.endswith("ULL") or init_str.endswith("ull"):
@@ -496,13 +513,9 @@ class CastXmlParse:
         # Convert init to typed Python value
         value = self._parse_init_value(init)
 
-        return [ConstantDefinition(
-            name=name,
-            source=source,
-            c_type=c_type,
-            value=value
-        )]
-
+        return [
+            ConstantDefinition(name=name, source=source, c_type=c_type, value=value)
+        ]
 
     def _parse_constant_wrapper(self, elem):
         try:
@@ -513,6 +526,7 @@ class CastXmlParse:
             if getattr(self, "verbose", False):
                 print(f"Warning: Failed to parse constant '{elem.get('name')}' - {e}")
         return []
+
 
 def parse(xml_path: str, **kwargs):
     """

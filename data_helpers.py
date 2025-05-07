@@ -1,22 +1,23 @@
 from data import *
 
 builtin_types = {
-        "int8_t",
-        "uint8_t",
-        "int16_t",
-        "uint16_t",
-        "int32_t",
-        "uint32_t",
-        "int64_t",
-        "uint64_t",
-        "int128_t",
-        "uint128_t",
-        "float",
-        "double",
-        "long double",
-        "bool",
-        "void*"
-    }
+    "int8_t",
+    "uint8_t",
+    "int16_t",
+    "uint16_t",
+    "int32_t",
+    "uint32_t",
+    "int64_t",
+    "uint64_t",
+    "int128_t",
+    "uint128_t",
+    "float",
+    "double",
+    "long double",
+    "bool",
+    "void*",
+}
+
 
 def find_type_by_name(data_structs, name):
     """
@@ -28,6 +29,7 @@ def find_type_by_name(data_structs, name):
         if hasattr(item, "name") and item.name == name:
             return item
     return None
+
 
 def validate_class_definition(cls: ClassDefinition, types):
     """
@@ -43,7 +45,7 @@ def validate_class_definition(cls: ClassDefinition, types):
     if not isinstance(cls.size, int) or cls.size <= 0:
         raise ValueError(f"Class '{cls.name}': size must be a positive integer")
 
-    if not isinstance(cls.alignment, int) or (cls.alignment < 0 ):
+    if not isinstance(cls.alignment, int) or (cls.alignment < 0):
         raise ValueError(f"Class '{cls.name}': alignment must be non negative integer")
 
     if not isinstance(cls.fields, list):
@@ -54,28 +56,47 @@ def validate_class_definition(cls: ClassDefinition, types):
             raise ValueError(f"Field in class '{cls.name}' has invalid or empty name")
 
         if not isinstance(field.c_type, str) or not field.c_type:
-            raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid or empty c_type")
+            raise ValueError(
+                f"Field '{field.name}' in class '{cls.name}' has invalid or empty c_type"
+            )
 
-        if types != None and (not field.c_type in types and not field.c_type in builtin_types):
-            raise ValueError(f"Field '{field.name}' in class '{cls.name}' has unknown type '{field.c_type}'")
-                 
+        if types != None and (
+            not field.c_type in types and not field.c_type in builtin_types
+        ):
+            raise ValueError(
+                f"Field '{field.name}' in class '{cls.name}' has unknown type '{field.c_type}'"
+            )
+
         if not isinstance(field.bitoffset, int) or field.bitoffset < 0:
-            raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid bitoffset")
+            raise ValueError(
+                f"Field '{field.name}' in class '{cls.name}' has invalid bitoffset"
+            )
 
         if not isinstance(field.size_in_bits, int) or field.size_in_bits < 0:
-            raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid size_in_bits ({field.size_in_bits})")
+            raise ValueError(
+                f"Field '{field.name}' in class '{cls.name}' has invalid size_in_bits ({field.size_in_bits})"
+            )
 
         if not isinstance(field.bitfield, bool):
-            raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid bitfield flag")
+            raise ValueError(
+                f"Field '{field.name}' in class '{cls.name}' has invalid bitfield flag"
+            )
 
         if not isinstance(field.elements, list):
-            raise ValueError(f"Field '{field.name}' in class '{cls.name}' has non-list elements attribute")
+            raise ValueError(
+                f"Field '{field.name}' in class '{cls.name}' has non-list elements attribute"
+            )
 
         for dim in field.elements:
             if not isinstance(dim, int) or dim < 0:
-                raise ValueError(f"Field '{field.name}' in class '{cls.name}' has invalid array dimension: {dim}")
+                raise ValueError(
+                    f"Field '{field.name}' in class '{cls.name}' has invalid array dimension: {dim}"
+                )
             if dim == 0 and field.elements != [0]:
-                raise ValueError(f"Field '{field.name}' in class '{cls.name}' has dimension 0 not as [0] exactly")
+                raise ValueError(
+                    f"Field '{field.name}' in class '{cls.name}' has dimension 0 not as [0] exactly"
+                )
+
 
 def validate_typedef_definition(td: TypedefDefinition, types):
     """
@@ -91,9 +112,11 @@ def validate_typedef_definition(td: TypedefDefinition, types):
     if not isinstance(td.definition, str) or not td.definition:
         raise ValueError(f"Typedef '{td.name}': definition must be a non-empty string")
 
-    if types != None and (not td.definition in types and not td.definition in builtin_types):
+    if types != None and (
+        not td.definition in types and not td.definition in builtin_types
+    ):
         raise ValueError(f"Typedef '{td.name}': unknown type '{td.definition}'")
-           
+
     if not isinstance(td.elements, list):
         raise ValueError(f"Typedef '{td.name}': elements must be a list")
 
@@ -101,7 +124,10 @@ def validate_typedef_definition(td: TypedefDefinition, types):
         if not isinstance(dim, int) or dim < 0:
             raise ValueError(f"Typedef '{td.name}': invalid array dimension {dim}")
         if dim == 0 and td.elements != [0]:
-            raise ValueError(f"Typedef '{td.name}': dimension 0 must appear only as [0]")
+            raise ValueError(
+                f"Typedef '{td.name}': dimension 0 must appear only as [0]"
+            )
+
 
 def validate_enum_definition(enum: EnumDefinition):
     """
@@ -109,7 +135,9 @@ def validate_enum_definition(enum: EnumDefinition):
     Raises ValueError if any condition is violated.
     """
     if not isinstance(enum.name, str):
-        raise ValueError("EnumDefinition name must be a string (can be empty for anonymous)")
+        raise ValueError(
+            "EnumDefinition name must be a string (can be empty for anonymous)"
+        )
 
     if not isinstance(enum.source, str) or not enum.source:
         raise ValueError(f"Enum '{enum.name}': source must be a non-empty string")
@@ -124,9 +152,14 @@ def validate_enum_definition(enum: EnumDefinition):
         if not isinstance(enum_value, EnumName):
             raise ValueError(f"Enum '{enum.name}': enum value must be of type EnumName")
         if not isinstance(enum_value.name, str) or not enum_value.name:
-            raise ValueError(f"Enum '{enum.name}': enum value has invalid or empty name")
+            raise ValueError(
+                f"Enum '{enum.name}': enum value has invalid or empty name"
+            )
         if not isinstance(enum_value.value, int):
-            raise ValueError(f"Enum '{enum.name}': enum value '{enum_value.name}' must have an integer value")
+            raise ValueError(
+                f"Enum '{enum.name}': enum value '{enum_value.name}' must have an integer value"
+            )
+
 
 def validate_union_definition(u: UnionDefinition, types):
     """
@@ -152,22 +185,40 @@ def validate_union_definition(u: UnionDefinition, types):
         if not isinstance(field.name, str) or not field.name:
             raise ValueError(f"Union '{u.name}': field has invalid or empty name")
         if not isinstance(field.c_type, str) or not field.c_type:
-            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid or empty c_type")
-        if types != None and (field.c_type not in types and field.c_type not in builtin_types):
-            raise ValueError(f"Union '{u.name}': field '{field.name}' has unknown type '{field.c_type}'")
+            raise ValueError(
+                f"Union '{u.name}': field '{field.name}' has invalid or empty c_type"
+            )
+        if types != None and (
+            field.c_type not in types and field.c_type not in builtin_types
+        ):
+            raise ValueError(
+                f"Union '{u.name}': field '{field.name}' has unknown type '{field.c_type}'"
+            )
         if not isinstance(field.bitoffset, int) or field.bitoffset < 0:
-            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid bitoffset")
+            raise ValueError(
+                f"Union '{u.name}': field '{field.name}' has invalid bitoffset"
+            )
         if not isinstance(field.size_in_bits, int) or field.size_in_bits <= 0:
-            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid size_in_bits ({field.size_in_bits})")
+            raise ValueError(
+                f"Union '{u.name}': field '{field.name}' has invalid size_in_bits ({field.size_in_bits})"
+            )
         if not isinstance(field.bitfield, bool):
-            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid bitfield flag")
+            raise ValueError(
+                f"Union '{u.name}': field '{field.name}' has invalid bitfield flag"
+            )
         if not isinstance(field.elements, list):
-            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid elements")
+            raise ValueError(
+                f"Union '{u.name}': field '{field.name}' has invalid elements"
+            )
         for dim in field.elements:
             if not isinstance(dim, int) or dim < 0:
-                raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid array dimension: {dim}")
+                raise ValueError(
+                    f"Union '{u.name}': field '{field.name}' has invalid array dimension: {dim}"
+                )
             if dim == 0 and field.elements != [0]:
-                raise ValueError(f"Union '{u.name}': field '{field.name}' has dimension 0 not as [0]")
+                raise ValueError(
+                    f"Union '{u.name}': field '{field.name}' has dimension 0 not as [0]"
+                )
 
 
 def validate_constant_definition(cd: ConstantDefinition, types):
@@ -199,7 +250,13 @@ def validate_definitions(definitions):
     if not isinstance(definitions, list):
         raise ValueError("Definitions must be a list")
 
-    allowed_types = (ClassDefinition, UnionDefinition, EnumDefinition, TypedefDefinition, ConstantDefinition)
+    allowed_types = (
+        ClassDefinition,
+        UnionDefinition,
+        EnumDefinition,
+        TypedefDefinition,
+        ConstantDefinition,
+    )
 
     types = {defn.name for defn in definitions}
 
