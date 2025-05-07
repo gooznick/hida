@@ -82,5 +82,5 @@
   <FundamentalType id="_37" name="char" size="8" align="8"/>
   <FundamentalType id="_50" name="void" size="0" align="8"/>
   <File id="f0" name="&lt;builtin&gt;"/>
-  <File id="f1" name="/home/user/projects/castxml/headers/arrays.h"/>
+  <File id="f1" name="/home/eranbu/projects/castxml/headers/arrays.h"/>
 </CastXML>

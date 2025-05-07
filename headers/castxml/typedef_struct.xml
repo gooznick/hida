@@ -46,5 +46,5 @@
   <FundamentalType id="_24" name="char" size="8" align="8"/>
   <FundamentalType id="_38" name="void" size="0" align="8"/>
   <File id="f0" name="&lt;builtin&gt;"/>
-  <File id="f1" name="/home/user/projects/castxml/headers/typedef_struct.h"/>
+  <File id="f1" name="/home/eranbu/projects/castxml/headers/typedef_struct.h"/>
 </CastXML>
