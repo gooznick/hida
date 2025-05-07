@@ -122,6 +122,8 @@ class CastXmlParse:
                 new_def = self._parse_typedef_wrapper(elem)
             elif elem.tag in ("Enumeration") :
                 new_def = self._parse_enum_wrapper(elem)
+            elif elem.tag in ("Union") :
+                new_def = self._parse_union_wrapper(elem)
             self.data = self.data + new_def 
                           
         if self.remove_unknown:
@@ -178,7 +180,8 @@ class CastXmlParse:
     def _get_type(self, type_id):
         type_name, size, align, elements = self._get_raw_type( type_id)
         base_type = CastXmlParse._normalize_integral_type(type_name, size, self.use_bool)
-
+        if base_type == None or base_type == "":
+            import ipdb; ipdb.set_trace()
         return base_type, size, align, elements
     
     def _get_source_info(self, elem):
@@ -206,11 +209,11 @@ class CastXmlParse:
         Recursively resolves the full namespace-qualified name of an element,
         based on its 'context' chain. Anonymous namespaces are represented by their ID.
         """
-        name = elem.get("name")
+        name = elem.get("name", "")
         if name == "":
             name = elem.get("id")
         context_id = elem.get("context")
-        parts = [name] if name else []
+        parts = [name]
 
         while context_id:
             context_elem = self._id_map.get(context_id, None) 
@@ -272,6 +275,58 @@ class CastXmlParse:
             if getattr(self, "verbose", False):
                 print(f"Warning: Failed to parse enum '{elem.get('name')}' - {e}")
         return []
+    
+    def _parse_union(self, union_elem):
+        """
+        Parses a <Union> element and returns a UnionDefinition object.
+        """
+        name = self._add_namespace(union_elem)
+
+        size_attr = union_elem.get("size")
+        if size_attr is None:
+            raise ValueError(f"Union '{name}' missing required 'size' attribute")
+        size_bits = int(size_attr)
+
+        if size_bits % self.CHAR_BITS != 0:
+            raise ValueError(f"Union '{name}' size {size_bits} is not a multiple of CHAR_BITS")
+        size = size_bits // self.CHAR_BITS
+
+        align_attr = union_elem.get("align")
+        alignment = int(align_attr) // self.CHAR_BITS if align_attr else 0
+        if align_attr is None and self.verbose:
+            print(f"Warning: Union '{name}' has no alignment information, assuming 0.")
+
+        source = self._get_source_info(union_elem)
+
+        members_str = union_elem.get("members")
+        if not members_str:
+            raise ValueError(f"Union '{name}' has no member list")
+
+        fields = []
+        for member_id in members_str.split():
+            member_elem = self.xml_root.find(f".//*[@id='{member_id}']")
+            if member_elem is not None and member_elem.tag == "Field":
+                field = self._parse_field(member_elem)
+                fields.append(field)
+
+        return [UnionDefinition(
+            name=name,
+            source=source,
+            alignment=alignment,
+            size=size,
+            fields=fields
+        )]
+
+
+    def _parse_union_wrapper(self, elem):
+        try:
+            return self._parse_union(elem)
+        except Exception as e:
+            if not getattr(self, "skip_failed_parsing", False):
+                raise
+            if getattr(self, "verbose", False):
+                print(f"Warning: Failed to parse union '{elem.get('name')}' - {e}")
+        return []
 
     def _parse_typedef(self, typedef_elem):
         """
@@ -321,7 +376,6 @@ class CastXmlParse:
         """
         Parses a <Struct> element and returns a ClassDefinition object.
         """
-        struct_id = struct_elem.get("id")
         name = self._add_namespace(struct_elem)
 
         size_attr = struct_elem.get("size")
