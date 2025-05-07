@@ -43,8 +43,8 @@ def validate_class_definition(cls: ClassDefinition, types):
     if not isinstance(cls.size, int) or cls.size <= 0:
         raise ValueError(f"Class '{cls.name}': size must be a positive integer")
 
-    if not isinstance(cls.alignment, int) or (cls.alignment != 0 and (cls.alignment & (cls.alignment - 1)) != 0):
-        raise ValueError(f"Class '{cls.name}': alignment must be 0 or a power of two")
+    if not isinstance(cls.alignment, int) or (cls.alignment < 0 ):
+        raise ValueError(f"Class '{cls.name}': alignment must be non negative integer")
 
     if not isinstance(cls.fields, list):
         raise ValueError(f"Class '{cls.name}': fields must be a list")

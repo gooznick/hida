@@ -28,13 +28,12 @@
 * Enums
 * c++11 enums
 * Unions
+* bitfields
+* Static constants
+* packing (#pragma pack)
 
 * Ignore non POD types
 * Anonnymous inner structs and unions
-* bitfields
-* packing (#pragma pack)
-* Static constants
-* Constant macros (?)
 * wide characters
 
 ## Manipulators

@@ -145,7 +145,7 @@ class CastXmlParse:
         if tag == "FundamentalType":
             name = self._add_namespace(elem)
             size = int(elem.get("size"))
-            align = int(elem.get("align"))
+            align = int(elem.get("align")) // self.CHAR_BITS
             return name, size, align, []
 
         elif tag == "Typedef":
@@ -158,7 +158,7 @@ class CastXmlParse:
 
         elif tag == "PointerType":
             size = int(elem.get("size"))
-            align = int(elem.get("align"))
+            align = int(elem.get("align")) // self.CHAR_BITS
             return "void*", size, align, []
         
         elif tag == "CvQualifiedType":
@@ -174,7 +174,7 @@ class CastXmlParse:
         elif tag in ("Struct", "Class", "Union", "Enumeration"):
             name = self._add_namespace(elem)  
             size = int(elem.get("size"))
-            align = int(elem.get("align"))
+            align = int(elem.get("align")) // self.CHAR_BITS
             return name, size, align, []
 
         raise NotImplementedError(f"Type resolution not implemented for tag: {tag}")
@@ -293,7 +293,7 @@ class CastXmlParse:
             raise ValueError(f"Union '{name}' size {size_bits} is not a multiple of CHAR_BITS")
         size = size_bits // self.CHAR_BITS
 
-        align_attr = union_elem.get("align")
+        align_attr = union_elem.get("align", None) 
         alignment = int(align_attr) // self.CHAR_BITS if align_attr else 0
         if align_attr is None and self.verbose:
             print(f"Warning: Union '{name}' has no alignment information, assuming 0.")
@@ -391,13 +391,13 @@ class CastXmlParse:
         size = size_bits // self.CHAR_BITS
 
 
-        align_attr = struct_elem.get("align")
+        align_attr = struct_elem.get("align", None)
         if align_attr is None:
             if self.verbose:
                 print(f"Warning: Struct '{name}' has no 'align' attribute, defaulting to 0")
             alignment = 0
         else:
-            alignment = int(align_attr)
+            alignment = int(align_attr) // self.CHAR_BITS
 
         source = self._get_source_info(struct_elem)
 

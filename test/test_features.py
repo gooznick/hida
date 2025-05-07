@@ -604,3 +604,83 @@ def test_constants():
         assert isinstance(const, ConstantDefinition), f"{name} is not a ConstantDefinition"
         assert const.c_type == c_type, f"{name}: expected c_type '{c_type}', got '{const.c_type}'"
         assert const.value == expected_value, f"{name}: expected value '{expected_value}', got '{const.value}'"
+
+def test_struct_packing():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'packing.xml'))
+
+    assert isinstance(result, list), "Expected list of definitions"
+    validate_definitions(result)
+
+    expected_structs = {
+        "DefaultAlign": (4, 8),  # default alignment and padded size
+        "Packed1": (1, 5),       # tightly packed: 1 + 4 = 5
+        "Packed2": (2, 6),       # 1 + 1 (padding) + 4 = 6
+        "Packed4": (4, 8),       # same layout as default on 4-byte alignment
+    }
+
+    for name, (expected_align, expected_size) in expected_structs.items():
+        struct = find_type_by_name(result, name)
+        assert struct is not None, f"Struct '{name}' not found"
+        assert struct.alignment == expected_align, f"{name}: expected alignment {expected_align}, got {struct.alignment}"
+        assert struct.size == expected_size, f"{name}: expected size {expected_size}, got {struct.size}"
+
+def test_all_basic_types_struct():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'all_types.xml'),
+                   skip_failed_parsing=True, remove_unknown=True)
+
+    assert isinstance(result, list), "Expected list of definitions"
+    validate_definitions(result)
+
+    struct = find_type_by_name(result, "AllTypes")
+    assert struct is not None, "Struct AllTypes not found"
+    assert isinstance(struct, ClassDefinition)
+
+    # allow wchar_t / char16_t / char32_t to be signed or unsigned depending on platform
+    def is_equiv(actual, expected):
+        if isinstance(expected, (tuple, list)):
+            return actual in expected
+        return actual == expected
+
+    expected_fields = [
+        ("ch", "int8_t"),
+        ("sch", "int8_t"),
+        ("uch", "uint8_t"),
+
+        ("wch", ("int32_t", "uint32_t")),
+        ("ch16", ("int16_t", "uint16_t")),
+        ("ch32", ("int32_t", "uint32_t")),
+
+        ("b2", "uint8_t"),
+
+        ("s", "int16_t"),
+        ("us", "uint16_t"),
+        ("i", "int32_t"),
+        ("ui", "uint32_t"),
+        ("l", "int64_t"),
+        ("ul", "uint64_t"),
+        ("ll", "int64_t"),
+        ("ull", "uint64_t"),
+
+        ("i8", "int8_t"),
+        ("ui8", "uint8_t"),
+        ("i16", "int16_t"),
+        ("ui16", "uint16_t"),
+        ("i32", "int32_t"),
+        ("ui32", "uint32_t"),
+        ("i64", "int64_t"),
+        ("ui64", "uint64_t"),
+
+        ("f", "float"),
+        ("d", "double"),
+        ("ld", "long double"),
+
+        ("ptr", "void*"),
+    ]
+
+    assert len(struct.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields, got {len(struct.fields)}"
+
+    for idx, (name, expected_type) in enumerate(expected_fields):
+        field = struct.fields[idx]
+        assert field.name == name, f"Field {idx} name mismatch: expected '{name}', got '{field.name}'"
+        assert is_equiv(field.c_type, expected_type), f"Field '{name}' type mismatch: expected '{expected_type}', got '{field.c_type}'"
+        assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, f"Field '{name}' has invalid size"
