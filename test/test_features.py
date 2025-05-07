@@ -12,11 +12,39 @@ def test_basic():
     result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'basic.xml'))
 
     assert isinstance(result, list), "Expected list of class definitions"
+
     struct_a = find_type_by_name(result, "A")
-    assert struct_a, "Struct A not found"
-    assert len(struct_a.fields) == 2, "Expected 2 fields"
-    assert struct_a.fields[0].name == "i" and struct_a.fields[0].c_type == "int32_t"
-    assert struct_a.fields[1].name == "f" and struct_a.fields[1].c_type == "float"
+    assert struct_a is not None, "Struct A not found"
+
+    expected_fields = [
+        {
+            "name": "i",
+            "c_type": "int32_t",
+            "elements": [],
+            "bitoffset": 0,
+            "size_in_bits": 32,
+            "bitfield": False,
+        },
+        {
+            "name": "f",
+            "c_type": "float",
+            "elements": [],
+            "bitoffset": 32,
+            "size_in_bits": 32,
+            "bitfield": False,
+        },
+    ]
+
+    assert len(struct_a.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
+
+    for idx, expected in enumerate(expected_fields):
+        field = struct_a.fields[idx]
+        for key, value in expected.items():
+            actual = getattr(field, key)
+            assert actual == value, f"Field '{field.name}' expected {key}={value}, got {actual}"
+
+    expected_size = 8  # two 4-byte fields
+    assert struct_a.size == expected_size, f"Expected struct size {expected_size}, got {struct_a.size}"
 
 def test_class():
     result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'class.xml'))

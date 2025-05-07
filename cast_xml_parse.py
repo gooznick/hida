@@ -3,6 +3,10 @@ from pathlib import Path
 from data import *
 
 class CastXmlParse:
+
+    CHAR_BITS = 8  # Number of bits in a byte (standard for most platforms)
+
+
     def __init__(self, use_bool=False):
         """
         Initialize the parser with an optional configuration dictionary.
@@ -149,7 +153,13 @@ class CastXmlParse:
         size_attr = struct_elem.get("size")
         if size_attr is None:
             raise ValueError(f"Struct '{name}' missing required 'size' attribute")
-        size = int(size_attr)
+        size_bits = int(size_attr)
+
+        if size_bits % self.CHAR_BITS != 0:
+            raise ValueError(f"Struct '{name}' size {size_bits} is not a multiple of CHAR_BITS ({self.CHAR_BITS})")
+
+        size = size_bits // self.CHAR_BITS
+
 
         align_attr = struct_elem.get("align")
         if align_attr is None:
