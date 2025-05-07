@@ -216,3 +216,35 @@ def test_pointers():
         assert field.c_type == c_type, f"Expected type '{c_type}' for field '{name}', got '{field.c_type}'"
         assert field.elements in ([], [3]) if name == "arr_func_ptr" else field.elements == [], \
             f"Unexpected array dimensions in field '{name}': {field.elements}"
+
+def test_typedefs():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'typedefs.xml'))
+
+    assert isinstance(result, list), "Expected list of definitions"
+    validate_definitions(result)
+
+    expected_typedefs = {
+        "MyInt":         ("int32_t", []),
+        "MyULong":       ("uint64_t", []),
+        "FloatPtr":      ("void*", []),
+        "FuncPtr":       ("void*", []),
+        "PointPtr":      ("void*", []),
+        "Shapes":        ("Circle", [10]),
+        "ShapesPtr":     ("void*", []),
+        "Alias1":        ("int32_t", []),
+        "Alias2":        ("int32_t", []),
+        "Alias3":        ("int32_t", []),
+    }
+    expected_typedefs.update({
+        "IntArray1D": ("int32_t", [5]),
+        "IntArray2D": ("int32_t", [3, 4]),
+        "IntArray3D": ("int32_t", [2, 3, 4]),
+        "Alias1D":    ("int32_t", [5]),
+        "Alias2D":    ("int32_t", [3, 4]),
+        "Alias3D":    ("int32_t", [2, 3, 4]),
+    })
+    for name, (expected_def, expected_elements) in expected_typedefs.items():
+        typedef = find_type_by_name(result, name)
+        assert typedef is not None, f"Typedef {name} not found"
+        assert typedef.definition == expected_def, f"{name}: expected definition '{expected_def}', got '{typedef.definition}'"
+        assert typedef.elements == expected_elements, f"{name}: expected elements {expected_elements}, got {typedef.elements}"

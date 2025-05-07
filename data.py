@@ -41,6 +41,7 @@ class UnionDefinition(DefinitionBase):
 @dataclass
 class TypedefDefinition(DefinitionBase):
     definition: str = ""  # Actual type the typedef refers to
+    elements: List[int] = field(default_factory=list) # Array dimensions (empty if scalar)
 
 @dataclass
 class ConstantDefinition(DefinitionBase):

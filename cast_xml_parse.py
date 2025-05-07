@@ -78,9 +78,13 @@ class CastXmlParse:
                 struct_def = self._parse_struct(elem)
                 if struct_def:
                     self.data.append(struct_def)
+            elif elem.tag in ("Typedef") and elem.get("name"):
+                typedef_def = self._parse_typedef(elem)
+                if typedef_def:
+                    self.data.append(typedef_def)
         return self.data
 
-    def _get_type(self, type_id):
+    def _get_raw_type(self, type_id):
         """
         Recursively resolves a type ID to its base type name, size, align, and array dimensions.
         Returns: (type_name: str, size: int, align: int, elements: List[int])
@@ -97,7 +101,12 @@ class CastXmlParse:
             return name, size, align, []
 
         elif tag == "Typedef":
-            return self._get_type(elem.get("type"))
+            base_type, size, align, elements = self._get_raw_type(elem.get("type"))
+            name = elem.get("name", "")
+            return base_type if base_type!="" else name, size, align, elements
+        elif tag == "ElaboratedType":
+            return self._get_raw_type(elem.get("type"))
+
 
         elif tag == "PointerType":
             size = int(elem.get("size"))
@@ -105,13 +114,14 @@ class CastXmlParse:
             return "void*", size, align, []
         
         elif tag == "CvQualifiedType":
-            base_type, size, align, elements = self._get_type(elem.get("type"))
+            base_type, size, align, elements = self._get_raw_type(elem.get("type"))
             return base_type, size, align, elements
 
         elif tag == "ArrayType":
             dim = int(elem.get("max", "-1")) + 1
-            base_type, size, align, elements = self._get_type(elem.get("type"))
+            base_type, size, align, elements = self._get_raw_type(elem.get("type"))
             return base_type, size, align, [dim] + elements
+
 
         elif tag in ("Struct", "Class", "Union", "Enumeration"):
             name = elem.get("name")
@@ -120,7 +130,13 @@ class CastXmlParse:
             return name, size, align, []
 
         raise NotImplementedError(f"Type resolution not implemented for tag: {tag}")
-                       
+    
+    def _get_type(self, type_id):
+        type_name, size, align, elements = self._get_raw_type( type_id)
+        base_type = CastXmlParse._normalize_integral_type(type_name, size, self.use_bool)
+
+        return base_type, size, align, elements
+    
     def _get_source_info(self, elem):
         """
         Extracts a human-readable source location from a tag using 'file' and 'line' attributes.
@@ -141,6 +157,30 @@ class CastXmlParse:
 
         return f"{file_path}:{line}"
                     
+    def _parse_typedef(self, typedef_elem):
+        """
+        Parses a <Typedef> element and returns a TypedefDefinition object.
+        If the typedef refers to a pointer, the definition is always 'void*'.
+        """
+        name = typedef_elem.get("name")
+        if not name:
+            raise ValueError("Typedef element missing 'name' attribute")
+
+        type_id = typedef_elem.get("type")
+        if not type_id:
+            raise ValueError(f"Typedef '{name}' missing 'type' attribute")
+
+        source = self._get_source_info(typedef_elem)
+
+        # Resolve type
+        resolved_type, _, _, elements = self._get_type(type_id)
+
+        return TypedefDefinition(
+            name=name,
+            source=source,
+            definition=resolved_type,
+            elements=elements
+        )
                     
     def _parse_struct(self, struct_elem):
         """
@@ -205,7 +245,6 @@ class CastXmlParse:
         offset = int(offset_attr)
 
         type_name, size, align, elements = self._get_type(c_type)
-        type_name = CastXmlParse._normalize_integral_type(type_name, size, self.use_bool)
         return Field(
             name=name,
             c_type=type_name,
