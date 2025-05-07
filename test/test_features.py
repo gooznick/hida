@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.join(here, os.pardir))
 from cast_xml_parse import (CastXmlParse, parse)
 from data import *
 from data_helpers import *
+
 def test_basic():
     result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'basic.xml'))
 
@@ -45,7 +46,8 @@ def test_basic():
 
     expected_size = 8  # two 4-byte fields
     assert struct_a.size == expected_size, f"Expected struct size {expected_size}, got {struct_a.size}"
-
+    validate_definitions(result)
+    
 def test_class():
     result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'class.xml'))
 
@@ -56,6 +58,7 @@ def test_class():
     assert len(a.fields) == 2, "A should have 2 fields"
     assert a.fields[0].name == "i" and a.fields[0].c_type == "int32_t"
     assert a.fields[1].name == "f" and a.fields[1].c_type == "float"
+    validate_definitions(result)
 
 def test_basics():
     result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'basics.xml'))
@@ -80,6 +83,7 @@ def test_basics():
     assert c.fields[0].name == "i" and c.fields[0].c_type == "int8_t"
     assert c.fields[1].name == "us" and c.fields[1].c_type == "uint16_t"
     assert c.fields[2].name == "s" and c.fields[2].c_type == "int16_t"
+    validate_definitions(result)
 
 def test_normalize_integral_type():
     fn = CastXmlParse._normalize_integral_type  # staticmethod
