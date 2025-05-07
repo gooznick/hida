@@ -105,7 +105,6 @@ def test_normalize_integral_type():
     assert fn("bool", 8) == "uint8_t"
     assert fn("bool", 8, use_bool=True) == "bool"
 
-    print("All normalize_integral_type tests passed.")
 
 def test_all_basic_types():
     result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'basic_types.xml'))
@@ -138,3 +137,24 @@ def test_all_basic_types():
         field = struct_def.fields[idx]
         assert field.name == field_name, f"Expected field '{field_name}', got '{field.name}'"
         assert field.c_type == c_type, f"Expected type '{c_type}' for '{field_name}', got '{field.c_type}'"
+
+def test_nested_structs():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'nested.xml'))
+
+    assert isinstance(result, list), "Expected list of class definitions"
+    validate_definitions(result)
+
+    a = find_type_by_name(result, "A")
+    assert a is not None and len(a.fields) == 1
+    assert a.fields[0].name == "a" and a.fields[0].c_type == "int32_t"
+
+    b = find_type_by_name(result, "B")
+    assert b is not None and len(b.fields) == 2
+    assert b.fields[0].name == "a" and b.fields[0].c_type == "A"
+    assert b.fields[1].name == "b" and b.fields[1].c_type == "int32_t"
+
+    c = find_type_by_name(result, "C")
+    assert c is not None and len(c.fields) == 3
+    assert c.fields[0].name == "a" and c.fields[0].c_type == "A"
+    assert c.fields[1].name == "b" and c.fields[1].c_type == "B"
+    assert c.fields[2].name == "c" and c.fields[2].c_type == "int32_t"

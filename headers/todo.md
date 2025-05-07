@@ -17,9 +17,10 @@
 
 ## Should support
 
+* basic types 
+
 * Namespaces
 * All types of pointers (pointers, double pointers, pointers to non POD, function pointers)
-* basic types 
 * fixed width types
 * bool, double, float
 * Arrays 1-4D
