@@ -128,6 +128,48 @@ def validate_enum_definition(enum: EnumDefinition):
         if not isinstance(enum_value.value, int):
             raise ValueError(f"Enum '{enum.name}': enum value '{enum_value.name}' must have an integer value")
 
+def validate_union_definition(u: UnionDefinition, types):
+    """
+    Validates a UnionDefinition instance.
+    Raises ValueError if any condition is violated.
+    """
+    if not isinstance(u.name, str) or not u.name:
+        raise ValueError("UnionDefinition name must be a non-empty string")
+
+    if not isinstance(u.source, str) or not u.source:
+        raise ValueError(f"Union '{u.name}': source must be a non-empty string")
+
+    if not isinstance(u.size, int) or u.size <= 0:
+        raise ValueError(f"Union '{u.name}': size must be a positive integer")
+
+    if not isinstance(u.alignment, int) or u.alignment < 0:
+        raise ValueError(f"Union '{u.name}': alignment must be a non-negative integer")
+
+    if not isinstance(u.fields, list):
+        raise ValueError(f"Union '{u.name}': fields must be a list")
+
+    for field in u.fields:
+        if not isinstance(field.name, str) or not field.name:
+            raise ValueError(f"Union '{u.name}': field has invalid or empty name")
+        if not isinstance(field.c_type, str) or not field.c_type:
+            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid or empty c_type")
+        if field.c_type not in types and field.c_type not in builtin_types:
+            raise ValueError(f"Union '{u.name}': field '{field.name}' has unknown type '{field.c_type}'")
+        if not isinstance(field.bitoffset, int) or field.bitoffset < 0:
+            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid bitoffset")
+        if not isinstance(field.size_in_bits, int) or field.size_in_bits <= 0:
+            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid size_in_bits")
+        if not isinstance(field.bitfield, bool):
+            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid bitfield flag")
+        if not isinstance(field.elements, list):
+            raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid elements")
+        for dim in field.elements:
+            if not isinstance(dim, int) or dim < 0:
+                raise ValueError(f"Union '{u.name}': field '{field.name}' has invalid array dimension: {dim}")
+            if dim == 0 and field.elements != [0]:
+                raise ValueError(f"Union '{u.name}': field '{field.name}' has dimension 0 not as [0]")
+
+
 def validate_definitions(definitions):
     """
     Validates that 'definitions' is a list of known definition dataclasses,
@@ -150,3 +192,5 @@ def validate_definitions(definitions):
             validate_typedef_definition(defn, types)
         if isinstance(defn, EnumDefinition):
             validate_enum_definition(defn)
+        if isinstance(defn, UnionDefinition):
+            validate_union_definition(defn, types)
