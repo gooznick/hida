@@ -684,3 +684,22 @@ def test_all_basic_types_struct():
         assert field.name == name, f"Field {idx} name mismatch: expected '{name}', got '{field.name}'"
         assert is_equiv(field.c_type, expected_type), f"Field '{name}' type mismatch: expected '{expected_type}', got '{field.c_type}'"
         assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, f"Field '{name}' has invalid size"
+
+def test_includes():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'includes.xml'),
+                   skip_failed_parsing=True, remove_unknown=True)
+
+    assert isinstance(result, list), "Expected list of definitions"
+    validate_definitions(result)
+
+    struct = find_type_by_name(result, "TestStruct")
+    assert struct is not None, "Struct TestStruct not found"
+    assert isinstance(struct, ClassDefinition)
+    assert len(struct.fields) == 1, "Expected 1 field in TestStruct"
+
+    field = struct.fields[0]
+    assert field.name == "id", f"Expected field name 'id', got '{field.name}'"
+    assert field.c_type == "int32_t", f"Expected c_type 'int32_t', got '{field.c_type}'"
+    assert field.elements == [], "Expected no array elements"
+    assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, "Invalid size_in_bits"
+    assert not field.bitfield, "Expected 'id' not to be a bitfield"

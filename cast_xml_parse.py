@@ -83,7 +83,7 @@ class CastXmlParse:
 
         filtered = []
         for d in self.data:
-            if isinstance(d, ClassDefinition):
+            if isinstance(d, (UnionDefinition, ClassDefinition)):
                 if all(f.c_type in known_types for f in d.fields):
                     filtered.append(d)
             elif isinstance(d, TypedefDefinition):
