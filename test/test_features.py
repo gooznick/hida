@@ -158,3 +158,32 @@ def test_nested_structs():
     assert c.fields[0].name == "a" and c.fields[0].c_type == "A"
     assert c.fields[1].name == "b" and c.fields[1].c_type == "B"
     assert c.fields[2].name == "c" and c.fields[2].c_type == "int32_t"
+
+def test_arrays():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'arrays.xml'))
+
+    assert isinstance(result, list), "Expected list of class definitions"
+    validate_definitions(result)
+
+    b = find_type_by_name(result, "B")
+    assert b is not None, "Struct B not found"
+
+    expected_fields = [
+        ("s", "A", [2]),
+        ("a", "int32_t", [10]),
+        ("b", "int32_t", [2, 3]),
+        ("c", "int32_t", [2, 3, 4]),
+        ("d", "int32_t", [5, 6, 7, 8]),
+        ("e", "int32_t", [0]),
+    ]
+
+    assert len(b.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
+
+    for idx, (name, c_type, elements) in enumerate(expected_fields):
+        field = b.fields[idx]
+        assert field.name == name, f"Expected field name '{name}', got '{field.name}'"
+        assert field.c_type == c_type, f"Expected c_type '{c_type}', got '{field.c_type}'"
+        assert field.elements == elements, f"Expected elements {elements}, got {field.elements}"
+        assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, f"Invalid size_in_bits for '{name}'"
+
+    assert b.size > 0, f"Struct B size must be positive, got {b.size}"

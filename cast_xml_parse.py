@@ -110,7 +110,7 @@ class CastXmlParse:
         elif tag == "ArrayType":
             dim = int(elem.get("max", "-1")) + 1
             base_type, size, align, elements = self._get_type(elem.get("type"))
-            return base_type, size, align, elements + [dim]
+            return base_type, size, align, [dim] + elements
 
         elif tag in ("Struct", "Class", "Union", "Enumeration"):
             name = elem.get("name")
