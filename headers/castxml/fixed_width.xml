@@ -232,6 +232,6 @@
   <File id="f2" name="/usr/include/x86_64-linux-gnu/bits/stdint-intn.h"/>
   <File id="f3" name="/usr/include/x86_64-linux-gnu/bits/stdint-uintn.h"/>
   <File id="f4" name="/usr/include/stdint.h"/>
-  <File id="f5" name="/home/eranbu/projects/castxml/headers/fixed_width.h"/>
+  <File id="f5" name="/home/user/projects/castxml/headers/fixed_width.h"/>
   <File id="f6" name="/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9/bits/c++config.h"/>
 </CastXML>

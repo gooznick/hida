@@ -632,8 +632,8 @@
   <File id="f2" name="/usr/include/x86_64-linux-gnu/bits/stdint-intn.h"/>
   <File id="f3" name="/usr/include/x86_64-linux-gnu/bits/stdint-uintn.h"/>
   <File id="f4" name="/usr/include/stdint.h"/>
-  <File id="f5" name="/home/eranbu/.pyenv/versions/3.10.4/lib/python3.10/site-packages/castxml/data/share/castxml/clang/include/stddef.h"/>
-  <File id="f6" name="/home/eranbu/.pyenv/versions/3.10.4/lib/python3.10/site-packages/castxml/data/share/castxml/clang/include/__stddef_max_align_t.h"/>
+  <File id="f5" name="/home/user/.pyenv/versions/3.10.4/lib/python3.10/site-packages/castxml/data/share/castxml/clang/include/stddef.h"/>
+  <File id="f6" name="/home/user/.pyenv/versions/3.10.4/lib/python3.10/site-packages/castxml/data/share/castxml/clang/include/__stddef_max_align_t.h"/>
   <File id="f7" name="complicated_structs.hpp"/>
   <File id="f8" name="/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9/bits/c++config.h"/>
   <File id="f9" name="/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/cstddef"/>
