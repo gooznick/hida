@@ -103,6 +103,30 @@ def validate_typedef_definition(td: TypedefDefinition, types):
         if dim == 0 and td.elements != [0]:
             raise ValueError(f"Typedef '{td.name}': dimension 0 must appear only as [0]")
 
+def validate_enum_definition(enum: EnumDefinition):
+    """
+    Validates an EnumDefinition instance.
+    Raises ValueError if any condition is violated.
+    """
+    if not isinstance(enum.name, str):
+        raise ValueError("EnumDefinition name must be a string (can be empty for anonymous)")
+
+    if not isinstance(enum.source, str) or not enum.source:
+        raise ValueError(f"Enum '{enum.name}': source must be a non-empty string")
+
+    if not isinstance(enum.size, int) or enum.size <= 0:
+        raise ValueError(f"Enum '{enum.name}': size must be a positive integer")
+
+    if not isinstance(enum.enums, list):
+        raise ValueError(f"Enum '{enum.name}': enums must be a list")
+
+    for enum_value in enum.enums:
+        if not isinstance(enum_value, EnumName):
+            raise ValueError(f"Enum '{enum.name}': enum value must be of type EnumName")
+        if not isinstance(enum_value.name, str) or not enum_value.name:
+            raise ValueError(f"Enum '{enum.name}': enum value has invalid or empty name")
+        if not isinstance(enum_value.value, int):
+            raise ValueError(f"Enum '{enum.name}': enum value '{enum_value.name}' must have an integer value")
 
 def validate_definitions(definitions):
     """
@@ -124,3 +148,5 @@ def validate_definitions(definitions):
             validate_class_definition(defn, types)
         if isinstance(defn, TypedefDefinition):
             validate_typedef_definition(defn, types)
+        if isinstance(defn, EnumDefinition):
+            validate_enum_definition(defn)

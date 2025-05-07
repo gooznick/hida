@@ -402,3 +402,61 @@ def test_fixed_width_structs():
             assert field.elements == elements, f"{struct_name}.{name}: expected elements {elements}, got {field.elements}"
             assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, f"{struct_name}.{name}: invalid size_in_bits"
         assert s.size > 0, f"{struct_name}: size must be positive"
+
+def test_enums():
+    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'enums.xml'))
+
+    assert isinstance(result, list), "Expected list of definitions"
+    validate_definitions(result)
+
+    expected_enums = {
+        "Color": {
+            "size": 4,
+            "values": {
+                "Red": 0,
+                "Green": 1,
+                "Blue": 5,
+                "Yellow": 6,
+            },
+        },
+        "Direction": {
+            "size": 4,
+            "values": {
+                "North": 0,
+                "South": 1,
+                "East": 2,
+                "West": 3,
+            },
+        },
+        "StatusCode": {
+            "size": 1,
+            "values": {
+                "OK": 0,
+                "Error": 1,
+                "Timeout": 2,
+                "Unknown": 255,
+            },
+        },
+        "ErrorLevel": {
+            "size": 2,
+            "values": {
+                "Info": 1,
+                "Warning": 2,
+                "Critical": 3,
+            },
+        },
+
+    }
+
+    for expected_name, enum_data in expected_enums.items():
+        match = None
+        for d in result:
+            if isinstance(d, EnumDefinition) and (
+                d.name == expected_name or d.name.startswith(expected_name)
+            ):
+                match = d
+                break
+        assert match is not None, f"Enum '{expected_name}' not found"
+        assert match.size == enum_data["size"], f"Enum '{match.name}' has incorrect size"
+        parsed = {e.name: e.value for e in match.enums}
+        assert parsed == enum_data["values"], f"Enum '{match.name}' values do not match"

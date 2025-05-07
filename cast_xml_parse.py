@@ -115,16 +115,15 @@ class CastXmlParse:
         
         self.data = []
         for elem in self.xml_root.findall(".//"):
-            
+            new_def = []
             if elem.tag in ("Struct", "Class"):
-                struct_def = self._parse_struct_wrapper(elem)
-                if struct_def:
-                    self.data.append(struct_def)
+                new_def = self._parse_struct_wrapper(elem)
             elif elem.tag in ("Typedef") and elem.get("name"):
-                typedef_def = self._parse_typedef_wrapper(elem)
-                if typedef_def:
-                    self.data.append(typedef_def)
-        
+                new_def = self._parse_typedef_wrapper(elem)
+            elif elem.tag in ("Enumeration") :
+                new_def = self._parse_enum_wrapper(elem)
+            self.data = self.data + new_def 
+                          
         if self.remove_unknown:
             self._remove_unknown()
         return self.data
@@ -228,7 +227,52 @@ class CastXmlParse:
         if parts and parts[0] == "::":
             del parts[0] # Global namespace removal
         return "::".join(parts)
-       
+    
+    def _parse_enum(self, enum_elem):
+        """
+        Parses a <Enumeration> element and returns an EnumDefinition object.
+        """
+        name = self._add_namespace(enum_elem)
+
+        size_attr = enum_elem.get("size")
+        if size_attr is None:
+            raise ValueError(f"Enum '{name}' missing 'size' attribute")
+
+        size_bits = int(size_attr)
+        if size_bits % self.CHAR_BITS != 0:
+            raise ValueError(f"Enum '{name}' size {size_bits} is not a multiple of CHAR_BITS")
+
+        size = size_bits // self.CHAR_BITS
+        source = self._get_source_info(enum_elem)
+
+        enum_values = []
+        for val in enum_elem.findall("EnumValue"):
+            val_name = val.get("name")
+            val_init = val.get("init")
+            if val_name is None or val_init is None:
+                raise ValueError(f"Enum '{name}' has EnumValue with missing 'name' or 'init'")
+            enum_values.append(EnumName(name=val_name, value=int(val_init)))
+
+        return [EnumDefinition(
+            name=name,
+            source=source,
+            size=size,
+            enums=enum_values
+        )]
+
+    def _parse_enum_wrapper(self, elem):
+        """
+        Wrapper for _parse_enum that respects skip_failed_parsing and verbose flags.
+        """
+        try:
+            return self._parse_enum(elem)
+        except Exception as e:
+            if not getattr(self, "skip_failed_parsing", False):
+                raise
+            if getattr(self, "verbose", False):
+                print(f"Warning: Failed to parse enum '{elem.get('name')}' - {e}")
+        return []
+
     def _parse_typedef(self, typedef_elem):
         """
         Parses a <Typedef> element and returns a TypedefDefinition object.
@@ -246,12 +290,12 @@ class CastXmlParse:
         # Resolve type
         resolved_type, _, _, elements = self._get_type(type_id)
 
-        return TypedefDefinition(
+        return [TypedefDefinition(
             name=name,
             source=source,
             definition=resolved_type,
             elements=elements
-        )
+        )]
     def _parse_typedef_wrapper(self, elem):
         try:
             return self._parse_typedef(elem)
@@ -261,7 +305,7 @@ class CastXmlParse:
             else:
                 if self.verbose:
                     print(f"Warning: Failed to parse typedef '{elem.get('name')}' - {e}")
-        return None
+        return []
        
     def _parse_struct_wrapper(self, struct_elem):
         try:
@@ -271,7 +315,7 @@ class CastXmlParse:
                 raise
             elif self.verbose:
                 print(f"Warning: Failed to parse struct '{struct_elem.get('name')}' - {e}")
-        return None
+        return []
 
     def _parse_struct(self, struct_elem):
         """
@@ -315,7 +359,7 @@ class CastXmlParse:
                 field = self._parse_field(member_elem)
                 class_def.fields.append(field)
 
-        return class_def
+        return [class_def]
 
     def _parse_field(self, field_elem):
         """

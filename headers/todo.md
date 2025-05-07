@@ -24,9 +24,9 @@
 * typedefs
 * C struct typedefs
 * Namespaces
+* fixed width types
 
 * Ignore non POD types
-* fixed width types
 * Enums
 * c++11 enums
 * Unions
