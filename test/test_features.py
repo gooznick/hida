@@ -324,3 +324,30 @@ def test_std_types_pointers():
         assert field.name == name, f"Expected field '{name}', got '{field.name}'"
         assert field.c_type == c_type, f"Field '{name}' expected type '{c_type}', got '{field.c_type}'"
         assert field.elements == [], f"Field '{name}' should not be an array"
+
+
+def test_remove_unknown_behavior():
+    xml_path = os.path.join(here, os.pardir, 'headers', 'castxml', 'std_types.xml')
+
+    # ✅ Case: skip_failed_parsing and remove_unknown enabled — should work
+    result = parse(xml_path, skip_failed_parsing=True, remove_unknown=True)
+
+    validate_definitions(result)
+    names = {d.name for d in result if hasattr(d, "name")}
+    assert "B" in names, "Struct B should be present"
+
+    #  Case: strict mode — allow error to propagate
+    try:
+        result = parse(xml_path, skip_failed_parsing=False,
+                               remove_unknown=False)
+
+        assert False, "Expected exception due to unknown std::string"
+    except Exception:
+        pass  # Expected
+
+    #  Case: skip_failed only — A skipped, B stays
+    result = parse(xml_path,
+                                    skip_failed_parsing=True,
+                                    remove_unknown=False)
+    names = {d.name for d in result if hasattr(d, "name")}
+    assert "B" in names, "Struct B should be present in skip_failed mode"
