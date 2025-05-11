@@ -89,10 +89,10 @@ def test_complicated():
 
         if isinstance(expected, tuple) and isinstance(expected[1], list):
             expected_type, expected_dims = expected
-            assert type_matches(field.c_type, expected_type), f"{name}: expected type {expected_type}, got {field.c_type}"
+            assert type_matches(field.type, expected_type), f"{name}: expected type {expected_type}, got {field.type}"
             assert field.elements == expected_dims, f"{name}: expected dimensions {expected_dims}, got {field.elements}"
         else:
-            assert type_matches(field.c_type, expected), f"{name}: expected type {expected}, got {field.c_type}"
+            assert type_matches(field.type, expected), f"{name}: expected type {expected}, got {field.type}"
             assert field.elements == [], f"{name}: expected scalar, got array {field.elements}"
 
         assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, f"{name}: invalid bit size"

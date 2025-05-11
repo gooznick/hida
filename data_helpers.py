@@ -58,16 +58,16 @@ def validate_class_definition(cls: ClassDefinition, types):
         if not isinstance(field.name, str) or not field.name:
             raise ValueError(f"Field in class '{cls.name}' has invalid or empty name")
 
-        if not isinstance(field.c_type, str) or not field.c_type:
+        if not isinstance(field.type, str) or not field.type:
             raise ValueError(
-                f"Field '{field.name}' in class '{cls.name}' has invalid or empty c_type"
+                f"Field '{field.name}' in class '{cls.name}' has invalid or empty type"
             )
 
         if types != None and (
-            not field.c_type in types and not field.c_type in builtin_types
+            not field.type in types and not field.type in builtin_types
         ):
             raise ValueError(
-                f"Field '{field.name}' in class '{cls.name}' has unknown type '{field.c_type}'"
+                f"Field '{field.name}' in class '{cls.name}' has unknown type '{field.type}'"
             )
 
         if not isinstance(field.bitoffset, int) or field.bitoffset < 0:
@@ -187,15 +187,15 @@ def validate_union_definition(u: UnionDefinition, types):
     for field in u.fields:
         if not isinstance(field.name, str) or not field.name:
             raise ValueError(f"Union '{u.name}': field has invalid or empty name")
-        if not isinstance(field.c_type, str) or not field.c_type:
+        if not isinstance(field.type, str) or not field.type:
             raise ValueError(
-                f"Union '{u.name}': field '{field.name}' has invalid or empty c_type"
+                f"Union '{u.name}': field '{field.name}' has invalid or empty type"
             )
         if types != None and (
-            field.c_type not in types and field.c_type not in builtin_types
+            field.type not in types and field.type not in builtin_types
         ):
             raise ValueError(
-                f"Union '{u.name}': field '{field.name}' has unknown type '{field.c_type}'"
+                f"Union '{u.name}': field '{field.name}' has unknown type '{field.type}'"
             )
         if not isinstance(field.bitoffset, int) or field.bitoffset < 0:
             raise ValueError(
@@ -235,11 +235,11 @@ def validate_constant_definition(cd: ConstantDefinition, types):
     if not isinstance(cd.source, str) or not cd.source:
         raise ValueError(f"Constant '{cd.name}': source must be a non-empty string")
 
-    if not isinstance(cd.c_type, str) or not cd.c_type:
-        raise ValueError(f"Constant '{cd.name}': c_type must be a non-empty string")
+    if not isinstance(cd.type, str) or not cd.type:
+        raise ValueError(f"Constant '{cd.name}': type must be a non-empty string")
 
-    if cd.c_type not in types and cd.c_type not in builtin_types:
-        raise ValueError(f"Constant '{cd.name}': unknown type '{cd.c_type}'")
+    if cd.type not in types and cd.type not in builtin_types:
+        raise ValueError(f"Constant '{cd.name}': unknown type '{cd.type}'")
 
     if not isinstance(cd.value, (int, float, str)):
         raise ValueError(f"Constant '{cd.name}': value must be int, float, or str")
@@ -400,7 +400,7 @@ def add_padding_fields(definitions):
         for start_bit, size_bits, _ in holes:
             pad_field = Field(
                 name=f"pad{pad_index}",
-                c_type="uint8_t",  # dummy type
+                type="uint8_t",  # dummy type
                 elements=[],
                 bitoffset=start_bit,
                 size_in_bits=size_bits,
@@ -442,8 +442,8 @@ def remove_typedefs(definitions):
     for d in definitions:
         if isinstance(d, (ClassDefinition, UnionDefinition)):
             for field in d.fields:
-                while field.c_type in typedef_map:
-                    field.c_type = typedef_map[field.c_type]
+                while field.type in typedef_map:
+                    field.type = typedef_map[field.type]
 
     # 3. Remove TypedefDefinition instances
     return [d for d in definitions if not isinstance(d, TypedefDefinition)]

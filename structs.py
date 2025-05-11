@@ -21,7 +21,7 @@ class CTypeInfo:
 class Field:
     name: str  # Name of the field
     # type of the field
-    c_type: Union[str, CTypeInfo]
+    type: Union[str, CTypeInfo]
     elements: List[int]  # Number of elements (for arrays)
     bitoffset: int  # offset [bits] from the beginning of the struct
     size_in_bits: int = 0  # size [bits] of the field

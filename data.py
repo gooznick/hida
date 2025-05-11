@@ -12,7 +12,7 @@ class DefinitionBase:
 @dataclass
 class Field:
     name: str  # Name of the field
-    c_type: str  # C/C++ type of the field
+    type: str  # C/C++ type of the field
     elements: List[int]  # Array dimensions (empty if scalar)
     bitoffset: int  # Bit offset from the start of the struct/union
     size_in_bits: int = 0  # Size of the field in bits
@@ -55,5 +55,5 @@ class TypedefDefinition(DefinitionBase):
 
 @dataclass
 class ConstantDefinition(DefinitionBase):
-    c_type: str  # C/C++ type of the constant
+    type: str  # C/C++ type of the constant
     value: Union[int, float, str]  # Value of the constant

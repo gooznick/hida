@@ -93,7 +93,7 @@ class CastXmlParse:
         filtered = []
         for d in self.data:
             if isinstance(d, (UnionDefinition, ClassDefinition)):
-                if all(f.c_type in known_types for f in d.fields):
+                if all(f.type in known_types for f in d.fields):
                     filtered.append(d)
             elif isinstance(d, TypedefDefinition):
                 if d.definition in known_types:
@@ -439,8 +439,8 @@ class CastXmlParse:
         if name == "":
             name = field_elem.get("id")
 
-        c_type = field_elem.get("type")
-        if not c_type:
+        type = field_elem.get("type")
+        if not type:
             raise ValueError(f"Field '{name}' missing 'type' attribute")
 
         offset_attr = field_elem.get("offset")
@@ -448,14 +448,14 @@ class CastXmlParse:
             raise ValueError(f"Field '{name}' missing required 'offset' attribute")
         offset = int(offset_attr)
 
-        type_name, size_in_bits, align, elements = self._get_type(c_type)
+        type_name, size_in_bits, align, elements = self._get_type(type)
         bits = field_elem.get("bits", None)
         if bits:
             size_in_bits = int(bits)
 
         return Field(
             name=name,
-            c_type=type_name,
+            type=type_name,
             elements=elements,
             size_in_bits=size_in_bits,
             bitoffset=offset,
@@ -507,14 +507,14 @@ class CastXmlParse:
         if not type_id:
             raise ValueError(f"Constant '{name}' missing type reference")
 
-        c_type, _, _, _ = self._get_type(type_id)
+        type, _, _, _ = self._get_type(type_id)
         source = self._get_source_info(var_elem)
 
         # Convert init to typed Python value
         value = self._parse_init_value(init)
 
         return [
-            ConstantDefinition(name=name, source=source, c_type=c_type, value=value)
+            ConstantDefinition(name=name, source=source, type=type, value=value)
         ]
 
     def _parse_constant_wrapper(self, elem):
