@@ -291,8 +291,8 @@ def test_typedefs():
         typedef = find_type_by_name(result, name)
         assert typedef is not None, f"Typedef {name} not found"
         assert (
-            typedef.definition == expected_def or None == expected_def
-        ), f"{name}: expected definition '{expected_def}', got '{typedef.definition}'"
+            typedef.type == expected_def or None == expected_def
+        ), f"{name}: expected definition '{expected_def}', got '{typedef.type}'"
         assert (
             typedef.elements == expected_elements
         ), f"{name}: expected elemes {expected_elements}, got {typedef.elements}"
@@ -309,15 +309,15 @@ def test_typedef_struct_inline():
     typedef = find_type_by_name(result, "Point")
     assert typedef is not None, "Typedef 'Point' not found"
     assert isinstance(typedef, TypedefDefinition), "'Point' is not a TypedefDefinition"
-    assert typedef.definition != "", "'Point' typedef must have a definition"
+    assert typedef.type != "", "'Point' typedef must have a definition"
     assert typedef.elements == [], "'Point' typedef should not have array dimensions"
 
     # Look for the struct that this typedef refers to
-    struct_def = find_type_by_name(result, typedef.definition)
-    assert struct_def is not None, f"Struct '{typedef.definition}' not found"
+    struct_def = find_type_by_name(result, typedef.type)
+    assert struct_def is not None, f"Struct '{typedef.type}' not found"
     assert isinstance(
         struct_def, ClassDefinition
-    ), f"Expected ClassDefinition for '{typedef.definition}'"
+    ), f"Expected ClassDefinition for '{typedef.type}'"
     assert len(struct_def.fields) == 1, "Struct should have exactly one field"
     assert struct_def.fields[0].name == "x"
     assert struct_def.fields[0].type == "int32_t"

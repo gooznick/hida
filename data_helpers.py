@@ -112,13 +112,13 @@ def validate_typedef_definition(td: TypedefDefinition, types):
     if not isinstance(td.source, str) or not td.source:
         raise ValueError(f"Typedef '{td.name}': source must be a non-empty string")
 
-    if not isinstance(td.definition, str) or not td.definition:
+    if not isinstance(td.type, str) or not td.type:
         raise ValueError(f"Typedef '{td.name}': definition must be a non-empty string")
 
     if types != None and (
-        not td.definition in types and not td.definition in builtin_types
+        not td.type in types and not td.type in builtin_types
     ):
-        raise ValueError(f"Typedef '{td.name}': unknown type '{td.definition}'")
+        raise ValueError(f"Typedef '{td.name}': unknown type '{td.type}'")
 
     if not isinstance(td.elements, list):
         raise ValueError(f"Typedef '{td.name}': elements must be a list")
@@ -433,7 +433,7 @@ def remove_typedefs(definitions):
     """
     # 1. Build typedef mapping: typedef_name → actual_type
     typedef_map = {
-        td.name: td.definition
+        td.name: td.type
         for td in definitions
         if isinstance(td, TypedefDefinition)
     }

@@ -96,7 +96,7 @@ class CastXmlParse:
                 if all(f.type in known_types for f in d.fields):
                     filtered.append(d)
             elif isinstance(d, TypedefDefinition):
-                if d.definition in known_types:
+                if d.type in known_types:
                     filtered.append(d)
             else:
                 filtered.append(d)  # keep Enums, Unions, Constants, etc.
@@ -360,7 +360,7 @@ class CastXmlParse:
 
         return [
             TypedefDefinition(
-                name=name, source=source, definition=resolved_type, elements=elements
+                name=name, source=source, type=resolved_type, elements=elements
             )
         ]
 

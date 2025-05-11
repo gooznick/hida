@@ -205,7 +205,7 @@ def create_definitions(root: ET.Element) -> List:
                     else "unknown"
                 )
                 definitions.append(
-                    TypedefDefinition(name=full_name, definition=typedef_def)
+                    TypedefDefinition(name=full_name, type=typedef_def)
                 )
     return definitions
 
