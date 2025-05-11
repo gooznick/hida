@@ -44,3 +44,8 @@
   * c only
   * endianess swapper
 
+## rejects :
+
+* add scope/namespace list [name may have :: in it, as in struct<std::is_same>]
+* if struct has member "incomplete" with value "1" - ignore it
+* autoremove system headers sources

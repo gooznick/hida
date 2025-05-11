@@ -24,16 +24,16 @@ def test_basic():
     expected_fields = [
         {
             "name": "i",
-            "type": "int32_t",
-            "elements": [],
+            "type": TypeBase("int32_t"),
+            "elements": (),
             "bitoffset": 0,
             "size_in_bits": 32,
             "bitfield": False,
         },
         {
             "name": "f",
-            "type": "float",
-            "elements": [],
+            "type": TypeBase("float"),
+            "elements": (),
             "bitoffset": 32,
             "size_in_bits": 32,
             "bitfield": False,
@@ -67,8 +67,8 @@ def test_class():
     a = find_type_by_name(result, "A")
     assert a is not None, "Class A not found"
     assert len(a.fields) == 2, "A should have 2 fields"
-    assert a.fields[0].name == "i" and a.fields[0].type == "int32_t"
-    assert a.fields[1].name == "f" and a.fields[1].type == "float"
+    assert a.fields[0].name == "i" and a.fields[0].type.fullname == "int32_t"
+    assert a.fields[1].name == "f" and a.fields[1].type.fullname == "float"
     validate_definitions(result)
 
 
@@ -80,43 +80,43 @@ def test_basics():
     a = find_type_by_name(result, "A")
     assert a is not None, "Struct A not found"
     assert len(a.fields) == 2
-    assert a.fields[0].name == "i" and a.fields[0].type == "int32_t"
-    assert a.fields[1].name == "f" and a.fields[1].type == "float"
+    assert a.fields[0].name == "i" and a.fields[0].type.fullname == "int32_t"
+    assert a.fields[1].name == "f" and a.fields[1].type.fullname == "float"
 
     b = find_type_by_name(result, "B")
     assert b is not None, "Struct B not found"
     assert len(b.fields) == 2
-    assert b.fields[0].name == "i" and b.fields[0].type == "int8_t"
-    assert b.fields[1].name == "d" and b.fields[1].type == "double"
+    assert b.fields[0].name == "i" and b.fields[0].type.fullname == "int8_t"
+    assert b.fields[1].name == "d" and b.fields[1].type.fullname == "double"
 
     c = find_type_by_name(result, "C")
     assert c is not None, "Class C not found"
     assert len(c.fields) == 3
-    assert c.fields[0].name == "i" and c.fields[0].type == "int8_t"
-    assert c.fields[1].name == "us" and c.fields[1].type == "uint16_t"
-    assert c.fields[2].name == "s" and c.fields[2].type == "int16_t"
+    assert c.fields[0].name == "i" and c.fields[0].type.fullname == "int8_t"
+    assert c.fields[1].name == "us" and c.fields[1].type.fullname == "uint16_t"
+    assert c.fields[2].name == "s" and c.fields[2].type.fullname == "int16_t"
     validate_definitions(result)
 
 
 def test_normalize_integral_type():
     fn = CastXmlParse._normalize_integral_type  # staticmethod
 
-    assert fn("int", 32) == "int32_t"
-    assert fn("unsigned int", 32) == "uint32_t"
-    assert fn("short", 16) == "int16_t"
-    assert fn("unsigned short", 16) == "uint16_t"
-    assert fn("long long", 64) == "int64_t"
-    assert fn("unsigned long long", 64) == "uint64_t"
-    assert fn("char", 8) == "int8_t"
-    assert fn("unsigned char", 8) == "uint8_t"
+    assert fn(TypeBase("int"), 32) == TypeBase("int32_t")
+    assert fn(TypeBase("unsigned int"), 32) == TypeBase("uint32_t")
+    assert fn(TypeBase("short"), 16) == TypeBase("int16_t")
+    assert fn(TypeBase("unsigned short"), 16) == TypeBase("uint16_t")
+    assert fn(TypeBase("long long"), 64) == TypeBase("int64_t")
+    assert fn(TypeBase("unsigned long long"), 64) == TypeBase("uint64_t")
+    assert fn(TypeBase("char"), 8) == TypeBase("int8_t")
+    assert fn(TypeBase("unsigned char"), 8) == TypeBase("uint8_t")
 
-    assert fn("float", 32) == "float"
-    assert fn("double", 64) == "double"
-    assert fn("long double", 128) == "long double"
-    assert fn("void*", 64) == "void*"
+    assert fn(TypeBase("float"), 32) == TypeBase("float")
+    assert fn(TypeBase("double"), 64) == TypeBase("double")
+    assert fn(TypeBase("long double"), 128) == TypeBase("long double")
+    assert fn(TypeBase("void*"), 64) == TypeBase("void*")
 
-    assert fn("bool", 8) == "uint8_t"
-    assert fn("bool", 8, use_bool=True) == "bool"
+    assert fn(TypeBase("bool"), 8) == TypeBase("uint8_t")
+    assert fn(TypeBase("bool"), 8, use_bool=True) == TypeBase("bool")
 
 
 def test_all_basic_types():
@@ -128,37 +128,39 @@ def test_all_basic_types():
 
     struct_def = find_type_by_name(result, "AllBasicTypes")
     assert struct_def is not None, "Struct AllBasicTypes not found"
+
+    windows = platform.system() == "Windows"
+
     expected_fields = [
-        ("b", "uint8_t"),  # or "bool" if use_bool=True is respected
-        ("c", "int8_t"),
-        ("sc", "int8_t"),
-        ("uc", "uint8_t"),
-        ("s", "int16_t"),
-        ("us", "uint16_t"),
-        ("i", "int32_t"),
-        ("ui", "uint32_t"),
-        ("l", "int32_t" if windows else "int64_t"),
-        ("ul", "uint32_t" if windows else "uint64_t"),
-        ("ll", "int64_t"),
-        ("ull", "uint64_t"),
-        ("f", "float"),
-        ("d", "double"),
-        ("ld", "long double"),
+        ("b", TypeBase("uint8_t")),  # or TypeBase("bool") if use_bool=True
+        ("c", TypeBase("int8_t")),
+        ("sc", TypeBase("int8_t")),
+        ("uc", TypeBase("uint8_t")),
+        ("s", TypeBase("int16_t")),
+        ("us", TypeBase("uint16_t")),
+        ("i", TypeBase("int32_t")),
+        ("ui", TypeBase("uint32_t")),
+        ("l", TypeBase("int32_t" if windows else "int64_t")),
+        ("ul", TypeBase("uint32_t" if windows else "uint64_t")),
+        ("ll", TypeBase("int64_t")),
+        ("ull", TypeBase("uint64_t")),
+        ("f", TypeBase("float")),
+        ("d", TypeBase("double")),
+        ("ld", TypeBase("long double")),
     ]
-    
 
     assert len(struct_def.fields) == len(expected_fields)
 
-    for idx, (field_name, type) in enumerate(expected_fields):
+    for idx, (field_name, expected_type) in enumerate(expected_fields):
         field = struct_def.fields[idx]
         assert (
             field.name == field_name
         ), f"Expected field '{field_name}', got '{field.name}'"
         assert (
-            field.type == type
-        ), f"Expected type '{type}' for '{field_name}', got '{field.type}'"
-    validate_definitions(result)
+            field.type == expected_type
+        ), f"Expected type '{expected_type.fullname}' for '{field_name}', got '{field.c_type.fullname}'"
 
+    validate_definitions(result)
 
 def test_nested_structs():
     result = parse(os.path.join(here, os.pardir, "headers", "castxml", "nested.xml"))
@@ -167,19 +169,21 @@ def test_nested_structs():
 
     a = find_type_by_name(result, "A")
     assert a is not None and len(a.fields) == 1
-    assert a.fields[0].name == "a" and a.fields[0].type == "int32_t"
+    assert a.fields[0].name == "a" and a.fields[0].type.fullname == "int32_t"
 
     b = find_type_by_name(result, "B")
     assert b is not None and len(b.fields) == 2
-    assert b.fields[0].name == "a" and b.fields[0].type == "A"
-    assert b.fields[1].name == "b" and b.fields[1].type == "int32_t"
+    assert b.fields[0].name == "a" and b.fields[0].type.fullname == "A"
+    assert b.fields[1].name == "b" and b.fields[1].type.fullname == "int32_t"
 
     c = find_type_by_name(result, "C")
     assert c is not None and len(c.fields) == 3
-    assert c.fields[0].name == "a" and c.fields[0].type == "A"
-    assert c.fields[1].name == "b" and c.fields[1].type == "B"
-    assert c.fields[2].name == "c" and c.fields[2].type == "int32_t"
+    assert c.fields[0].name == "a" and c.fields[0].type.fullname == "A"
+    assert c.fields[1].name == "b" and c.fields[1].type.fullname == "B"
+    assert c.fields[2].name == "c" and c.fields[2].type.fullname == "int32_t"
+
     validate_definitions(result)
+
 
 
 def test_arrays():
@@ -192,33 +196,26 @@ def test_arrays():
     assert b is not None, "Struct B not found"
 
     expected_fields = [
-        ("s", "A", [2]),
-        ("a", "int32_t", [10]),
-        ("b", "int32_t", [2, 3]),
-        ("c", "int32_t", [2, 3, 4]),
-        ("d", "int32_t", [5, 6, 7, 8]),
-        ("e", "int32_t", [0]),
+        ("s", "A", (2,)),
+        ("a", "int32_t", (10,)),
+        ("b", "int32_t", (2, 3)),
+        ("c", "int32_t", (2, 3, 4)),
+        ("d", "int32_t", (5, 6, 7, 8)),
+        ("e", "int32_t", (0,)),
     ]
 
-    assert len(b.fields) == len(
-        expected_fields
-    ), f"Expected {len(expected_fields)} fields"
+    assert len(b.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
 
-    for idx, (name, type, elements) in enumerate(expected_fields):
+    for idx, (name, type_str, elements) in enumerate(expected_fields):
         field = b.fields[idx]
         assert field.name == name, f"Expected field name '{name}', got '{field.name}'"
-        assert (
-            field.type == type
-        ), f"Expected type '{type}', got '{field.type}'"
-        assert (
-            field.elements == elements
-        ), f"Expected elements {elements}, got {field.elements}"
-        assert (
-            isinstance(field.size_in_bits, int) and field.size_in_bits > 0
-        ), f"Invalid size_in_bits for '{name}'"
+        assert field.type.fullname == type_str, f"Expected type '{type_str}', got '{field.type.fullname}'"
+        assert field.elements == elements, f"Expected elements {elements}, got {field.elements}"
+        assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, f"Invalid size_in_bits for '{name}'"
 
     assert b.size > 0, f"Struct B size must be positive, got {b.size}"
     validate_definitions(result)
+
 
 
 def test_pointers():
@@ -241,23 +238,20 @@ def test_pointers():
         ("arr_func_ptr", "void*"),
     ]
 
-    assert len(struct_def.fields) == len(
-        expected_fields
-    ), f"Expected {len(expected_fields)} fields"
+    assert len(struct_def.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
 
-    for idx, (name, type) in enumerate(expected_fields):
+    for idx, (name, expected_type) in enumerate(expected_fields):
         field = struct_def.fields[idx]
         assert field.name == name, f"Expected field name '{name}', got '{field.name}'"
-        assert (
-            field.type == type
-        ), f"Expected type '{type}' for field '{name}', got '{field.type}'"
-        assert (
-            field.elements in ([], [3])
-            if name == "arr_func_ptr"
-            else field.elements == []
-        ), f"Unexpected array dimensions in field '{name}': {field.elements}"
+        assert field.type.fullname == expected_type, f"Expected type '{expected_type}' for field '{name}', got '{field.type.fullname}'"
+        if name == "arr_func_ptr":
+            assert field.elements == (3,), f"Expected elements (3,) for 'arr_func_ptr', got {field.elements}"
+        else:
+            assert field.elements == (), f"Expected scalar field for '{name}', got elements {field.elements}"
+
     validate_definitions(result)
 
+import platform
 
 def test_typedefs():
     result = parse(os.path.join(here, os.pardir, "headers", "castxml", "typedefs.xml"))
@@ -265,39 +259,38 @@ def test_typedefs():
     assert isinstance(result, list), "Expected list of definitions"
     validate_definitions(result)
 
+    windows = platform.system() == "Windows"
+
     expected_typedefs = {
-        "MyInt": ("int32_t", []),
-        "MyULong": ("uint32_t" if windows else "uint64_t", []),
-        "FloatPtr": ("void*", []),
-        "FuncPtr": ("void*", []),
-        "PointPtr": ("void*", []),
-        "Shapes": (None, [10]),
-        "ShapesPtr": ("void*", []),
-        "Alias1": ("int32_t", []),
-        "Alias2": ("int32_t", []),
-        "Alias3": ("int32_t", []),
+        "MyInt": ("int32_t", ()),
+        "MyULong": ("uint32_t" if windows else "uint64_t", ()),
+        "FloatPtr": ("void*", ()),
+        "FuncPtr": ("void*", ()),
+        "PointPtr": ("void*", ()),
+        "Shapes": (None, (10,)),
+        "ShapesPtr": ("void*", ()),
+        "Alias1": ("int32_t", ()),
+        "Alias2": ("int32_t", ()),
+        "Alias3": ("int32_t", ()),
+        "IntArray1D": ("int32_t", (5,)),
+        "IntArray2D": ("int32_t", (3, 4)),
+        "IntArray3D": ("int32_t", (2, 3, 4)),
+        "Alias1D": ("int32_t", (5,)),
+        "Alias2D": ("int32_t", (3, 4)),
+        "Alias3D": ("int32_t", (2, 3, 4)),
     }
-    expected_typedefs.update(
-        {
-            "IntArray1D": ("int32_t", [5]),
-            "IntArray2D": ("int32_t", [3, 4]),
-            "IntArray3D": ("int32_t", [2, 3, 4]),
-            "Alias1D": ("int32_t", [5]),
-            "Alias2D": ("int32_t", [3, 4]),
-            "Alias3D": ("int32_t", [2, 3, 4]),
-        }
-    )
-    for name, (expected_def, expected_elements) in expected_typedefs.items():
+
+    for name, (expected_type_name, expected_elements) in expected_typedefs.items():
         typedef = find_type_by_name(result, name)
         assert typedef is not None, f"Typedef {name} not found"
-        assert (
-            typedef.type == expected_def or None == expected_def
-        ), f"{name}: expected definition '{expected_def}', got '{typedef.type}'"
-        assert (
-            typedef.elements == expected_elements
-        ), f"{name}: expected elemes {expected_elements}, got {typedef.elements}"
-    validate_definitions(result)
+        if expected_type_name is not None:
+            assert typedef.type.fullname == expected_type_name, \
+                f"{name}: expected definition '{expected_type_name}', got '{typedef.type.fullname}'"
 
+        assert typedef.elements == expected_elements, \
+            f"{name}: expected elements {expected_elements}, got {typedef.elements}"
+
+    validate_definitions(result)
 
 def test_typedef_struct_inline():
     result = parse(
@@ -309,19 +302,20 @@ def test_typedef_struct_inline():
     typedef = find_type_by_name(result, "Point")
     assert typedef is not None, "Typedef 'Point' not found"
     assert isinstance(typedef, TypedefDefinition), "'Point' is not a TypedefDefinition"
-    assert typedef.type != "", "'Point' typedef must have a definition"
-    assert typedef.elements == [], "'Point' typedef should not have array dimensions"
+    assert typedef.type is not None, "'Point' typedef must have a definition"
+    assert typedef.elements == (), "'Point' typedef should not have array dimensions"
 
     # Look for the struct that this typedef refers to
-    struct_def = find_type_by_name(result, typedef.type)
-    assert struct_def is not None, f"Struct '{typedef.type}' not found"
+    struct_def = find_type_by_name(result, typedef.type.fullname)
+    assert struct_def is not None, f"Struct '{typedef.type.fullname}' not found"
     assert isinstance(
         struct_def, ClassDefinition
-    ), f"Expected ClassDefinition for '{typedef.type}'"
+    ), f"Expected ClassDefinition for '{typedef.type.fullname}'"
     assert len(struct_def.fields) == 1, "Struct should have exactly one field"
     assert struct_def.fields[0].name == "x"
-    assert struct_def.fields[0].type == "int32_t"
+    assert struct_def.fields[0].type.fullname == "int32_t"
     validate_definitions(result)
+
 
 
 def test_namespaces():
@@ -337,34 +331,38 @@ def test_namespaces():
     assert (
         len(a.fields) == 1
         and a.fields[0].name == "x"
-        and a.fields[0].type == "int32_t"
+        and a.fields[0].type.fullname == "int32_t"
     )
 
     # Nested namespace
     b = find_type_by_name(result, "Outer::Inner::B")
     assert b is not None, "Struct Outer::Inner::B not found"
     assert (
-        len(b.fields) == 1 and b.fields[0].name == "y" and b.fields[0].type == "float"
+        len(b.fields) == 1
+        and b.fields[0].name == "y"
+        and b.fields[0].type.fullname == "float"
     )
 
-    # Anonymous namespace
-    C_anon_struct = [s for s in result if s.name.endswith("::C")]
-    assert len(C_anon_struct) == 1, "Struct C (in anonymous namespace) not found"
-    c = C_anon_struct[0]
+    # Anonymous namespace — ends with ::C
+    C_anon_structs = [s for s in result if s.fullname.endswith("::C")]
+    assert len(C_anon_structs) == 1, "Struct C (in anonymous namespace) not found"
+    c = C_anon_structs[0]
     assert (
         len(c.fields) == 1
         and c.fields[0].name == "z"
-        and c.fields[0].type == "double"
+        and c.fields[0].type.fullname == "double"
     )
 
-    # AllNamespaces aggregates them all
+    # Aggregator
     agg = find_type_by_name(result, "AllNamespaces")
     assert agg is not None, "Struct AllNamespaces not found"
     assert [f.name for f in agg.fields] == ["a", "b", "c"]
-    assert agg.fields[0].type == "TopLevel::A"
-    assert agg.fields[1].type == "Outer::Inner::B"
-    assert agg.fields[2].type.endswith("::C")
+    assert agg.fields[0].type.fullname == "TopLevel::A"
+    assert agg.fields[1].type.fullname == "Outer::Inner::B"
+    assert agg.fields[2].type.fullname.endswith("::C")
+
     validate_definitions(result)
+
 
 
 def test_std_types_pointers():
@@ -385,18 +383,13 @@ def test_std_types_pointers():
         ("s", "void*"),
     ]
 
-    assert len(struct_a.fields) == len(
-        expected_fields
-    ), f"Expected {len(expected_fields)} fields"
+    assert len(struct_a.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
 
-    for idx, (name, type) in enumerate(expected_fields):
+    for idx, (name, expected_type) in enumerate(expected_fields):
         field = struct_a.fields[idx]
         assert field.name == name, f"Expected field '{name}', got '{field.name}'"
-        assert (
-            field.type == type
-        ), f"Field '{name}' expected type '{type}', got '{field.type}'"
-        assert field.elements == [], f"Field '{name}' should not be an array"
-
+        assert field.type.fullname == expected_type, f"Field '{name}' expected type '{expected_type}', got '{field.type.fullname}'"
+        assert field.elements == (), f"Field '{name}' should not be an array"
 
 def test_remove_unknown_behavior():
     xml_path = os.path.join(here, os.pardir, "headers", "castxml", "std_types.xml")
@@ -432,32 +425,32 @@ def test_fixed_width_structs():
 
     expected_structs = {
         "A": [
-            ("a1", "int8_t", []),
-            ("a2", "int16_t", []),
-            ("a3", "int32_t", []),
-            ("a4", "int64_t", []),
-            ("a5", "uint8_t", []),
-            ("a6", "uint16_t", []),
-            ("a7", "uint32_t", []),
-            ("a8", "uint64_t", []),
+            ("a1", "int8_t", ()),
+            ("a2", "int16_t", ()),
+            ("a3", "int32_t", ()),
+            ("a4", "int64_t", ()),
+            ("a5", "uint8_t", ()),
+            ("a6", "uint16_t", ()),
+            ("a7", "uint32_t", ()),
+            ("a8", "uint64_t", ()),
         ],
         "B": [
-            ("b1", "int8_t", []),
-            ("b2", "int16_t", []),
-            ("b3", "int32_t", []),
-            ("b4", "int64_t", []),
-            ("b5", "uint8_t", []),
-            ("b6", "uint16_t", []),
-            ("b7", "uint32_t", []),
-            ("b8", "uint64_t", []),
+            ("b1", "int8_t", ()),
+            ("b2", "int16_t", ()),
+            ("b3", "int32_t", ()),
+            ("b4", "int64_t", ()),
+            ("b5", "uint8_t", ()),
+            ("b6", "uint16_t", ()),
+            ("b7", "uint32_t", ()),
+            ("b8", "uint64_t", ()),
         ],
         "C": [
-            ("arr1", "int32_t", [4]),
-            ("arr2", "uint64_t", [2, 3]),
+            ("arr1", "int32_t", (4,)),
+            ("arr2", "uint64_t", (2, 3)),
         ],
         "D": [
-            ("d1", "uint16_t", [5, 6]),
-            ("d2", "int8_t", [0]),
+            ("d1", "uint16_t", (5, 6)),
+            ("d2", "int8_t", (0,)),
         ],
     }
 
@@ -468,14 +461,14 @@ def test_fixed_width_structs():
             expected_fields
         ), f"{struct_name}: Expected {len(expected_fields)} fields"
 
-        for idx, (name, type, elements) in enumerate(expected_fields):
+        for idx, (name, expected_type, elements) in enumerate(expected_fields):
             field = s.fields[idx]
             assert (
                 field.name == name
             ), f"{struct_name}.{name}: expected name '{name}', got '{field.name}'"
             assert (
-                field.type == type
-            ), f"{struct_name}.{name}: expected type '{type}', got '{field.type}'"
+                field.type.fullname == expected_type
+            ), f"{struct_name}.{name}: expected type '{expected_type}', got '{field.type.fullname}'"
             assert (
                 field.elements == elements
             ), f"{struct_name}.{name}: expected elements {elements}, got {field.elements}"
@@ -483,6 +476,7 @@ def test_fixed_width_structs():
                 isinstance(field.size_in_bits, int) and field.size_in_bits > 0
             ), f"{struct_name}.{name}: invalid size_in_bits"
         assert s.size > 0, f"{struct_name}: size must be positive"
+
 
 
 def test_enums():
@@ -562,37 +556,27 @@ def test_unions():
     packet = find_type_by_name(result, "Packet")
     assert packet is not None, "Struct Packet not found"
     assert isinstance(packet, ClassDefinition)
-    assert any(
-        f.name == "data" for f in packet.fields
-    ), "Expected union field 'data' in Packet"
+    assert any(f.name == "data" for f in packet.fields), "Expected union field 'data' in Packet"
 
     # Test struct with anonymous union
     mixed = find_type_by_name(result, "Mixed")
     assert mixed is not None, "Struct Mixed not found"
     assert isinstance(mixed, ClassDefinition)
-    anon = find_type_by_name(result, mixed.fields[1].type)
+    anon = find_type_by_name(result, mixed.fields[1].type.fullname)
     assert anon is not None, "Mixed anon union not found"
-
-    assert set(f.name for f in anon.fields).intersection(
-        {"d", "l"}
-    ), "Missing anonymous union fields in Mixed"
+    assert set(f.name for f in anon.fields).intersection({"d", "l"}), "Missing anonymous union fields in Mixed"
 
     # Test nested union
     nested_union = find_type_by_name(result, "NestedUnion")
     assert nested_union is not None, "NestedUnion not found"
     assert isinstance(nested_union, UnionDefinition)
-    assert any(
-        "nested" in f.name for f in nested_union.fields
-    ), "Missing nested struct in NestedUnion"
+    assert any("nested" in f.name for f in nested_union.fields), "Missing nested struct in NestedUnion"
 
     # Test deep union
     deep = find_type_by_name(result, "DeepUnion")
     assert deep is not None, "DeepUnion not found"
     assert isinstance(deep, UnionDefinition)
-    assert any(
-        "structured" in f.name for f in deep.fields
-    ), "Missing structured field in DeepUnion"
-
+    assert any("structured" in f.name for f in deep.fields), "Missing structured field in DeepUnion"
 
 def test_bitfields():
     result = parse(
@@ -612,22 +596,14 @@ def test_bitfields():
         ("reserved", "uint32_t", 6, True),
     ]
 
-    assert len(s.fields) == len(
-        expected_fields
-    ), f"Expected {len(expected_fields)} fields"
+    assert len(s.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
 
-    for idx, (name, type, size_in_bits, bitfield) in enumerate(expected_fields):
+    for idx, (name, expected_type, size_in_bits, bitfield) in enumerate(expected_fields):
         f = s.fields[idx]
         assert f.name == name, f"Field {idx} expected name '{name}', got '{f.name}'"
-        assert (
-            f.type == type
-        ), f"Field '{name}' expected type '{type}', got '{f.type}'"
-        assert (
-            f.size_in_bits == size_in_bits
-        ), f"Field '{name}' expected size {size_in_bits}, got {f.size_in_bits}"
-        assert (
-            f.bitfield == bitfield
-        ), f"Field '{name}' expected bitfield={bitfield}, got {f.bitfield}"
+        assert f.type.fullname == expected_type, f"Field '{name}' expected type '{expected_type}', got '{f.type.fullname}'"
+        assert f.size_in_bits == size_in_bits, f"Field '{name}' expected size {size_in_bits}, got {f.size_in_bits}"
+        assert f.bitfield == bitfield, f"Field '{name}' expected bitfield={bitfield}, got {f.bitfield}"
 
 
 def test_bitfields_complex():
@@ -639,7 +615,7 @@ def test_bitfields_complex():
     # --- StatusFlags ---
     status = find_type_by_name(result, "StatusFlags")
     assert status is not None and len(status.fields) == 3
-    assert [(f.name, f.type, f.size_in_bits, f.bitfield) for f in status.fields] == [
+    assert [(f.name, f.type.fullname, f.size_in_bits, f.bitfield) for f in status.fields] == [
         ("ready", "uint32_t", 1, True),
         ("error", "uint32_t", 1, True),
         ("reserved", "uint32_t", 6, True),
@@ -648,7 +624,7 @@ def test_bitfields_complex():
     # --- ControlRegister ---
     ctrl = find_type_by_name(result, "ControlRegister")
     assert ctrl is not None and len(ctrl.fields) == 4
-    assert [(f.name, f.type, f.size_in_bits, f.bitfield) for f in ctrl.fields] == [
+    assert [(f.name, f.type.fullname, f.size_in_bits, f.bitfield) for f in ctrl.fields] == [
         ("mode", "uint32_t", 3, True),
         ("speed", "int32_t", 5, True),
         ("enable", "uint32_t", 1, True),
@@ -681,16 +657,18 @@ def test_bitfields_complex():
     assert flat is not None
     field_names = set(f.name for f in flat.fields)
     assert "top" in field_names
-    nested = find_type_by_name(result, flat.fields[1].type)
-    assert nested, "Nested struct not found"
+
+    nested = find_type_by_name(result, flat.fields[1].type.fullname)
+    assert nested is not None, "Nested struct not found"
     assert nested.fields[1].name == "raw", "Nested raw field not found"
-    nested2 = find_type_by_name(result, nested.fields[0].type)
-    assert nested2, "Nested inner struct not found"
+
+    nested2 = find_type_by_name(result, nested.fields[0].type.fullname)
+    assert nested2 is not None, "Nested inner struct not found"
     assert nested2.fields[0].name == "u1"
-    assert nested2.fields[0].bitfield == True
+    assert nested2.fields[0].bitfield is True
     assert nested2.fields[0].size_in_bits == 3
     assert nested2.fields[1].name == "u2"
-    assert nested2.fields[1].bitfield == True
+    assert nested2.fields[1].bitfield is True
     assert nested2.fields[1].size_in_bits == 5
 
 
@@ -709,18 +687,12 @@ def test_constants():
         "null_ptr": ("void*", 0),
     }
 
-    for name, (type, expected_value) in expected_constants.items():
+    for name, (expected_type, expected_value) in expected_constants.items():
         const = find_type_by_name(result, name)
         assert const is not None, f"Constant '{name}' not found"
-        assert isinstance(
-            const, ConstantDefinition
-        ), f"{name} is not a ConstantDefinition"
-        assert (
-            const.type == type
-        ), f"{name}: expected type '{type}', got '{const.type}'"
-        assert (
-            const.value == expected_value
-        ), f"{name}: expected value '{expected_value}', got '{const.value}'"
+        assert isinstance(const, ConstantDefinition), f"{name} is not a ConstantDefinition"
+        assert const.type.fullname == expected_type, f"{name}: expected type '{expected_type}', got '{const.type.fullname}'"
+        assert const.value == expected_value, f"{name}: expected value '{expected_value}', got '{const.value}'"
 
 
 def test_struct_packing():
@@ -747,6 +719,8 @@ def test_struct_packing():
         ), f"{name}: expected size {expected_size}, got {struct.size}"
 
 
+import platform
+
 def test_all_basic_types_struct():
     result = parse(
         os.path.join(here, os.pardir, "headers", "castxml", "all_types.xml"),
@@ -761,8 +735,11 @@ def test_all_basic_types_struct():
     assert struct is not None, "Struct AllTypes not found"
     assert isinstance(struct, ClassDefinition)
 
-    # allow wchar_t / char16_t / char32_t to be signed or unsigned depending on platform
-    def is_equiv(actual, expected):
+    windows = platform.system() == "Windows"
+
+    # Allow platform-dependent width aliases
+    def is_equiv(actual_type, expected):
+        actual = actual_type.fullname
         if isinstance(expected, (tuple, list)):
             return actual in expected
         return actual == expected
@@ -797,22 +774,16 @@ def test_all_basic_types_struct():
         ("ptr", "void*"),
     ]
 
-    assert len(struct.fields) == len(
-        expected_fields
-    ), f"Expected {len(expected_fields)} fields, got {len(struct.fields)}"
+    assert len(struct.fields) == len(expected_fields), \
+        f"Expected {len(expected_fields)} fields, got {len(struct.fields)}"
 
     for idx, (name, expected_type) in enumerate(expected_fields):
         field = struct.fields[idx]
-        assert (
-            field.name == name
-        ), f"Field {idx} name mismatch: expected '{name}', got '{field.name}'"
-        assert is_equiv(
-            field.type, expected_type
-        ), f"Field '{name}' type mismatch: expected '{expected_type}', got '{field.type}'"
-        assert (
-            isinstance(field.size_in_bits, int) and field.size_in_bits > 0
-        ), f"Field '{name}' has invalid size"
-
+        assert field.name == name, f"Field {idx} name mismatch: expected '{name}', got '{field.name}'"
+        assert is_equiv(field.type, expected_type), \
+            f"Field '{name}' type mismatch: expected '{expected_type}', got '{field.type.fullname}'"
+        assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, \
+            f"Field '{name}' has invalid size"
 
 def test_includes():
     result = parse(
@@ -831,9 +802,7 @@ def test_includes():
 
     field = struct.fields[0]
     assert field.name == "id", f"Expected field name 'id', got '{field.name}'"
-    assert field.type == "int32_t", f"Expected type 'int32_t', got '{field.type}'"
-    assert field.elements == [], "Expected no array elements"
-    assert (
-        isinstance(field.size_in_bits, int) and field.size_in_bits > 0
-    ), "Invalid size_in_bits"
+    assert field.type.fullname == "int32_t", f"Expected type 'int32_t', got '{field.type.fullname}'"
+    assert field.elements == (), "Expected no array elements"
+    assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, "Invalid size_in_bits"
     assert not field.bitfield, "Expected 'id' not to be a bitfield"

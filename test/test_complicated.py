@@ -12,10 +12,13 @@ from data_helpers import *
 import platform
 
 windows = platform.system() == "Windows"
+import platform
 
 def test_complicated():
-    result = parse(os.path.join(here, os.pardir, 'headers', 'castxml', 'complicated.xml'),
-                   use_bool=True, skip_failed_parsing=True, remove_unknown=True)
+    result = parse(
+        os.path.join(here, os.pardir, 'headers', 'castxml', 'complicated.xml'),
+        use_bool=True, skip_failed_parsing=True, remove_unknown=True
+    )
 
     assert isinstance(result, list), "Expected list of parsed definitions"
     validate_definitions(result)
@@ -23,6 +26,8 @@ def test_complicated():
     struct = find_type_by_name(result, "Everything")
     assert struct is not None, "Struct 'Everything' not found"
     assert isinstance(struct, ClassDefinition)
+
+    windows = platform.system() == "Windows"
 
     expected_fields = {
         # Basic + fixed-width
@@ -34,15 +39,14 @@ def test_complicated():
 
         # Wide chars
         "wch": ("int32_t", "uint32_t", "int16_t"),
-
         "ch16": ("int16_t", "uint16_t"),
         "ch32": ("int32_t", "uint32_t"),
 
         # Arrays
-        "a1": ("int32_t", [3]),
-        "a2": ("float", [2, 2]),
-        "a3": ("double", [2, 2, 2]),
-        "a4": ("int8_t", [2, 2, 2, 2]),  # char is int8_t
+        "a1": ("int32_t", (3,)),
+        "a2": ("float", (2, 2)),
+        "a3": ("double", (2, 2, 2)),
+        "a4": ("int8_t", (2, 2, 2, 2)),
 
         # Pointers
         "p_i": "void*",
@@ -53,14 +57,14 @@ def test_complicated():
 
         # Function pointers
         "callback": "void*",
-        "handlers": ("void*", [2]),
+        "handlers": ("void*", (2,)),
 
         # Typedefs
         "my_i": "int32_t",
         "my_ul": "uint32_t" if windows else "uint64_t",
         "fp": "void*",
         "pt": "void*",
-        #"pts": ("Point", [5]),
+        # "pts": ("Point", (5,)),  # Uncomment if Point is available and properly typed
 
         # Enums
         "e1": "SimpleEnum",
@@ -78,26 +82,31 @@ def test_complicated():
 
     fields_by_name = {f.name: f for f in struct.fields}
 
-    def type_matches(actual, expected_type):
-        if isinstance(expected_type, (tuple, list)):
-            return actual in expected_type
-        return actual == expected_type
+    def type_matches(actual_type: "TypeBase", expected):
+        actual = actual_type.fullname
+        if isinstance(expected, (tuple, list)):
+            return actual in expected
+        return actual == expected
 
     for name, expected in expected_fields.items():
         assert name in fields_by_name, f"Field '{name}' missing from Everything struct"
         field = fields_by_name[name]
 
-        if isinstance(expected, tuple) and isinstance(expected[1], list):
+        if isinstance(expected, tuple) and isinstance(expected[1], (list, tuple)):
             expected_type, expected_dims = expected
-            assert type_matches(field.type, expected_type), f"{name}: expected type {expected_type}, got {field.type}"
-            assert field.elements == expected_dims, f"{name}: expected dimensions {expected_dims}, got {field.elements}"
+            assert type_matches(field.type, expected_type), \
+                f"{name}: expected type {expected_type}, got {field.type.fullname}"
+            assert field.elements == expected_dims, \
+                f"{name}: expected dimensions {expected_dims}, got {field.elements}"
         else:
-            assert type_matches(field.type, expected), f"{name}: expected type {expected}, got {field.type}"
-            assert field.elements == [], f"{name}: expected scalar, got array {field.elements}"
+            assert type_matches(field.type, expected), \
+                f"{name}: expected type {expected}, got {field.type.fullname}"
+            assert field.elements == (), f"{name}: expected scalar, got array {field.elements}"
 
-        assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, f"{name}: invalid bit size"
+        assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, \
+            f"{name}: invalid bit size"
 
-    # Optionally, validate enums, typedefs, and unions exist too
+    # Ensure related types exist
     assert find_type_by_name(result, "MixedUnion"), "Union MixedUnion missing"
     assert find_type_by_name(result, "ScopedEnum"), "ScopedEnum missing"
     assert find_type_by_name(result, "SimpleEnum"), "SimpleEnum missing"

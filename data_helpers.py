@@ -22,16 +22,29 @@ builtin_types = {
 }
 
 
-def find_type_by_name(data_structs, name):
+def find_type_by_name(data_structs, name, fallback_to_name=True):
     """
-    Finds and returns the first ClassDefinition, UnionDefinition, or EnumDefinition
-    with the given name from the data_structs list.
+    Finds and returns the first ClassDefinition, UnionDefinition, EnumDefinition,
+    or TypedefDefinition with the given full name (including namespaces).
+    
+    If not found and fallback_to_name is True, tries to match just the base name.
     Returns None if not found.
     """
+    # First pass: try matching fullname
     for item in data_structs:
-        if hasattr(item, "name") and item.name == name:
-            return item
+        if hasattr(item, "name"):
+            if hasattr(item, "fullname") and item.fullname == name:
+                return item
+            elif not hasattr(item, "fullname") and item.name == name:
+                return item
+
+    if fallback_to_name:
+        for item in data_structs:
+            if hasattr(item, "name") and item.name == name:
+                return item
+
     return None
+
 
 
 def validate_class_definition(cls: ClassDefinition, types):
@@ -58,13 +71,13 @@ def validate_class_definition(cls: ClassDefinition, types):
         if not isinstance(field.name, str) or not field.name:
             raise ValueError(f"Field in class '{cls.name}' has invalid or empty name")
 
-        if not isinstance(field.type, str) or not field.type:
+        if not isinstance(field.type.fullname, str) or not field.type:
             raise ValueError(
                 f"Field '{field.name}' in class '{cls.name}' has invalid or empty type"
             )
 
         if types != None and (
-            not field.type in types and not field.type in builtin_types
+            not field.type.fullname in types and not field.type.fullname in builtin_types
         ):
             raise ValueError(
                 f"Field '{field.name}' in class '{cls.name}' has unknown type '{field.type}'"
@@ -85,9 +98,9 @@ def validate_class_definition(cls: ClassDefinition, types):
                 f"Field '{field.name}' in class '{cls.name}' has invalid bitfield flag"
             )
 
-        if not isinstance(field.elements, list):
+        if not isinstance(field.elements, tuple):
             raise ValueError(
-                f"Field '{field.name}' in class '{cls.name}' has non-list elements attribute"
+                f"Field '{field.name}' in class '{cls.name}' has non-tuple elements attribute"
             )
 
         for dim in field.elements:
@@ -95,7 +108,7 @@ def validate_class_definition(cls: ClassDefinition, types):
                 raise ValueError(
                     f"Field '{field.name}' in class '{cls.name}' has invalid array dimension: {dim}"
                 )
-            if dim == 0 and field.elements != [0]:
+            if dim == 0 and field.elements != (0,):
                 raise ValueError(
                     f"Field '{field.name}' in class '{cls.name}' has dimension 0 not as [0] exactly"
                 )
@@ -112,16 +125,16 @@ def validate_typedef_definition(td: TypedefDefinition, types):
     if not isinstance(td.source, str) or not td.source:
         raise ValueError(f"Typedef '{td.name}': source must be a non-empty string")
 
-    if not isinstance(td.type, str) or not td.type:
+    if not isinstance(td.type.name, str) or not td.type:
         raise ValueError(f"Typedef '{td.name}': definition must be a non-empty string")
 
     if types != None and (
-        not td.type in types and not td.type in builtin_types
+        not td.type.fullname in types and not td.type.fullname  in builtin_types
     ):
         raise ValueError(f"Typedef '{td.name}': unknown type '{td.type}'")
 
-    if not isinstance(td.elements, list):
-        raise ValueError(f"Typedef '{td.name}': elements must be a list")
+    if not isinstance(td.elements, tuple):
+        raise ValueError(f"Typedef '{td.name}': elements must be a tuple")
 
     for dim in td.elements:
         if not isinstance(dim, int) or dim < 0:
@@ -148,8 +161,8 @@ def validate_enum_definition(enum: EnumDefinition):
     if not isinstance(enum.size, int) or enum.size <= 0:
         raise ValueError(f"Enum '{enum.name}': size must be a positive integer")
 
-    if not isinstance(enum.enums, list):
-        raise ValueError(f"Enum '{enum.name}': enums must be a list")
+    if not isinstance(enum.enums, tuple):
+        raise ValueError(f"Enum '{enum.name}': enums must be a tuple")
 
     for enum_value in enum.enums:
         if not isinstance(enum_value, EnumName):
@@ -181,18 +194,18 @@ def validate_union_definition(u: UnionDefinition, types):
     if not isinstance(u.alignment, int) or u.alignment < 0:
         raise ValueError(f"Union '{u.name}': alignment must be a non-negative integer")
 
-    if not isinstance(u.fields, list):
-        raise ValueError(f"Union '{u.name}': fields must be a list")
+    if not isinstance(u.fields, tuple):
+        raise ValueError(f"Union '{u.name}': fields must be a tuple")
 
     for field in u.fields:
         if not isinstance(field.name, str) or not field.name:
             raise ValueError(f"Union '{u.name}': field has invalid or empty name")
-        if not isinstance(field.type, str) or not field.type:
+        if not isinstance(field.type.name, str) or not field.type:
             raise ValueError(
                 f"Union '{u.name}': field '{field.name}' has invalid or empty type"
             )
         if types != None and (
-            field.type not in types and field.type not in builtin_types
+            field.type.fullname not in types and field.type.fullname not in builtin_types
         ):
             raise ValueError(
                 f"Union '{u.name}': field '{field.name}' has unknown type '{field.type}'"
@@ -209,7 +222,7 @@ def validate_union_definition(u: UnionDefinition, types):
             raise ValueError(
                 f"Union '{u.name}': field '{field.name}' has invalid bitfield flag"
             )
-        if not isinstance(field.elements, list):
+        if not isinstance(field.elements, tuple):
             raise ValueError(
                 f"Union '{u.name}': field '{field.name}' has invalid elements"
             )
@@ -235,10 +248,10 @@ def validate_constant_definition(cd: ConstantDefinition, types):
     if not isinstance(cd.source, str) or not cd.source:
         raise ValueError(f"Constant '{cd.name}': source must be a non-empty string")
 
-    if not isinstance(cd.type, str) or not cd.type:
+    if not isinstance(cd.type.name, str) or not cd.type:
         raise ValueError(f"Constant '{cd.name}': type must be a non-empty string")
 
-    if cd.type not in types and cd.type not in builtin_types:
+    if cd.type.fullname not in types and cd.type.fullname not in builtin_types:
         raise ValueError(f"Constant '{cd.name}': unknown type '{cd.type}'")
 
     if not isinstance(cd.value, (int, float, str)):
@@ -464,7 +477,7 @@ def validate_definitions(definitions):
         ConstantDefinition,
     )
 
-    types = {defn.name for defn in definitions}
+    types = {defn.fullname for defn in definitions}
 
     for defn in definitions:
         if not isinstance(defn, allowed_types):

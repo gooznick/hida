@@ -1,59 +1,66 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, Union
+from typing import Tuple, Optional, Union
 from enum import Enum, auto
 
-
-@dataclass
-class DefinitionBase:
+@dataclass(frozen=True)
+class TypeBase:
     name: str  # Name of the symbol (type, enum, typedef, etc.)
-    source: str  # Source ID from the CastXML document
+    namespace: Tuple[str] = field(
+        default_factory=tuple
+    )  # nested namespaces (tuple if none)
+    
+    @property
+    def fullname(self) -> str:
+        return "::".join(list(self.namespace) + [self.name]) if self.namespace else self.name    
+@dataclass(frozen=True)
+class DefinitionBase(TypeBase):
+    source: str = "" # Source ID from the CastXML document
 
-
-@dataclass
+@dataclass(frozen=True)
 class Field:
     name: str  # Name of the field
-    type: str  # C/C++ type of the field
-    elements: List[int]  # Array dimensions (empty if scalar)
+    type: TypeBase  # C/C++ type of the field
+    elements: Tuple[int]  # Array dimensions (empty if scalar)
     bitoffset: int  # Bit offset from the start of the struct/union
     size_in_bits: int = 0  # Size of the field in bits
     bitfield: bool = False  # True if the field is a bitfield
 
 
-@dataclass
+@dataclass(frozen=True)
 class ClassDefinition(DefinitionBase):
     alignment: int = 0  # Alignment requirement in bytes
-    fields: List[Field] = field(default_factory=list)  # Fields in the struct/class
+    fields: Tuple[Field] = field(default_factory=tuple)  # Fields in the struct/class
     size: int = 0  # Total size in bytes
 
 
-@dataclass
+@dataclass(frozen=True)
 class EnumName:
     name: str  # Name of the enumerator
     value: int  # Value assigned to the enumerator
 
 
-@dataclass
+@dataclass(frozen=True)
 class EnumDefinition(DefinitionBase):
     size: int = 0  # Size of the enum type in bytes
-    enums: List[EnumName] = field(default_factory=list)  # Enumerators in the enum
+    enums: Tuple[EnumName] = field(default_factory=tuple)  # Enumerators in the enum
 
 
-@dataclass
+@dataclass(frozen=True)
 class UnionDefinition(DefinitionBase):
     alignment: int = 0  # Alignment requirement in bytes
-    fields: List[Field] = field(default_factory=list)  # Fields in the union
+    fields: Tuple[Field] = field(default_factory=tuple)  # Fields in the union
     size: int = 0  # Total size in bytes
 
 
-@dataclass
+@dataclass(frozen=True)
 class TypedefDefinition(DefinitionBase):
-    type: str = ""  # Actual type the typedef refers to
-    elements: List[int] = field(
-        default_factory=list
+    type: TypeBase = field(default_factory=TypeBase) # Actual type the typedef refers to
+    elements: Tuple[int] = field(
+        default_factory=tuple
     )  # Array dimensions (empty if scalar)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ConstantDefinition(DefinitionBase):
-    type: str  # C/C++ type of the constant
-    value: Union[int, float, str]  # Value of the constant
+    type: TypeBase = field(default_factory=TypeBase) # C/C++ type of the constant
+    value: Union[int, float, str] =  "" # Value of the constant
