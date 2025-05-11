@@ -104,3 +104,86 @@ def test_flatten_namespaces():
     assert "Beta__Data" in names
     assert "Beta__Extra" in names
     assert all(d.namespace == () for d in flattened)
+
+def test_resolve_typedefs():
+    result = parse(
+        os.path.join(here, os.pardir, "headers", "castxml", "typedef_remove.xml"),
+        skip_failed_parsing=True,
+        remove_unknown=True,
+    )
+
+    resolved = resolve_typedefs(result)
+
+    a = find_type_by_name(resolved, "A")
+    assert a is not None and isinstance(a, ClassDefinition)
+
+    expected = {
+        "value": ("int32_t", ()),
+        "arr1": ("float", (4,)),
+        "arr2": ("float", (3, 4)),
+    }
+
+    for f in a.fields:
+        base_type = f.type.fullname
+        dims = f.elements
+        assert f.name in expected, f"Unexpected field: {f.name}"
+        exp_type, exp_dims = expected[f.name]
+        assert base_type == exp_type, f"{f.name}: expected type {exp_type}, got {base_type}"
+        assert dims == exp_dims, f"{f.name}: expected dims {exp_dims}, got {dims}"
+
+    # Ensure typedefs are removed
+    names = {d.name for d in resolved}
+    assert "MyInt" not in names
+    assert "Alias1" not in names
+    assert "Alias2" not in names
+    assert "MyArray" not in names
+    assert "MyArray2D" not in names
+
+
+
+@pytest.fixture
+def sample_definitions() -> List[DefinitionBase]:
+    return [
+        DefinitionBase("A", "/usr/include/stdio.h"),
+        DefinitionBase("B", "/home/user/project/foo.h"),
+        DefinitionBase("C", "C:\\Program Files\\Microsoft SDKs\\bar.h"),
+        DefinitionBase("D", "/usr/local/include/something.h"),
+        DefinitionBase("E", "D:\\MyLib\\custom\\baz.h"),
+    ]
+
+
+def test_include_regex(sample_definitions):
+    # Include only user/project headers
+    result = filter_by_source_regexes(sample_definitions, include=r"/home/user/")
+    assert len(result) == 1
+    assert result[0].name == "B"
+
+
+def test_exclude_regex(sample_definitions):
+    # Exclude system headers (Linux-style)
+    result = filter_by_source_regexes(sample_definitions, exclude=r"^/usr/include/")
+    assert all(d.name != "A" for d in result)
+
+
+def test_include_and_exclude(sample_definitions):
+    # Include all .h files, but exclude ones from Windows SDKs
+    result = filter_by_source_regexes(
+        sample_definitions,
+        include=r"\.h$",
+        exclude=r"Program Files|Microsoft"
+    )
+    assert all("Microsoft" not in d.source for d in result)
+    assert "C" not in [d.name for d in result]
+
+
+def test_no_filters(sample_definitions):
+    # No filtering: return all
+    result = filter_by_source_regexes(sample_definitions)
+    assert len(result) == len(sample_definitions)
+
+
+def test_include_as_list(sample_definitions):
+    # List of includes: both user and system headers
+    result = filter_by_source_regexes(sample_definitions, include=[r"/usr/", r"/home/user/"])
+    names = [d.name for d in result]
+    assert "A" in names and "B" in names
