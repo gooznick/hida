@@ -430,7 +430,7 @@ class CastXmlParse:
             if member_elem is not None and member_elem.tag == "Field":
                 field = self._parse_field(member_elem)
                 fields.append(field)
-        class_def = ClassDefinition( name=type_.name, namespace=type_.namespace, source=source, alignment=alignment, size=size, fields=fields) 
+        class_def = ClassDefinition( name=type_.name, namespace=type_.namespace, source=source, alignment=alignment, size=size, fields=tuple(fields)) 
         return [class_def]
 
     def _parse_field(self, field_elem):

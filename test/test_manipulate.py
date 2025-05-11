@@ -49,6 +49,7 @@ def test_fill_bitfield_holes_with_padding():
     assert before == after, "No padding should be inserted into Packed"
 
     validate_definitions(result)
+    
 def test_fill_struct_holes_with_padding_bytes_multiple_structs():
     result = parse(
         os.path.join(here, os.pardir, "headers", "castxml", "holes_real.xml"),
@@ -88,3 +89,18 @@ def test_fill_struct_holes_with_padding_bytes_multiple_structs():
             if field.name.startswith("__pad"):
                 assert field.type.fullname == "uint8_t"
                 assert isinstance(field.elements, tuple)
+
+def test_flatten_namespaces():
+    result = parse(
+        os.path.join(here, os.pardir, "headers", "castxml", "namespaced_types.xml"),
+        skip_failed_parsing=True,
+        remove_unknown=True,
+    )
+
+    # Full flatten
+    flattened = flatten_namespaces(result)
+    names = {d.name for d in flattened}
+    assert "Alpha__Data" in names
+    assert "Beta__Data" in names
+    assert "Beta__Extra" in names
+    assert all(d.namespace == () for d in flattened)

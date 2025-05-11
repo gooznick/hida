@@ -64,8 +64,8 @@ def validate_class_definition(cls: ClassDefinition, types):
     if not isinstance(cls.alignment, int) or (cls.alignment < 0):
         raise ValueError(f"Class '{cls.name}': alignment must be non negative integer")
 
-    if not isinstance(cls.fields, list):
-        raise ValueError(f"Class '{cls.name}': fields must be a list")
+    if not isinstance(cls.fields, tuple):
+        raise ValueError(f"Class '{cls.name}': fields must be a tuple")
 
     for field in cls.fields:
         if not isinstance(field.name, str) or not field.name:
@@ -394,50 +394,6 @@ def find_struct_holes(definitions):
     return result
 
 
-def add_padding_fields(definitions):
-    """
-    Return a new list of definitions where holes in structs/unions
-    are filled with padding fields named pad0, pad1, etc.
-    """
-    padded_defs = []
-    
-    for d in definitions:
-        if not isinstance(d, (ClassDefinition)):
-            padded_defs.append(d)
-            continue
-
-        holes = find_struct_holes([d]).get(d.name, [])
-        new_fields = list(d.fields)  # copy original fields
-        pad_index = 0
-
-        for start_bit, size_bits, _ in holes:
-            pad_field = Field(
-                name=f"pad{pad_index}",
-                type="uint8_t",  # dummy type
-                elements=[],
-                bitoffset=start_bit,
-                size_in_bits=size_bits,
-                bitfield=True
-            )
-            new_fields.append(pad_field)
-            pad_index += 1
-
-        # sort fields by bitoffset again
-        new_fields.sort(key=lambda f: f.bitoffset)
-
-        if isinstance(d, ClassDefinition):
-            new_def = ClassDefinition(
-                name=d.name,
-                source=d.source,
-                alignment=d.alignment,
-                size=d.size,
-                fields=new_fields
-            )
-
-
-        padded_defs.append(new_def)
-
-    return padded_defs
 
 def remove_typedefs(definitions):
     """
