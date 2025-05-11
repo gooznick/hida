@@ -1,4 +1,7 @@
 from data import *
+import re
+from typing import List, Optional, Union
+import platform
 
 builtin_types = {
     "int8_t",
@@ -280,6 +283,59 @@ def verify_size(definitions):
 
             if d.size * 8 < max_bits:
                 raise ValueError(f"{d.name}: Union size too small ({d.size} bytes) for largest field ({max_bits} bits)")
+
+
+
+def get_system_include_regexes() -> List[str]:
+    """
+    Returns a list of regex patterns that match system include directories.
+    Includes common Windows and Unix/GCC/Clang paths.
+    """
+    if platform.system() == "Windows":
+        return [
+            r"\\Program Files\\",                # VS STL, Windows SDK
+            r"\\Microsoft Visual Studio\\",
+            r"\\Windows Kits\\",
+            r"\\vcpkg\\installed\\.*?\\include\\",
+        ]
+    else:
+        return [
+            r"^/usr/include/",
+            r"^/usr/local/include/",
+            r"^/usr/lib/clang/.*/include/",
+            r"^/opt/",
+        ]
+
+
+
+def filter_by_source_regexes(
+    definitions: List[DefinitionBase],
+    include: Optional[Union[str, List[str]]] = None,
+    exclude: Optional[Union[str, List[str]]] = None
+) -> List[DefinitionBase]:
+    """
+    Filters definitions based on regexes matching their `source` field.
+
+    - `include`: pattern or list of patterns. If provided, only matching sources are kept.
+    - `exclude`: pattern or list of patterns. If provided, matching sources are removed.
+    """
+    if isinstance(include, str):
+        include = [include]
+    if isinstance(exclude, str):
+        exclude = [exclude]
+
+    include_patterns = [re.compile(p) for p in include] if include else []
+    exclude_patterns = [re.compile(p) for p in exclude] if exclude else []
+
+    def should_keep(defn: DefinitionBase) -> bool:
+        if include_patterns and not any(p.search(defn.source) for p in include_patterns):
+            return False
+        if exclude_patterns and any(p.search(defn.source) for p in exclude_patterns):
+            return False
+        return True
+
+    return [d for d in definitions if should_keep(d)]
+
 
 def find_struct_holes(definitions):
     """
