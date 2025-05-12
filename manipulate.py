@@ -293,3 +293,26 @@ def sort_definitions_topologically(definitions: List[TypeBase]) -> List[TypeBase
         visit(name)
 
     return result
+
+def filter_connected_definitions(definitions: List[TypeBase], roots: Union[str, List[str]]) -> List[TypeBase]:
+    """
+    Filters the definitions list to include only those reachable from the given root type(s),
+    based on field, typedef, or constant dependencies.
+    """
+    if isinstance(roots, str):
+        roots = [roots]
+
+    graph = build_type_dependency_graph(definitions)
+    name_to_def = {d.fullname: d for d in definitions}
+    visited = set()
+    stack = list(roots)
+
+    while stack:
+        current = stack.pop()
+        if current in visited:
+            continue
+        visited.add(current)
+        stack.extend(graph.get(current, []))
+
+    return [d for d in definitions if d.fullname in visited]
+

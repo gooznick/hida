@@ -178,3 +178,20 @@ def test_include_as_list(sample_definitions):
     result = filter_by_source_regexes(sample_definitions, include=[r"/usr/", r"/home/user/"])
     names = [d.name for d in result]
     assert "A" in names and "B" in names
+
+def test_filter_connected_definitions():
+    path = os.path.join(here, os.pardir, "headers", "castxml", "connected_filter.xml")
+    all_defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
+    validate_definitions(all_defs)
+
+    # Prune everything except what's needed by Main
+    connected = filter_connected_definitions(all_defs, "Main")
+
+    # We expect the following types to remain
+    expected_types = {"Main", "Payload", "Wrapper", "Nested", "Status"}
+
+    remaining_names = {d.fullname for d in connected}
+    assert expected_types.issubset(remaining_names), f"Missing expected types: {expected_types - remaining_names}"
+
+    # Ensure unrelated types are not included
+    assert "Unused" not in remaining_names, "Disconnected type 'Unused' should have been removed"

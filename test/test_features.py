@@ -250,11 +250,8 @@ def test_pointers():
 
     validate_definitions(result)
 
-import platform
-
 def test_typedefs():
     result = parse(os.path.join(here, os.pardir, "headers", "castxml", "typedefs.xml"))
-
     assert isinstance(result, list), "Expected list of definitions"
     validate_definitions(result)
 
@@ -290,6 +287,7 @@ def test_typedefs():
             f"{name}: expected elements {expected_elements}, got {typedef.elements}"
 
     validate_definitions(result)
+
 
 def test_typedef_struct_inline():
     result = parse(
