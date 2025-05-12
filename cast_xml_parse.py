@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from data import *
+from manipulate import *
 import data_helpers
 
 
@@ -40,6 +41,7 @@ class CastXmlParse:
         except Exception as e:
             raise RuntimeError(f"Failed to extract data from XML structure: {e}") from e
 
+        self.data = sort_definitions_topologically(self.data)
         return self.data
 
     @staticmethod
@@ -128,15 +130,16 @@ class CastXmlParse:
         for elem in self.xml_root.findall(".//"):
             new_def = []
             if elem.tag in ("Struct", "Class"):
-                new_def = self._parse_struct_wrapper(elem)
+                new_def = self._parse_with_wrapper(elem, self._parse_struct, kind="struct") 
             elif elem.tag in ("Typedef") and elem.get("name"):
-                new_def = self._parse_typedef_wrapper(elem)
+                new_def = self._parse_with_wrapper(elem, self._parse_typedef, kind="typedef")  
             elif elem.tag in ("Enumeration"):
-                new_def = self._parse_enum_wrapper(elem)
+                new_def = self._parse_with_wrapper(elem, self._parse_enum, kind="enum") 
             elif elem.tag in ("Union"):
-                new_def = self._parse_union_wrapper(elem)
+                new_def = self._parse_with_wrapper(elem, self._parse_union, kind="union") 
             elif elem.tag in ("Variable") and elem.get("init"):
-                new_def = self._parse_constant_wrapper(elem)
+                new_def = self._parse_with_wrapper(elem, self._parse_constant, kind="constant") 
+
             self.data = self.data + new_def
 
         if self.remove_unknown:
@@ -240,7 +243,7 @@ class CastXmlParse:
             if context_elem.tag == "Namespace":
                 ns_name = context_elem.get("name")
                 if not ns_name:  # anonymous namespace
-                    ns_name = f"<anon@{context_elem.get('id')}>"
+                    ns_name = f"_anon{context_elem.get('id')}"
                 parts.insert(0, ns_name)
 
             context_id = context_elem.get("context")
@@ -279,18 +282,7 @@ class CastXmlParse:
 
         return [EnumDefinition(name=type_.name, namespace=type_.namespace, source=source, size=size, enums=tuple(enum_values))]
 
-    def _parse_enum_wrapper(self, elem):
-        """
-        Wrapper for _parse_enum that respects skip_failed_parsing and verbose flags.
-        """
-        try:
-            return self._parse_enum(elem)
-        except Exception as e:
-            if not getattr(self, "skip_failed_parsing", False):
-                raise
-            if getattr(self, "verbose", False):
-                print(f"Warning: Failed to parse enum '{elem.get('name')}' - {e}")
-        return []
+
 
     def _parse_union(self, union_elem):
         """
@@ -325,7 +317,8 @@ class CastXmlParse:
             member_elem = self.xml_root.find(f".//*[@id='{member_id}']")
             if member_elem is not None and member_elem.tag == "Field":
                 field = self._parse_field(member_elem)
-                fields.append(field)
+                if field:
+                    fields.append(field)
 
         return [
             UnionDefinition(
@@ -333,15 +326,7 @@ class CastXmlParse:
             )
         ]
 
-    def _parse_union_wrapper(self, elem):
-        try:
-            return self._parse_union(elem)
-        except Exception as e:
-            if not getattr(self, "skip_failed_parsing", False):
-                raise
-            if getattr(self, "verbose", False):
-                print(f"Warning: Failed to parse union '{elem.get('name')}' - {e}")
-        return []
+
 
     def _parse_typedef(self, typedef_elem):
         """
@@ -359,36 +344,41 @@ class CastXmlParse:
         # Resolve type
         resolved_type, _, _, elements = self._get_type(type_id)
 
+        if type_ == resolved_type and elements == ():
+            return []
         return [
             TypedefDefinition(
                 name=type_.name, namespace=type_.namespace, source=source, type=resolved_type, elements=tuple(elements)
             )
         ]
 
-    def _parse_typedef_wrapper(self, elem):
+
+
+    def _parse_with_wrapper(self, elem, parse_func, kind="element"):
+        """
+        Generic error-handling wrapper for _parse_* functions.
+
+        Args:
+            elem: The XML element to parse.
+            parse_func: The parsing function to call (e.g., self._parse_struct).
+            kind: A human-readable name (e.g., "struct", "typedef") for logging.
+
+        Returns:
+            Parsed result or []/None on failure.
+        """
         try:
-            return self._parse_typedef(elem)
+            return parse_func(elem)
+        except NotImplementedError as e:
+                pass # NIINAE
         except Exception as e:
             if not self.skip_failed_parsing:
                 raise
-            else:
-                if self.verbose:
-                    print(
-                        f"Warning: Failed to parse typedef '{elem.get('name')}' - {e}"
-                    )
+            if self.verbose:
+                name = elem.get("name") or "<unnamed>"
+                print(f"Warning: Failed to parse {kind} '{name}' - {e}")
         return []
 
-    def _parse_struct_wrapper(self, struct_elem):
-        try:
-            return self._parse_struct(struct_elem)
-        except Exception as e:
-            if not self.skip_failed_parsing:
-                raise
-            elif self.verbose:
-                print(
-                    f"Warning: Failed to parse struct '{struct_elem.get('name')}' - {e}"
-                )
-        return []
+
 
     def _parse_struct(self, struct_elem):
         """
@@ -429,7 +419,8 @@ class CastXmlParse:
             member_elem = self._id_map.get(member_id, None)
             if member_elem is not None and member_elem.tag == "Field":
                 field = self._parse_field(member_elem)
-                fields.append(field)
+                if field:
+                    fields.append(field)
         class_def = ClassDefinition( name=type_.name, namespace=type_.namespace, source=source, alignment=alignment, size=size, fields=tuple(fields)) 
         return [class_def]
 
@@ -454,7 +445,8 @@ class CastXmlParse:
         bits = field_elem.get("bits", None)
         if bits:
             size_in_bits = int(bits)
-
+        if elements == (0,):
+            return None
         return Field(
             name=name,
             type=type_name,
@@ -519,15 +511,7 @@ class CastXmlParse:
             ConstantDefinition(name=type_.name, namespace=type_.namespace, source=source, type=type, value=value)
         ]
 
-    def _parse_constant_wrapper(self, elem):
-        try:
-            return self._parse_constant(elem)
-        except Exception as e:
-            if not getattr(self, "skip_failed_parsing", False):
-                raise
-            if getattr(self, "verbose", False):
-                print(f"Warning: Failed to parse constant '{elem.get('name')}' - {e}")
-        return []
+
 
 
 def parse(xml_path: str, **kwargs):

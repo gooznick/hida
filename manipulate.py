@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict, Set
 import platform
 
 from dataclasses import replace
@@ -12,23 +12,21 @@ def get_system_include_regexes() -> List[str]:
     Returns a list of regex patterns that match system include directories.
     Includes common Windows and Unix/GCC/Clang paths.
     """
-    if platform.system() == "Windows":
-        return [
-            r"builtin",               
-            r"\\Program Files\\",                # VS STL, Windows SDK
-            r"\\Microsoft Visual Studio\\",
-            r"\\Windows Kits\\",
-            r"\\vcpkg\\installed\\.*?\\include\\",
-        ]
-    else:
-        return [
-            r"^<builtin>",               
-            r"^/usr/include/",
-            r"^/usr/local/include/",
-            r"^/usr/lib/clang/.*/include/",
-            r"^/opt/",
-        ]
-
+    return [
+        r"builtin",               
+        r"\\Program Files\\",                # VS STL, Windows SDK
+        r"\\Microsoft Visual Studio\\",
+        r"\\Windows Kits\\",
+        r"\\vcpkg\\installed\\.*?\\include\\",
+        # linux
+        r"^<builtin>",               
+        r"^/usr/include/",
+        r"^/usr/local/include/",
+        r"^/usr/lib/clang/.*/include/",
+        r"/clang/include/",
+        r"/x86_64-linux-gnu/",
+        r"^/opt/",
+    ]
 
 
 def filter_by_source_regexes(
@@ -51,10 +49,10 @@ def filter_by_source_regexes(
     exclude_patterns = [re.compile(p) for p in exclude] if exclude else []
 
     def should_keep(defn: DefinitionBase) -> bool:
-        if include_patterns and not any(p.search(defn.source) for p in include_patterns):
-            return False
-        if exclude_patterns and any(p.search(defn.source) for p in exclude_patterns):
-            return False
+        if include_patterns:
+            return any(p.search(defn.source) for p in include_patterns)
+        if exclude_patterns:
+            return not any(p.search(defn.source) for p in exclude_patterns)
         return True
 
     return [d for d in definitions if should_keep(d)]
@@ -244,3 +242,54 @@ def resolve_typedefs(definitions):
             updated.append(d)
 
     return updated
+
+
+def build_type_dependency_graph(definitions: List[TypeBase]) -> Dict[str, Set[str]]:
+    """
+    Builds a graph where each node is a type name, and edges point to types it depends on.
+    """
+    graph = defaultdict(set)
+
+    for d in definitions:
+        dname = d.fullname
+        if isinstance(d, (ClassDefinition, UnionDefinition)):
+            for field in d.fields:
+                graph[dname].add(field.type.fullname)
+        elif isinstance(d, TypedefDefinition):
+            graph[dname].add(d.type.fullname)
+        elif isinstance(d, ConstantDefinition):
+            graph[dname].add(d.type.fullname)
+
+        # ensure all nodes exist in the graph even if they have no dependencies
+        if dname not in graph:
+            graph[dname] = set()
+
+    return graph
+
+def sort_definitions_topologically(definitions: List[TypeBase]) -> List[TypeBase]:
+    """
+    Reorders the definitions so all dependencies are defined before use.
+    """
+    graph = build_type_dependency_graph(definitions)
+    name_to_def = {d.fullname: d for d in definitions}
+    visited = {}
+    result = []
+
+    def visit(node):
+        if visited.get(node) == "visiting":
+            raise ValueError(f"Cyclic dependency detected at {node}")
+        if visited.get(node) == "visited":
+            return
+
+        visited[node] = "visiting"
+        for dep in graph[node]:
+            if dep in graph:  # ignore built-in types
+                visit(dep)
+        visited[node] = "visited"
+        if node in name_to_def:
+            result.append(name_to_def[node])
+
+    for name in graph:
+        visit(name)
+
+    return result

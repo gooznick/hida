@@ -55,7 +55,7 @@ def load_and_verify_header(header_basename: str, use_bool=True, skip_failed_pars
     "bitfields_basic.xml",
     "holes_real.xml",
     "fixed_width.xml",
-    "typedefs_remove.xml",
+    "typedef_remove.xml",
     "complicated.xml",
 ])
 def test_header_xml_to_python_and_verify(filename):

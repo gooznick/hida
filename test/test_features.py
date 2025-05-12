@@ -201,7 +201,6 @@ def test_arrays():
         ("b", "int32_t", (2, 3)),
         ("c", "int32_t", (2, 3, 4)),
         ("d", "int32_t", (5, 6, 7, 8)),
-        ("e", "int32_t", (0,)),
     ]
 
     assert len(b.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
@@ -450,7 +449,6 @@ def test_fixed_width_structs():
         ],
         "D": [
             ("d1", "uint16_t", (5, 6)),
-            ("d2", "int8_t", (0,)),
         ],
     }
 

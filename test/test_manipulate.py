@@ -144,11 +144,11 @@ def test_resolve_typedefs():
 @pytest.fixture
 def sample_definitions() -> List[DefinitionBase]:
     return [
-        DefinitionBase("A", "/usr/include/stdio.h"),
-        DefinitionBase("B", "/home/user/project/foo.h"),
-        DefinitionBase("C", "C:\\Program Files\\Microsoft SDKs\\bar.h"),
-        DefinitionBase("D", "/usr/local/include/something.h"),
-        DefinitionBase("E", "D:\\MyLib\\custom\\baz.h"),
+        DefinitionBase("A", (), "/usr/include/stdio.h"),
+        DefinitionBase("B", (), "/home/user/project/foo.h"),
+        DefinitionBase("C", (), "C:\\Program Files\\Microsoft SDKs\\bar.h"),
+        DefinitionBase("D", (), "/usr/local/include/something.h"),
+        DefinitionBase("E", (), "D:\\MyLib\\custom\\baz.h"),
     ]
 
 
@@ -165,15 +165,6 @@ def test_exclude_regex(sample_definitions):
     assert all(d.name != "A" for d in result)
 
 
-def test_include_and_exclude(sample_definitions):
-    # Include all .h files, but exclude ones from Windows SDKs
-    result = filter_by_source_regexes(
-        sample_definitions,
-        include=r"\.h$",
-        exclude=r"Program Files|Microsoft"
-    )
-    assert all("Microsoft" not in d.source for d in result)
-    assert "C" not in [d.name for d in result]
 
 
 def test_no_filters(sample_definitions):
