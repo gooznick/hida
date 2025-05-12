@@ -16,6 +16,18 @@ def bit_to_type(bits: int):
         bits = 8
     return typemap[bits]
 
+def is_pythonable(t : Union[str, TypeBase]) -> bool:
+    """
+    Checks if a TypeBase or str can be converted to a valid Python ctypes type.
+    """
+    if isinstance(t, TypeBase):
+        name = t.fullname
+    else:
+        name = t
+    if "<" in name or ">" in name or "," in name:
+        return False
+    return True
+
 def to_python_name(t: Union[str, TypeBase]) -> str:
     """
     Converts a TypeBase or str to a valid Python ctypes name.
@@ -35,6 +47,8 @@ def to_python_name(t: Union[str, TypeBase]) -> str:
         "uint32_t": "ctypes.c_uint32",
         "int64_t": "ctypes.c_int64",
         "uint64_t": "ctypes.c_uint64",
+        "int128_t": "ctypes.c_int64 * 2",
+        "uint128_t": "ctypes.c_uint64 * 2",
         "float": "ctypes.c_float",
         "double": "ctypes.c_double",
         "long double": "ctypes.c_longdouble",
@@ -59,7 +73,10 @@ def generate_python_code_from_definitions(definitions: List[TypeBase], alignment
     ]
 
     for d in definitions:
+        if not is_pythonable(d):
+            continue
         if isinstance(d, (ClassDefinition, UnionDefinition)):
+
             typename = "Structure" if isinstance(d, ClassDefinition) else "Union"
             lines.append(f"# Python implementation of {d.fullname}, size = {d.size} bytes")
             lines.append(f"class {to_python_name(d)}(ctypes.{typename}):")
@@ -70,18 +87,8 @@ def generate_python_code_from_definitions(definitions: List[TypeBase], alignment
                 lines.append(f"    _pack_ = {d.alignment}")
 
             lines.append("    _fields_ = [")
-            fields = d.fields or (
-                Field(
-                    name="dummy",
-                    type=TypeBase("uint8_t"),
-                    elements=(),
-                    bitoffset=0,
-                    size_in_bits=8,
-                    bitfield=False,
-                ),
-            )
 
-            for f in fields:
+            for f in d.fields:
                 tname = to_python_name(f.type)
                 dims = "".join(f" * {dim}" for dim in f.elements if dim > 0)
                 bit = f", {f.size_in_bits}" if f.bitfield else ""
@@ -95,8 +102,12 @@ def generate_python_code_from_definitions(definitions: List[TypeBase], alignment
         elif isinstance(d, EnumDefinition):
             base = bit_to_type(d.size * 8)
             lines.append(f"class {to_python_name(d)}({base.__module__}.{base.__name__}):")
-            for e in d.enums:
+            enums = d.enums
+            if len(enums) == 0:
+                enums = [EnumName(name="DUMMY", value=0)]
+            for e in enums:
                 lines.append(f"    {e.name} = {e.value}")
+            
             lines.append("")
 
         elif isinstance(d, TypedefDefinition):

@@ -367,7 +367,10 @@ class CastXmlParse:
             Parsed result or []/None on failure.
         """
         try:
-            return parse_func(elem)
+            defn = parse_func(elem)
+            if defn and len(defn) and "<builtin>" in defn[0].source:
+                return []
+            return defn
         except NotImplementedError as e:
                 pass # NIINAE
         except Exception as e:
