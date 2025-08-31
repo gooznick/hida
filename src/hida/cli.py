@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import sys
 import tempfile
@@ -16,6 +15,7 @@ from hida import (
     write_header_from_definitions,
     write_c_header_from_definitions,
     generate_python_code_from_definitions,
+    dumps, load,
 )
 
 # Manipulators (import directly from module so you don't need to re-export in __init__)
@@ -42,18 +42,6 @@ from .castxml_runner import (
 
 
 # ---------- helpers ----------
-
-
-def _jsonable(obj):
-    if is_dataclass(obj):
-        return asdict(obj)
-    if isinstance(obj, (list, tuple)):
-        return [_jsonable(x) for x in obj]
-    if isinstance(obj, dict):
-        return {k: _jsonable(v) for k, v in obj.items()}
-    if hasattr(obj, "__dict__"):
-        return {k: _jsonable(v) for k, v in vars(obj).items()}
-    return obj
 
 
 def _write_text(path: Path, text: str) -> None:
@@ -266,6 +254,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     # 1) Get XML: path directly or generate from header via runner
     input_path: Path = args.input
     tmp_xml: Optional[Path] = None
+    json_path: Optional[Path] = None
 
     if input_path.suffix.lower() == ".xml":
         xml_path = input_path
@@ -274,6 +263,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         if extra:
             print(
                 f"[hida] Warning: extra args {extra} ignored when input is XML",
+                file=sys.stderr,
+            )
+    elif input_path.suffix.lower() == ".json":
+        json_path = input_path
+        if not json_path.exists():
+            parser.error(f"JSON not found: {json_path}")
+        if extra:
+            print(
+                f"[hida] Warning: extra args {extra} ignored when input is JSON",
                 file=sys.stderr,
             )
     else:
@@ -302,7 +300,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             return e.result.returncode
 
     # 2) Parse XML → defs
-    defs = parse(str(xml_path))
+    if json_path:
+        defs = load(json_path)
+    else:
+        defs = parse(str(xml_path))
 
     # 3) Manipulations (order chosen to be practical)
 
@@ -370,10 +371,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"[hida] wrote {args.c_header}")
 
     if args.json:
-        text = json.dumps(
-            _jsonable(defs),
+        text = dumps(
+            defs,
             indent=None if args.compact_json else 2,
-            ensure_ascii=False,
         )
         _write_text(args.json, text)
         print(f"[hida] wrote {args.json}")
