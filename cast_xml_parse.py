@@ -42,6 +42,7 @@ class CastXmlParse:
             raise RuntimeError(f"Failed to extract data from XML structure: {e}") from e
 
         self.data = sort_definitions_topologically(self.data)
+                
         return self.data
 
     @staticmethod
@@ -314,7 +315,7 @@ class CastXmlParse:
 
         fields = []
         for member_id in members_str.split():
-            member_elem = self.xml_root.find(f".//*[@id='{member_id}']")
+            member_elem = self._id_map[member_id]
             if member_elem is not None and member_elem.tag == "Field":
                 field = self._parse_field(member_elem)
                 if field:
