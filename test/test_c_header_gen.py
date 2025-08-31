@@ -25,8 +25,8 @@ import castxml_platform
     "pointers.xml",
     "std_types_pointers.xml",
     "arrays.xml",
-#    "enums.xml",
-#    "constants.xml",
+    "enums.xml",
+    "constants.xml",
     "all_types.xml",
     "includes.xml",
     "unions.xml",
@@ -46,8 +46,11 @@ def test_c_header_generation(filename):
     # Generate the header
     header_code = write_c_header_from_definitions(definitions)
     assert "#pragma once" in header_code
-    assert any("typedef struct" in line for line in header_code.splitlines()), "No struct defined"
-    assert any("typedef enum" in line for line in header_code.splitlines()) or "enum" not in header_code, "No enum defined"
+    
+    enums = bool([d for d in definitions if isinstance(d, EnumDefinition)])
+    classes = bool([d for d in definitions if isinstance(d, ClassDefinition)])
+    assert not classes or any("typedef struct" in line for line in header_code.splitlines()), "No struct defined"
+    assert not enums or  any("typedef enum" in line for line in header_code.splitlines()) or "enum" not in header_code, "No enum defined"
 
     with tempfile.TemporaryDirectory() as tmpdir:
         header_path = os.path.join(tmpdir, "generated.h")
