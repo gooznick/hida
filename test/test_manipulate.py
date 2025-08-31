@@ -20,7 +20,7 @@ from hida import (
     UnionDefinition,
     flatten_structs,
     remove_enums,
-    remove_source
+    remove_source,
 )
 
 here = os.path.dirname(__file__)
@@ -242,11 +242,8 @@ def test_filter_connected_definitions(cxplat):
     ), "Disconnected type 'Unused' should have been removed"
 
 
-
-
 HERE = Path(__file__).parent
 XML_DIR = HERE / "xml"
-
 
 
 def _get_struct(defs, name: str):
@@ -256,6 +253,7 @@ def _get_struct(defs, name: str):
                 return d
     raise AssertionError(f"Struct/union {name} not found in defs")
 
+
 def _field_names(defn):
     return [f.name for f in defn.fields]
 
@@ -264,15 +262,15 @@ def _field_names(defn):
 # flatten_structs manipulator
 # -----------------------------
 def test_flatten_structs_basic(cxplat):
-    path = os.path.join(
-        here, os.pardir, "headers", cxplat.directory, "flatten.xml"
-    )
+    path = os.path.join(here, os.pardir, "headers", cxplat.directory, "flatten.xml")
     defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
     validate_definitions(defs)
-    
+
     # Sanity before: Wrapper has a composite field `inner`
     wrapper = _get_struct(defs, "Wrapper")
-    assert any(f.name == "inner" for f in wrapper.fields), "Expected composite field 'inner' before flattening"
+    assert any(
+        f.name == "inner" for f in wrapper.fields
+    ), "Expected composite field 'inner' before flattening"
 
     # Apply flattening on just Wrapper
     defs2 = flatten_structs(defs, targets=["Wrapper"])  # or ["demo::Wrapper"]
@@ -290,7 +288,9 @@ def test_flatten_structs_basic(cxplat):
 
     # The array-of-struct example should remain unflattened by default
     wrapper_arr = _get_struct(defs2, "WrapperArr")
-    assert any(f.name == "items" for f in wrapper_arr.fields), "Array field should remain unless flatten_arrays=True"
+    assert any(
+        f.name == "items" for f in wrapper_arr.fields
+    ), "Array field should remain unless flatten_arrays=True"
 
 
 def _get_struct(defs, name_or_suffix: str):
@@ -300,12 +300,15 @@ def _get_struct(defs, name_or_suffix: str):
                 return d
     raise AssertionError(f"Struct/union {name_or_suffix} not found")
 
+
 def _field_names(defn):
     return [f.name for f in defn.fields]
+
 
 # -----------------------------
 # flatten_structs – extra coverage
 # -----------------------------
+
 
 def test_flatten_structs_fullname_and_separator(cxplat):
     """Flatten by fullname and with a custom separator."""
@@ -354,39 +357,46 @@ def test_flatten_structs_arrays_offsets(cxplat):
     assert "items" not in names
 
     # flattened element fields must exist
-    need = ["items[0]__a", "items[0]__b", "items[1]__a", "items[1]__b"]
+    need = ["items_0___a", "items_0___b", "items_1___a", "items_1___b"]
     for n in need:
         assert n in names, f"missing flattened array member {n}"
 
     # Check offsets stride between [0] and [1]
     f_by_name = {f.name: f for f in warr.fields}
-    off_a0 = f_by_name["items[0]__a"].bitoffset
-    off_a1 = f_by_name["items[1]__a"].bitoffset
-    off_b0 = f_by_name["items[0]__b"].bitoffset
-    off_b1 = f_by_name["items[1]__b"].bitoffset
+    off_a0 = f_by_name["items_0___a"].bitoffset
+    off_a1 = f_by_name["items_1___a"].bitoffset
+    off_b0 = f_by_name["items_0___b"].bitoffset
+    off_b1 = f_by_name["items_1___b"].bitoffset
 
     assert off_a1 - off_a0 == inner_stride_bits, "wrong stride for items[*]__a"
     assert off_b1 - off_b0 == inner_stride_bits, "wrong stride for items[*]__b"
+
 
 # -----------------------------
 # remove_enums manipulator
 # -----------------------------
 def test_remove_enums_basic(cxplat):
-    path = os.path.join(
-        here, os.pardir, "headers", cxplat.directory, "flat_enum.xml"
-    )
+    path = os.path.join(here, os.pardir, "headers", cxplat.directory, "flat_enum.xml")
     defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
 
     # Confirm the enum exists before transformation
-    enum_names_before = {d.fullname for d in defs if d.__class__.__name__ == "EnumDefinition"}
-    assert any(n.endswith("Color") for n in enum_names_before), "Expected an EnumDefinition 'Color' before removal"
+    enum_names_before = {
+        d.fullname for d in defs if d.__class__.__name__ == "EnumDefinition"
+    }
+    assert any(
+        n.endswith("Color") for n in enum_names_before
+    ), "Expected an EnumDefinition 'Color' before removal"
 
     # Apply removal
     defs2 = remove_enums(defs)
 
     # All enums should be gone
-    enum_names_after = {d.fullname for d in defs2 if d.__class__.__name__ == "EnumDefinition"}
-    assert not enum_names_after, f"Enum definitions remain after remove_enums: {enum_names_after}"
+    enum_names_after = {
+        d.fullname for d in defs2 if d.__class__.__name__ == "EnumDefinition"
+    }
+    assert (
+        not enum_names_after
+    ), f"Enum definitions remain after remove_enums: {enum_names_after}"
 
     # Fields that used to be enums should now be integer-typed (not the enum name)
     uses = _get_struct(defs2, "UsesColor")
@@ -397,17 +407,25 @@ def test_remove_enums_basic(cxplat):
     # Their TypeBase name should no longer be 'Color' (or namespaced Color)
     for fname in ("c1", "c2"):
         tname = fields[fname].type.name
-        assert "Color" not in tname, f"{fname} still has enum name after remove_enums (got type {tname})"
+        assert (
+            "Color" not in tname
+        ), f"{fname} still has enum name after remove_enums (got type {tname})"
 
     # And the plain byte field remains unchanged
-    assert fields["n"].type.name in {"uint8_t", "unsigned char", "unsigned char __attribute__((__vector_size__(1)))"}
+    assert fields["n"].type.name in {
+        "uint8_t",
+        "unsigned char",
+        "unsigned char __attribute__((__vector_size__(1)))",
+    }
 
 
-
-@pytest.mark.parametrize("xml_name,struct_name", [
-    ("flatten.xml",   "Wrapper"),
-    ("flat_enum.xml", "UsesColor"),
-])
+@pytest.mark.parametrize(
+    "xml_name,struct_name",
+    [
+        ("flatten.xml", "Wrapper"),
+        ("flat_enum.xml", "UsesColor"),
+    ],
+)
 def test_remove_source_default_empties_source(cxplat, xml_name, struct_name):
     path = os.path.join(here, os.pardir, "headers", cxplat.directory, xml_name)
     defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
@@ -422,10 +440,14 @@ def test_remove_source_default_empties_source(cxplat, xml_name, struct_name):
     target2 = _get_struct(defs2, struct_name)
     assert target2.source == "", "remove_source() should blank out source by default"
 
-@pytest.mark.parametrize("xml_name,struct_name", [
-    ("flatten.xml",   "Wrapper"),
-    ("flat_enum.xml", "UsesColor"),
-])
+
+@pytest.mark.parametrize(
+    "xml_name,struct_name",
+    [
+        ("flatten.xml", "Wrapper"),
+        ("flat_enum.xml", "UsesColor"),
+    ],
+)
 def test_remove_source_header_only_keeps_basename(cxplat, xml_name, struct_name):
     path = os.path.join(here, os.pardir, "headers", cxplat.directory, xml_name)
     defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
@@ -434,10 +456,13 @@ def test_remove_source_header_only_keeps_basename(cxplat, xml_name, struct_name)
     target = _get_struct(defs, struct_name)
     before = (target.source or "").strip().strip('"').strip("'")
     expected = (
-        before if (before.startswith("<") and before.endswith(">"))
+        before
+        if (before.startswith("<") and before.endswith(">"))
         else (PurePath(before).name if before else "")
     )
 
     defs2 = remove_source(defs, header_only=True)
     target2 = _get_struct(defs2, struct_name)
-    assert target2.source == expected, f"expected basename '{expected}', got '{target2.source}'"
+    assert (
+        target2.source == expected
+    ), f"expected basename '{expected}', got '{target2.source}'"

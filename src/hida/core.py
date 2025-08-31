@@ -8,4 +8,6 @@ def parse(xml_path: str, **kwargs):
     Helper function to parse a CastXML XML file with optional configuration parameters.
     """
     parser = CastXmlParse(**kwargs)
-    return parser.parse_xml(Path(xml_path))
+    defs = parser.parse_xml(Path(xml_path))
+
+    return defs

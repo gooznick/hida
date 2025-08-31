@@ -19,9 +19,9 @@ from .manipulate import (
     flatten_namespaces,
     resolve_typedefs,
     filter_connected_definitions,
-    flatten_structs, 
+    flatten_structs,
     remove_enums,
-    remove_source
+    remove_source,
 )
 
 from .c_header_gen import write_c_header_from_definitions
@@ -31,6 +31,7 @@ from .python_gen import (
     write_code_to_file,
     verify_struct_sizes,
 )
+from .ir_json import dump, dumps, load, loads
 
 __all__ = [
     # functions
@@ -66,4 +67,9 @@ __all__ = [
     "TypedefDefinition",
     "FunctionDefinition",
     "ConstantDefinition",
+    # ir_json
+    "load",
+    "loads",
+    "dump",
+    "dumps",
 ]

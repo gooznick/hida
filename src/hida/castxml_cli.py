@@ -12,6 +12,7 @@ from .castxml_runner import (
     find_castxml,
 )
 
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="hida-castxml",
@@ -27,13 +28,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Header file or directory. If directory, all headers are processed recursively.",
     )
     g_in.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         type=Path,
         default=None,
         help="XML output file (single-file mode). If omitted, uses <header>.xml in --out-dir.",
     )
     g_in.add_argument(
-        "-O", "--out-dir",
+        "-O",
+        "--out-dir",
         type=Path,
         default=Path("castxml"),
         help="Output directory (directory mode, or used when --output not given).",
@@ -53,7 +56,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to castxml executable. If not set, use CASTXML_BIN env var or PATH.",
     )
     g_cx.add_argument(
-        "-I", "--include",
+        "-I",
+        "--include",
         action="append",
         type=Path,
         default=[],
@@ -69,10 +73,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         help="Extra argument forwarded to castxml/clang (repeatable). "
-             "Unknown CLI args are also forwarded automatically.",
+        "Unknown CLI args are also forwarded automatically.",
     )
 
     return p
+
 
 def main(argv: Optional[List[str]] = None) -> int:
     parser = build_parser()
@@ -119,6 +124,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     except CastxmlRunError as e:
         # Runner already printed full command + stdout/stderr
         return e.result.returncode
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

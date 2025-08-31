@@ -141,5 +141,4 @@ def write_header_from_definitions(definitions: List[TypeBase]) -> str:
         else:
             raise RuntimeError(f"Unknown definition: {d}")
 
-    print(lines)
     return "\n".join(lines)

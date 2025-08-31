@@ -55,6 +55,7 @@ def find_castxml(explicit: Optional[str | Path] = None) -> str:
         return env
 
     from shutil import which
+
     exe_name = "castxml.exe" if _IS_WINDOWS else "castxml"
     exe = which(exe_name) or which("castxml")
     if exe:
@@ -92,7 +93,9 @@ def run_castxml_for_header(
     # Create a temporary .cpp that includes the header (robust against headers needing TU context).
     tmp_cpp_path = None
     try:
-        with tempfile.NamedTemporaryFile(suffix=".cpp", mode="w", delete=False) as tmp_cpp:
+        with tempfile.NamedTemporaryFile(
+            suffix=".cpp", mode="w", delete=False
+        ) as tmp_cpp:
             tmp_cpp.write(f'#include "{header}"\n')
             tmp_cpp_path = Path(tmp_cpp.name)
 
@@ -113,12 +116,16 @@ def run_castxml_for_header(
 
         # Extra args forwarded (placed near the end, before source is OK too)
         if extra_args:
-            cmd[1:1] = list(extra_args)  # insert after executable for visibility; harmless
+            cmd[1:1] = list(
+                extra_args
+            )  # insert after executable for visibility; harmless
 
         # Print full command (shell-like)
         print("$", _format_cmd(cmd))
 
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        proc = subprocess.run(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
         result = CastxmlResult(
             header=header,
             xml_out=xml_out,
@@ -190,4 +197,5 @@ def _format_cmd(cmd: Sequence[str]) -> str:
         # Fallback: manual quoting
         def q(s: str) -> str:
             return f'"{s}"' if (" " in s or "\t" in s) else s
+
         return " ".join(q(str(c)) for c in cmd)

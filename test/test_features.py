@@ -434,7 +434,12 @@ def test_remove_unknown_behavior(cxplat):
     )
 
     # ✅ Case: skip_failed_parsing and remove_unknown enabled — should work
-    result = parse(xml_path, skip_failed_parsing=True, remove_unknown=True)
+    result = parse(
+        xml_path,
+        do_not_ignore_system=True,
+        skip_failed_parsing=True,
+        remove_unknown=True,
+    )
 
     validate_definitions(result)
     names = {d.name for d in result if hasattr(d, "name")}

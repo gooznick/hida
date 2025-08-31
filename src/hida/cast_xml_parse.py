@@ -12,6 +12,7 @@ class CastXmlParse:
         self,
         use_bool=False,
         skip_failed_parsing=False,
+        do_not_ignore_system=False,
         remove_unknown=True,
         verbose=False,
     ):
@@ -20,6 +21,7 @@ class CastXmlParse:
         """
         self.use_bool = use_bool
         self.skip_failed_parsing = skip_failed_parsing
+        self.do_not_ignore_system = do_not_ignore_system
         self.remove_unknown = remove_unknown
         self.verbose = verbose
         self.xml_root = None
@@ -42,7 +44,10 @@ class CastXmlParse:
             raise RuntimeError(f"Failed to extract data from XML structure: {e}") from e
 
         self.data = sort_definitions_topologically(self.data)
-
+        if not self.do_not_ignore_system:
+            self.data = filter_by_source_regexes(
+                self.data, exclude=get_system_include_regexes()
+            )
         return self.data
 
     @staticmethod

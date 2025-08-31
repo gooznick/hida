@@ -349,8 +349,10 @@ def flatten_structs(
     names = set(targets)
     # allow matching by short name too
     targets_full: Set[str] = {
-        d.fullname for d in definitions
-        if isinstance(d, (ClassDefinition, UnionDefinition)) and (d.name in names or d.fullname in names)
+        d.fullname
+        for d in definitions
+        if isinstance(d, (ClassDefinition, UnionDefinition))
+        and (d.name in names or d.fullname in names)
     }
 
     def is_composite(fullname: str) -> bool:
@@ -374,16 +376,22 @@ def flatten_structs(
             return
 
         # Compute stride for each element if we flatten arrays of composites
-        elem_stride_bits = (ref.size * 8) if isinstance(ref, (ClassDefinition, UnionDefinition)) else 0
+        elem_stride_bits = (
+            (ref.size * 8) if isinstance(ref, (ClassDefinition, UnionDefinition)) else 0
+        )
 
         # Helper to emit subfields for a specific array element index prefix (or no index)
         def emit_subfields(name_prefix: str, elem_bit_base: int):
             for sf in sorted(ref.fields, key=lambda x: x.bitoffset):
-                new_name = f"{name_prefix}{separator}{sf.name}" if name_prefix else sf.name
+                new_name = (
+                    f"{name_prefix}{separator}{sf.name}" if name_prefix else sf.name
+                )
                 new_bit = parent_bitoff + f.bitoffset + elem_bit_base + sf.bitoffset
                 # If a subfield is itself composite, recurse (deep flatten)
                 if is_composite(sf.type.fullname) and (sf.elements == ()):
-                    yield from flatten_fields(parent_bitoff + f.bitoffset + elem_bit_base, new_name, sf)
+                    yield from flatten_fields(
+                        parent_bitoff + f.bitoffset + elem_bit_base, new_name, sf
+                    )
                 else:
                     yield replace(sf, name=new_name, bitoffset=new_bit)
 
@@ -393,7 +401,9 @@ def flatten_structs(
         else:
             # Flatten arrays of composites: unroll with index suffixes
             from itertools import product
+
             dims = list(f.elements)
+
             # linearize multi-d indices to a bitoffset; compute index -> stride
             def linear_index(idxs: Tuple[int, ...], dims: List[int]) -> int:
                 stride = 1
@@ -406,12 +416,15 @@ def flatten_structs(
             for idxs in product(*[range(d) for d in dims]):
                 lin = linear_index(idxs, dims)
                 elem_base = lin * elem_stride_bits
-                idx_suffix = "".join(f"[{i}]" for i in idxs)
+                idx_suffix = "".join(f"_{i}_" for i in idxs)
                 yield from emit_subfields(f"{f.name}{idx_suffix}", elem_base)
 
     new_defs: List[TypeBase] = []
     for d in definitions:
-        if not isinstance(d, (ClassDefinition, UnionDefinition)) or d.fullname not in targets_full:
+        if (
+            not isinstance(d, (ClassDefinition, UnionDefinition))
+            or d.fullname not in targets_full
+        ):
             new_defs.append(d)
             continue
 
@@ -429,6 +442,7 @@ def flatten_structs(
         new_defs.append(replace(d, fields=tuple(flat_fields)))
 
     return new_defs
+
 
 def remove_enums(
     definitions: List[TypeBase],
@@ -457,10 +471,22 @@ def remove_enums(
         if t.fullname in enum_map:
             return enum_map[t.fullname]
         # Some IRs might not have fullname filled on TypeBase; match by name
-        if t.name in {defs_by_name[k].name for k in enum_map.keys()} if (defs_by_name := {d.fullname: d for d in definitions if isinstance(d, EnumDefinition)}) else set():
+        if (
+            t.name in {defs_by_name[k].name for k in enum_map.keys()}
+            if (
+                defs_by_name := {
+                    d.fullname: d for d in definitions if isinstance(d, EnumDefinition)
+                }
+            )
+            else set()
+        ):
             # find the first matching by name; if multiple enums share a short name in different namespaces,
             # prefer not to guess—keep original type in that rare case.
-            candidates = [enum_map[k] for k, ed in defs_by_name.items() if ed.name == t.name and k in enum_map]
+            candidates = [
+                enum_map[k]
+                for k, ed in defs_by_name.items()
+                if ed.name == t.name and k in enum_map
+            ]
             if len(candidates) == 1:
                 return candidates[0]
         return t
@@ -471,10 +497,7 @@ def remove_enums(
             # drop enum definitions
             continue
         elif isinstance(d, (ClassDefinition, UnionDefinition)):
-            new_fields = tuple(
-                replace(f, type=subst_type(f.type))
-                for f in d.fields
-            )
+            new_fields = tuple(replace(f, type=subst_type(f.type)) for f in d.fields)
             out.append(replace(d, fields=new_fields))
         elif isinstance(d, TypedefDefinition):
             out.append(replace(d, type=subst_type(d.type)))
@@ -485,9 +508,9 @@ def remove_enums(
     return out
 
 
-
-
-def remove_source(definitions: List[DefinitionBase], *, header_only: bool = False) -> List[DefinitionBase]:
+def remove_source(
+    definitions: List[DefinitionBase], *, header_only: bool = False
+) -> List[DefinitionBase]:
     """
     Rewrite `source` for all definitions:
       - header_only = False (default): set source to empty string "".
