@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+<CastXML format="1.2.1">
+  <Namespace id="_1" name="::" members="_2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42 _43 _44 _45 _46 _47 _48 _49 _50"/>
+  <Struct id="_2" name="_GUID" context="_1" location="f0:0" file="f0" line="0" incomplete="1"/>
+  <Typedef id="_3" name="__int128_t" type="_51" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_4" name="__uint128_t" type="_52" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_5" name="__NSConstantString" type="_53" context="_1" location="f0:0" file="f0" line="0"/>
+  <Class id="_6" name="type_info" context="_1" location="f0:0" file="f0" line="0" incomplete="1"/>
+  <Typedef id="_7" name="size_t" type="_54" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_8" name="__builtin_ms_va_list" type="_55" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_9" name="__builtin_va_list" type="_55" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_10" name="uintptr_t" type="_54" context="_1" location="f1:61" file="f1" line="61"/>
+  <Typedef id="_11" name="va_list" type="_55" context="_1" location="f1:72" file="f1" line="72"/>
+  <Function id="_12" name="__va_start" returns="_56" context="_1" location="f1:155" file="f1" line="155" extern="1" artificial="1" mangled="?__va_start@@9">
+    <Argument type="_57"/>
+    <Ellipsis/>
+  </Function>
+  <Typedef id="_13" name="ptrdiff_t" type="_58" context="_1" location="f2:194" file="f2" line="194"/>
+  <Typedef id="_14" name="intptr_t" type="_58" context="_1" location="f2:195" file="f2" line="195"/>
+  <Typedef id="_15" name="__vcrt_bool" type="_59" context="_1" location="f2:203" file="f2" line="203"/>
+  <Function id="_16" name="__security_init_cookie" returns="_56" context="_1" location="f2:377" file="f2" line="377" mangled="?__security_init_cookie@@9"/>
+  <Function id="_17" name="__security_check_cookie" returns="_56" context="_1" location="f2:386" file="f2" line="386" mangled="?__security_check_cookie@@9">
+    <Argument name="_StackCookie" type="_10" location="f2:386" file="f2" line="386"/>
+  </Function>
+  <Function id="_18" name="__report_gsfailure" returns="_56" context="_1" location="f2:387" file="f2" line="387" mangled="?__report_gsfailure@@9">
+    <Argument name="_StackCookie" type="_10" location="f2:387" file="f2" line="387"/>
+  </Function>
+  <Variable id="_19" name="__security_cookie" type="_10" context="_1" location="f2:391" file="f2" line="391" extern="1" mangled="?__security_cookie@@3_KA"/>
+  <Typedef id="_20" name="int8_t" type="_60" context="_1" location="f3:18" file="f3" line="18"/>
+  <Typedef id="_21" name="int16_t" type="_61" context="_1" location="f3:19" file="f3" line="19"/>
+  <Typedef id="_22" name="int32_t" type="_62" context="_1" location="f3:20" file="f3" line="20"/>
+  <Typedef id="_23" name="int64_t" type="_58" context="_1" location="f3:21" file="f3" line="21"/>
+  <Typedef id="_24" name="uint8_t" type="_63" context="_1" location="f3:22" file="f3" line="22"/>
+  <Typedef id="_25" name="uint16_t" type="_64" context="_1" location="f3:23" file="f3" line="23"/>
+  <Typedef id="_26" name="uint32_t" type="_65" context="_1" location="f3:24" file="f3" line="24"/>
+  <Typedef id="_27" name="uint64_t" type="_54" context="_1" location="f3:25" file="f3" line="25"/>
+  <Typedef id="_28" name="int_least8_t" type="_60" context="_1" location="f3:27" file="f3" line="27"/>
+  <Typedef id="_29" name="int_least16_t" type="_61" context="_1" location="f3:28" file="f3" line="28"/>
+  <Typedef id="_30" name="int_least32_t" type="_62" context="_1" location="f3:29" file="f3" line="29"/>
+  <Typedef id="_31" name="int_least64_t" type="_58" context="_1" location="f3:30" file="f3" line="30"/>
+  <Typedef id="_32" name="uint_least8_t" type="_63" context="_1" location="f3:31" file="f3" line="31"/>
+  <Typedef id="_33" name="uint_least16_t" type="_64" context="_1" location="f3:32" file="f3" line="32"/>
+  <Typedef id="_34" name="uint_least32_t" type="_65" context="_1" location="f3:33" file="f3" line="33"/>
+  <Typedef id="_35" name="uint_least64_t" type="_54" context="_1" location="f3:34" file="f3" line="34"/>
+  <Typedef id="_36" name="int_fast8_t" type="_60" context="_1" location="f3:36" file="f3" line="36"/>
+  <Typedef id="_37" name="int_fast16_t" type="_62" context="_1" location="f3:37" file="f3" line="37"/>
+  <Typedef id="_38" name="int_fast32_t" type="_62" context="_1" location="f3:38" file="f3" line="38"/>
+  <Typedef id="_39" name="int_fast64_t" type="_58" context="_1" location="f3:39" file="f3" line="39"/>
+  <Typedef id="_40" name="uint_fast8_t" type="_63" context="_1" location="f3:40" file="f3" line="40"/>
+  <Typedef id="_41" name="uint_fast16_t" type="_65" context="_1" location="f3:41" file="f3" line="41"/>
+  <Typedef id="_42" name="uint_fast32_t" type="_65" context="_1" location="f3:42" file="f3" line="42"/>
+  <Typedef id="_43" name="uint_fast64_t" type="_54" context="_1" location="f3:43" file="f3" line="43"/>
+  <Typedef id="_44" name="intmax_t" type="_58" context="_1" location="f3:45" file="f3" line="45"/>
+  <Typedef id="_45" name="uintmax_t" type="_54" context="_1" location="f3:46" file="f3" line="46"/>
+  <Enumeration id="_46" name="Color" type="_62" context="_1" location="f4:4" file="f4" line="4" size="32" align="32">
+    <EnumValue name="Red" init="0"/>
+    <EnumValue name="Green" init="1"/>
+    <EnumValue name="Blue" init="5"/>
+    <EnumValue name="Yellow" init="6"/>
+  </Enumeration>
+  <Enumeration id="_47" name="Direction" type="_62" context="_1" location="f4:12" file="f4" line="12" scoped="1" size="32" align="32">
+    <EnumValue name="North" init="0"/>
+    <EnumValue name="South" init="1"/>
+    <EnumValue name="East" init="2"/>
+    <EnumValue name="West" init="3"/>
+  </Enumeration>
+  <Enumeration id="_48" name="StatusCode" type="_24" context="_1" location="f4:20" file="f4" line="20" scoped="1" size="8" align="8">
+    <EnumValue name="OK" init="0"/>
+    <EnumValue name="Error" init="1"/>
+    <EnumValue name="Timeout" init="2"/>
+    <EnumValue name="Unknown" init="255"/>
+  </Enumeration>
+  <Enumeration id="_49" name="ErrorLevel" type="_21" context="_1" location="f4:28" file="f4" line="28" size="16" align="16">
+    <EnumValue name="Info" init="1"/>
+    <EnumValue name="Warning" init="2"/>
+    <EnumValue name="Critical" init="3"/>
+  </Enumeration>
+  <Enumeration id="_50" name="" type="_62" context="_1" location="f4:35" file="f4" line="35" size="32" align="32">
+    <EnumValue name="FLAG_READ" init="1"/>
+    <EnumValue name="FLAG_WRITE" init="2"/>
+    <EnumValue name="FLAG_EXEC" init="4"/>
+  </Enumeration>
+  <FundamentalType id="_51" name="__int128" size="128" align="128"/>
+  <FundamentalType id="_52" name="unsigned __int128" size="128" align="128"/>
+  <Struct id="_53" name="__NSConstantString_tag" context="_1" location="f0:0" file="f0" line="0" members="_66 _67 _68 _69" size="256" align="64"/>
+  <FundamentalType id="_54" name="long long unsigned int" size="64" align="64"/>
+  <PointerType id="_55" type="_70" size="64" align="64"/>
+  <FundamentalType id="_56" name="void" size="0" align="8"/>
+  <PointerType id="_57" type="_55" size="64" align="64"/>
+  <FundamentalType id="_58" name="long long int" size="64" align="64"/>
+  <FundamentalType id="_59" name="bool" size="8" align="8"/>
+  <FundamentalType id="_60" name="signed char" size="8" align="8"/>
+  <FundamentalType id="_61" name="short int" size="16" align="16"/>
+  <FundamentalType id="_62" name="int" size="32" align="32"/>
+  <FundamentalType id="_63" name="unsigned char" size="8" align="8"/>
+  <FundamentalType id="_64" name="short unsigned int" size="16" align="16"/>
+  <FundamentalType id="_65" name="unsigned int" size="32" align="32"/>
+  <Field id="_66" name="isa" type="_71" context="_53" access="public" offset="0"/>
+  <Field id="_67" name="flags" type="_62" context="_53" access="public" offset="64"/>
+  <Field id="_68" name="str" type="_72" context="_53" access="public" offset="128"/>
+  <Field id="_69" name="length" type="_73" context="_53" access="public" offset="192"/>
+  <PointerType id="_71" type="_62c" size="64" align="64"/>
+  <CvQualifiedType id="_62c" type="_62" const="1"/>
+  <PointerType id="_72" type="_70c" size="64" align="64"/>
+  <CvQualifiedType id="_70c" type="_70" const="1"/>
+  <FundamentalType id="_73" name="long int" size="32" align="32"/>
+  <FundamentalType id="_70" name="char" size="8" align="8"/>
+  <File id="f0" name="&lt;builtin&gt;"/>
+  <File id="f1" name="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/include\vadefs.h"/>
+  <File id="f2" name="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/include\vcruntime.h"/>
+  <File id="f3" name="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/include\stdint.h"/>
+  <File id="f4" name="\\VBoxSvr\vbox\castxml\headers\enums.h"/>
+</CastXML>
