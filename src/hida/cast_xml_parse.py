@@ -1,8 +1,8 @@
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from data import *
-from manipulate import *
-import data_helpers
+from .data import *
+from .manipulate import *
+from . import data_helpers
 
 
 class CastXmlParse:
@@ -515,12 +515,3 @@ class CastXmlParse:
             ConstantDefinition(name=type_.name, namespace=type_.namespace, source=source, type=type, value=value)
         ]
 
-
-
-
-def parse(xml_path: str, **kwargs):
-    """
-    Helper function to parse a CastXML XML file with optional configuration parameters.
-    """
-    parser = CastXmlParse(**kwargs)
-    return parser.parse_xml(Path(xml_path))

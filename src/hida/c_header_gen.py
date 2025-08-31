@@ -1,5 +1,5 @@
 from typing import List
-from data import *
+from .data import *
 
 def write_c_header_from_definitions(definitions):
     """

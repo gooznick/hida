@@ -6,10 +6,10 @@ import sys
 here = os.path.dirname(__file__)
 
 sys.path.insert(0, os.path.join(here, os.pardir))
-from cast_xml_parse import parse
-from data_helpers import *
-from manipulate import *
-from header_gen import write_header_from_definitions
+
+from hida import parse, validate_definitions, write_header_from_definitions, filter_by_source_regexes, get_system_include_regexes
+from hida import EnumDefinition, ClassDefinition, TypedefDefinition, UnionDefinition
+
 
 here = os.path.dirname(__file__)
 

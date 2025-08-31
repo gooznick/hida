@@ -1,10 +1,9 @@
 import re
 from typing import List, Optional, Union, Dict, Set
-import platform
 
 from dataclasses import replace
 
-from data import *
+from .data import *
 
 
 def get_system_include_regexes() -> List[str]:

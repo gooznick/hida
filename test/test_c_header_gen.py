@@ -2,15 +2,15 @@ import os
 import tempfile
 import subprocess
 import sys
+import pytest
+
 here = os.path.dirname(__file__)
 
 sys.path.insert(0, os.path.join(here, os.pardir))
-from cast_xml_parse import parse
-from data_helpers import validate_definitions, find_type_by_name
-from data import *
-from manipulate import filter_by_source_regexes, get_system_include_regexes
-from c_header_gen import write_c_header_from_definitions
-import pytest
+
+from hida import parse, validate_definitions, filter_by_source_regexes, get_system_include_regexes,  write_c_header_from_definitions
+from hida import EnumDefinition, ClassDefinition
+
 
 @pytest.mark.parametrize("filename", [
     "basic.xml",

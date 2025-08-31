@@ -5,9 +5,10 @@ here = os.path.dirname(__file__)
 
 sys.path.insert(0, os.path.join(here, os.pardir))
 
-from cast_xml_parse import CastXmlParse, parse
-from data import *
-from data_helpers import *
+from hida import parse, validate_definitions
+from hida import ClassDefinition, find_type_by_name
+
+
 
 def test_complicated(cxplat):
     result = parse(

@@ -1,5 +1,5 @@
-from data import *
 from typing import List, Optional, Union
+from .data import *
 
 builtin_types = {
     "int8_t",

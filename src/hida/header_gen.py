@@ -1,5 +1,6 @@
 from typing import List
-from data import *
+
+from hida import TypeBase, TypedefDefinition, ConstantDefinition, ClassDefinition, UnionDefinition, EnumDefinition
 
 def to_c_type(t: TypeBase) -> str:
     name = t.name

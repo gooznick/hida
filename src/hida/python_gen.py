@@ -2,7 +2,8 @@ import ctypes
 import importlib.util
 from typing import List, Union
 from dataclasses import replace
-from data import *
+
+from .data import *
 
 def bit_to_type(bits: int):
     typemap = {

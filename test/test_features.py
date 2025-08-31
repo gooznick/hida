@@ -5,10 +5,10 @@ here = os.path.dirname(__file__)
 
 sys.path.insert(0, os.path.join(here, os.pardir))
 
-from cast_xml_parse import CastXmlParse, parse
-from data import *
-from data_helpers import *
+from hida import parse, validate_definitions, find_type_by_name
+from hida import EnumDefinition, ClassDefinition, UnionDefinition, ConstantDefinition, TypedefDefinition, TypeBase
 
+from hida.cast_xml_parse import CastXmlParse
 
 def test_basic(cxplat):
     result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "basic.xml"))
