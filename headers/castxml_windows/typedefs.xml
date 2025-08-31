@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<CastXML format="1.2.1">
+  <Namespace id="_1" name="::" members="_2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31"/>
+  <Struct id="_2" name="_GUID" context="_1" location="f0:0" file="f0" line="0" incomplete="1"/>
+  <Typedef id="_3" name="__int128_t" type="_32" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_4" name="__uint128_t" type="_33" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_5" name="__NSConstantString" type="_34" context="_1" location="f0:0" file="f0" line="0"/>
+  <Class id="_6" name="type_info" context="_1" location="f0:0" file="f0" line="0" incomplete="1"/>
+  <Typedef id="_7" name="size_t" type="_35" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_8" name="__builtin_ms_va_list" type="_36" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_9" name="__builtin_va_list" type="_36" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_10" name="MyInt" type="_37" context="_1" location="f1:1" file="f1" line="1"/>
+  <Typedef id="_11" name="MyULong" type="_38" context="_1" location="f1:2" file="f1" line="2"/>
+  <Typedef id="_12" name="FloatPtr" type="_39" context="_1" location="f1:3" file="f1" line="3"/>
+  <Typedef id="_13" name="FuncPtr" type="_40" context="_1" location="f1:4" file="f1" line="4"/>
+  <Struct id="_14" name="" context="_1" location="f1:6" file="f1" line="6" members="_41 _42 _43 _44 _45 _46" size="64" align="32"/>
+  <Typedef id="_15" name="Point" type="_47" context="_1" location="f1:9" file="f1" line="9"/>
+  <Typedef id="_16" name="PointPtr" type="_48" context="_1" location="f1:11" file="f1" line="11"/>
+  <Struct id="_17" name="" context="_1" location="f1:13" file="f1" line="13" members="_49 _50 _51 _52 _53 _54" size="96" align="32"/>
+  <Typedef id="_18" name="Circle" type="_55" context="_1" location="f1:16" file="f1" line="16"/>
+  <Typedef id="_19" name="Shapes" type="_56" context="_1" location="f1:18" file="f1" line="18"/>
+  <Typedef id="_20" name="ShapesPtr" type="_57" context="_1" location="f1:20" file="f1" line="20"/>
+  <Struct id="_21" name="" context="_1" location="f1:22" file="f1" line="22" members="_58 _59 _60 _61 _62 _63" size="128" align="64"/>
+  <Typedef id="_22" name="ComplexStruct" type="_64" context="_1" location="f1:25" file="f1" line="25"/>
+  <Typedef id="_23" name="Alias1" type="_10" context="_1" location="f1:28" file="f1" line="28"/>
+  <Typedef id="_24" name="Alias2" type="_23" context="_1" location="f1:29" file="f1" line="29"/>
+  <Typedef id="_25" name="Alias3" type="_24" context="_1" location="f1:30" file="f1" line="30"/>
+  <Typedef id="_26" name="IntArray1D" type="_65" context="_1" location="f1:32" file="f1" line="32"/>
+  <Typedef id="_27" name="IntArray2D" type="_66" context="_1" location="f1:33" file="f1" line="33"/>
+  <Typedef id="_28" name="IntArray3D" type="_67" context="_1" location="f1:34" file="f1" line="34"/>
+  <Typedef id="_29" name="Alias1D" type="_26" context="_1" location="f1:37" file="f1" line="37"/>
+  <Typedef id="_30" name="Alias2D" type="_27" context="_1" location="f1:38" file="f1" line="38"/>
+  <Typedef id="_31" name="Alias3D" type="_28" context="_1" location="f1:39" file="f1" line="39"/>
+  <FundamentalType id="_32" name="__int128" size="128" align="128"/>
+  <FundamentalType id="_33" name="unsigned __int128" size="128" align="128"/>
+  <Struct id="_34" name="__NSConstantString_tag" context="_1" location="f0:0" file="f0" line="0" members="_68 _69 _70 _71" size="256" align="64"/>
+  <FundamentalType id="_35" name="long long unsigned int" size="64" align="64"/>
+  <PointerType id="_36" type="_72" size="64" align="64"/>
+  <FundamentalType id="_37" name="int" size="32" align="32"/>
+  <FundamentalType id="_38" name="long unsigned int" size="32" align="32"/>
+  <PointerType id="_39" type="_73" size="64" align="64"/>
+  <PointerType id="_40" type="_74" size="64" align="64"/>
+  <Field id="_41" name="x" type="_37" context="_14" access="public" location="f1:7" file="f1" line="7" offset="0"/>
+  <Field id="_42" name="y" type="_37" context="_14" access="public" location="f1:8" file="f1" line="8" offset="32"/>
+  <Constructor id="_43" name="" context="_14" access="public" location="f1:6" file="f1" line="6" inline="1" artificial="1"/>
+  <Constructor id="_44" name="" context="_14" access="public" location="f1:6" file="f1" line="6" inline="1" artificial="1">
+    <Argument type="_75" location="f1:6" file="f1" line="6"/>
+  </Constructor>
+  <OperatorMethod id="_45" name="=" returns="_76" context="_14" access="public" location="f1:6" file="f1" line="6" inline="1" artificial="1" mangled="??4Point@@QEAAAEAU0@AEBU0@@Z">
+    <Argument type="_75" location="f1:6" file="f1" line="6"/>
+  </OperatorMethod>
+  <Destructor id="_46" name="" context="_14" access="public" location="f1:6" file="f1" line="6" inline="1" artificial="1"/>
+  <ElaboratedType id="_47" type="_14"/>
+  <PointerType id="_48" type="_15" size="64" align="64"/>
+  <Field id="_49" name="center" type="_15" context="_17" access="public" location="f1:14" file="f1" line="14" offset="0"/>
+  <Field id="_50" name="radius" type="_73" context="_17" access="public" location="f1:15" file="f1" line="15" offset="64"/>
+  <Constructor id="_51" name="" context="_17" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1"/>
+  <Constructor id="_52" name="" context="_17" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1">
+    <Argument type="_77" location="f1:13" file="f1" line="13"/>
+  </Constructor>
+  <OperatorMethod id="_53" name="=" returns="_78" context="_17" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1" mangled="??4Circle@@QEAAAEAU0@AEBU0@@Z">
+    <Argument type="_77" location="f1:13" file="f1" line="13"/>
+  </OperatorMethod>
+  <Destructor id="_54" name="" context="_17" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1"/>
+  <ElaboratedType id="_55" type="_17"/>
+  <ArrayType id="_56" min="0" max="9" type="_18"/>
+  <PointerType id="_57" type="_19" size="64" align="64"/>
+  <Field id="_58" name="shape_array" type="_20" context="_21" access="public" location="f1:23" file="f1" line="23" offset="0"/>
+  <Field id="_59" name="callback" type="_13" context="_21" access="public" location="f1:24" file="f1" line="24" offset="64"/>
+  <Constructor id="_60" name="" context="_21" access="public" location="f1:22" file="f1" line="22" inline="1" artificial="1"/>
+  <Constructor id="_61" name="" context="_21" access="public" location="f1:22" file="f1" line="22" inline="1" artificial="1">
+    <Argument type="_79" location="f1:22" file="f1" line="22"/>
+  </Constructor>
+  <OperatorMethod id="_62" name="=" returns="_80" context="_21" access="public" location="f1:22" file="f1" line="22" inline="1" artificial="1" mangled="??4ComplexStruct@@QEAAAEAU0@AEBU0@@Z">
+    <Argument type="_79" location="f1:22" file="f1" line="22"/>
+  </OperatorMethod>
+  <Destructor id="_63" name="" context="_21" access="public" location="f1:22" file="f1" line="22" inline="1" artificial="1"/>
+  <ElaboratedType id="_64" type="_21"/>
+  <ArrayType id="_65" min="0" max="4" type="_37"/>
+  <ArrayType id="_66" min="0" max="2" type="_81"/>
+  <ArrayType id="_67" min="0" max="1" type="_66"/>
+  <Field id="_68" name="isa" type="_82" context="_34" access="public" offset="0"/>
+  <Field id="_69" name="flags" type="_37" context="_34" access="public" offset="64"/>
+  <Field id="_70" name="str" type="_83" context="_34" access="public" offset="128"/>
+  <Field id="_71" name="length" type="_84" context="_34" access="public" offset="192"/>
+  <FundamentalType id="_73" name="float" size="32" align="32"/>
+  <ReferenceType id="_75" type="_14c" size="64" align="64"/>
+  <CvQualifiedType id="_14c" type="_14" const="1"/>
+  <ReferenceType id="_76" type="_14" size="64" align="64"/>
+  <ReferenceType id="_77" type="_17c" size="64" align="64"/>
+  <CvQualifiedType id="_17c" type="_17" const="1"/>
+  <ReferenceType id="_78" type="_17" size="64" align="64"/>
+  <ReferenceType id="_79" type="_21c" size="64" align="64"/>
+  <CvQualifiedType id="_21c" type="_21" const="1"/>
+  <ReferenceType id="_80" type="_21" size="64" align="64"/>
+  <ArrayType id="_81" min="0" max="3" type="_37"/>
+  <PointerType id="_82" type="_37c" size="64" align="64"/>
+  <CvQualifiedType id="_37c" type="_37" const="1"/>
+  <PointerType id="_83" type="_72c" size="64" align="64"/>
+  <CvQualifiedType id="_72c" type="_72" const="1"/>
+  <FundamentalType id="_84" name="long int" size="32" align="32"/>
+  <FundamentalType id="_72" name="char" size="8" align="8"/>
+  <FunctionType id="_74" returns="_85">
+    <Argument type="_37"/>
+    <Argument type="_73"/>
+  </FunctionType>
+  <FundamentalType id="_85" name="void" size="0" align="8"/>
+  <File id="f0" name="&lt;builtin&gt;"/>
+  <File id="f1" name="\\VBoxSvr\vbox\castxml\headers\typedefs.h"/>
+</CastXML>

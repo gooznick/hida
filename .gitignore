@@ -1,0 +1,47 @@
+# --- Python cache / build ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# --- Virtual environments ---
+.env
+.venv
+env/
+venv/
+ENV/
+Pipfile.lock
+poetry.lock
+
+# --- IDE / editor settings ---
+.vscode/
+.idea/
+*.swp
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Profiling / logs ---
+prof/
+test/prof/
+*.prof
+*.log
+
+# --- Test caches ---
+.pytest_cache/
+.tox/
+.coverage
+htmlcov/
+.mypy_cache/
+test/__pycache__/
+
+# --- Project specific ---
+.python-version
+*.zip

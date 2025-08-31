@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<CastXML format="1.2.1">
+  <Namespace id="_1" name="::" members="_2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12"/>
+  <Typedef id="_2" name="__int128_t" type="_13" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_3" name="__uint128_t" type="_14" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_4" name="__NSConstantString" type="_15" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_5" name="__builtin_ms_va_list" type="_16" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_6" name="__builtin_va_list" type="_17" context="_1" location="f0:0" file="f0" line="0"/>
+  <Variable id="_7" name="buffer_size" type="_18c" init="256" context="_1" location="f1:4" file="f1" line="4" mangled="_ZL11buffer_size"/>
+  <Variable id="_8" name="max_address" type="_19c" init="281474976710655ULL" context="_1" location="f1:5" file="f1" line="5" mangled="_ZL11max_address"/>
+  <Variable id="_9" name="newline" type="_20c" init="&apos;\n&apos;" context="_1" location="f1:6" file="f1" line="6" mangled="_ZL7newline"/>
+  <Variable id="_10" name="pi" type="_21c" init="3.14159012F" context="_1" location="f1:7" file="f1" line="7" mangled="_ZL2pi"/>
+  <Variable id="_11" name="e" type="_22c" init="2.7182818279999998" context="_1" location="f1:8" file="f1" line="8" mangled="_ZL1e"/>
+  <Variable id="_12" name="null_ptr" type="_23" init="0" context="_1" location="f1:11" file="f1" line="11" mangled="_Z8null_ptr"/>
+  <FundamentalType id="_13" name="__int128" size="128" align="128"/>
+  <FundamentalType id="_14" name="unsigned __int128" size="128" align="128"/>
+  <Struct id="_15" name="__NSConstantString_tag" context="_1" location="f0:0" file="f0" line="0" members="_24 _25 _26 _27" size="256" align="64"/>
+  <PointerType id="_16" type="_20" size="64" align="64"/>
+  <ArrayType id="_17" min="0" max="0" type="_28"/>
+  <FundamentalType id="_18" name="int" size="32" align="32"/>
+  <CvQualifiedType id="_18c" type="_18" const="1"/>
+  <FundamentalType id="_19" name="long long unsigned int" size="64" align="64"/>
+  <CvQualifiedType id="_19c" type="_19" const="1"/>
+  <FundamentalType id="_20" name="char" size="8" align="8"/>
+  <CvQualifiedType id="_20c" type="_20" const="1"/>
+  <FundamentalType id="_21" name="float" size="32" align="32"/>
+  <CvQualifiedType id="_21c" type="_21" const="1"/>
+  <FundamentalType id="_22" name="double" size="64" align="64"/>
+  <CvQualifiedType id="_22c" type="_22" const="1"/>
+  <PointerType id="_23" type="_29c" size="64" align="64"/>
+  <Field id="_24" name="isa" type="_30" context="_15" access="public" offset="0"/>
+  <Field id="_25" name="flags" type="_18" context="_15" access="public" offset="64"/>
+  <Field id="_26" name="str" type="_31" context="_15" access="public" offset="128"/>
+  <Field id="_27" name="length" type="_32" context="_15" access="public" offset="192"/>
+  <Struct id="_28" name="__va_list_tag" context="_1" location="f0:0" file="f0" line="0" members="_33 _34 _35 _36" size="192" align="64"/>
+  <CvQualifiedType id="_29c" type="_29" const="1"/>
+  <PointerType id="_30" type="_18c" size="64" align="64"/>
+  <PointerType id="_31" type="_20c" size="64" align="64"/>
+  <FundamentalType id="_32" name="long int" size="64" align="64"/>
+  <Field id="_33" name="gp_offset" type="_37" context="_28" access="public" offset="0"/>
+  <Field id="_34" name="fp_offset" type="_37" context="_28" access="public" offset="32"/>
+  <Field id="_35" name="overflow_arg_area" type="_38" context="_28" access="public" offset="64"/>
+  <Field id="_36" name="reg_save_area" type="_38" context="_28" access="public" offset="128"/>
+  <FundamentalType id="_37" name="unsigned int" size="32" align="32"/>
+  <PointerType id="_38" type="_29" size="64" align="64"/>
+  <FundamentalType id="_29" name="void" size="0" align="8"/>
+  <File id="f0" name="&lt;builtin&gt;"/>
+  <File id="f1" name="/home/eranbu/projects/castxml/headers/constants.h"/>
+</CastXML>

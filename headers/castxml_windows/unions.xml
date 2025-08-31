@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<CastXML format="1.2.1">
+  <Namespace id="_1" name="::" members="_2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14"/>
+  <Struct id="_2" name="_GUID" context="_1" location="f0:0" file="f0" line="0" incomplete="1"/>
+  <Typedef id="_3" name="__int128_t" type="_15" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_4" name="__uint128_t" type="_16" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_5" name="__NSConstantString" type="_17" context="_1" location="f0:0" file="f0" line="0"/>
+  <Class id="_6" name="type_info" context="_1" location="f0:0" file="f0" line="0" incomplete="1"/>
+  <Typedef id="_7" name="size_t" type="_18" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_8" name="__builtin_ms_va_list" type="_19" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_9" name="__builtin_va_list" type="_19" context="_1" location="f0:0" file="f0" line="0"/>
+  <Union id="_10" name="IntOrFloat" context="_1" location="f1:2" file="f1" line="2" members="_20 _21 _22 _23 _24 _25" size="32" align="32"/>
+  <Struct id="_11" name="Packet" context="_1" location="f1:8" file="f1" line="8" members="_26 _27 _28 _29 _30 _31 _32" size="64" align="32"/>
+  <Struct id="_12" name="Mixed" context="_1" location="f1:18" file="f1" line="18" members="_33 _34 _35 _36 _37 _38 _39 _40 _41" size="128" align="64"/>
+  <Union id="_13" name="NestedUnion" context="_1" location="f1:27" file="f1" line="27" members="_42 _43 _44 _45 _46 _47 _48" size="64" align="32"/>
+  <Union id="_14" name="DeepUnion" context="_1" location="f1:39" file="f1" line="39" members="_49 _50 _51 _52 _53 _54" size="64" align="32"/>
+  <FundamentalType id="_15" name="__int128" size="128" align="128"/>
+  <FundamentalType id="_16" name="unsigned __int128" size="128" align="128"/>
+  <Struct id="_17" name="__NSConstantString_tag" context="_1" location="f0:0" file="f0" line="0" members="_55 _56 _57 _58" size="256" align="64"/>
+  <FundamentalType id="_18" name="long long unsigned int" size="64" align="64"/>
+  <PointerType id="_19" type="_59" size="64" align="64"/>
+  <Field id="_20" name="i" type="_60" context="_10" access="public" location="f1:3" file="f1" line="3" offset="0"/>
+  <Field id="_21" name="f" type="_61" context="_10" access="public" location="f1:4" file="f1" line="4" offset="0"/>
+  <Constructor id="_22" name="IntOrFloat" context="_10" access="public" location="f1:2" file="f1" line="2" inline="1" artificial="1"/>
+  <Constructor id="_23" name="IntOrFloat" context="_10" access="public" location="f1:2" file="f1" line="2" inline="1" artificial="1">
+    <Argument type="_62" location="f1:2" file="f1" line="2"/>
+  </Constructor>
+  <OperatorMethod id="_24" name="=" returns="_63" context="_10" access="public" location="f1:2" file="f1" line="2" inline="1" artificial="1" mangled="??4IntOrFloat@@QEAAAEAT0@AEBT0@@Z">
+    <Argument type="_62" location="f1:2" file="f1" line="2"/>
+  </OperatorMethod>
+  <Destructor id="_25" name="IntOrFloat" context="_10" access="public" location="f1:2" file="f1" line="2" inline="1" artificial="1"/>
+  <Field id="_26" name="type" type="_60" context="_11" access="public" location="f1:9" file="f1" line="9" offset="0"/>
+  <Union id="_27" name="Payload" context="_11" access="public" location="f1:10" file="f1" line="10" members="_64 _65 _66 _67 _68 _69 _70" size="32" align="32"/>
+  <Field id="_28" name="data" type="_71" context="_11" access="public" location="f1:14" file="f1" line="14" offset="32"/>
+  <Constructor id="_29" name="Packet" context="_11" access="public" location="f1:8" file="f1" line="8" inline="1" artificial="1"/>
+  <Constructor id="_30" name="Packet" context="_11" access="public" location="f1:8" file="f1" line="8" inline="1" artificial="1">
+    <Argument type="_72" location="f1:8" file="f1" line="8"/>
+  </Constructor>
+  <OperatorMethod id="_31" name="=" returns="_73" context="_11" access="public" location="f1:8" file="f1" line="8" inline="1" artificial="1" mangled="??4Packet@@QEAAAEAU0@AEBU0@@Z">
+    <Argument type="_72" location="f1:8" file="f1" line="8"/>
+  </OperatorMethod>
+  <Destructor id="_32" name="Packet" context="_11" access="public" location="f1:8" file="f1" line="8" inline="1" artificial="1"/>
+  <Field id="_33" name="tag" type="_60" context="_12" access="public" location="f1:19" file="f1" line="19" offset="0"/>
+  <Union id="_34" context="_12" access="public" location="f1:20" file="f1" line="20" members="_74 _75 _76 _77 _78 _79" size="64" align="64"/>
+  <Field id="_35" name="" type="_34" context="_12" access="public" location="f1:20" file="f1" line="20" offset="64"/>
+  <Unimplemented id="_36" kind="IndirectField"/>
+  <Unimplemented id="_37" kind="IndirectField"/>
+  <Constructor id="_38" name="Mixed" context="_12" access="public" location="f1:18" file="f1" line="18" inline="1" artificial="1"/>
+  <Constructor id="_39" name="Mixed" context="_12" access="public" location="f1:18" file="f1" line="18" inline="1" artificial="1">
+    <Argument type="_80" location="f1:18" file="f1" line="18"/>
+  </Constructor>
+  <OperatorMethod id="_40" name="=" returns="_81" context="_12" access="public" location="f1:18" file="f1" line="18" inline="1" artificial="1" mangled="??4Mixed@@QEAAAEAU0@AEBU0@@Z">
+    <Argument type="_80" location="f1:18" file="f1" line="18"/>
+  </OperatorMethod>
+  <Destructor id="_41" name="Mixed" context="_12" access="public" location="f1:18" file="f1" line="18" inline="1" artificial="1"/>
+  <Field id="_42" name="id" type="_60" context="_13" access="public" location="f1:28" file="f1" line="28" offset="0"/>
+  <Struct id="_43" name="" context="_13" access="public" location="f1:29" file="f1" line="29" members="_82 _83 _84 _85 _86 _87 _88 _89 _90" size="64" align="32"/>
+  <Field id="_44" name="nested" type="_91" context="_13" access="public" location="f1:35" file="f1" line="35" offset="0"/>
+  <Constructor id="_45" name="NestedUnion" context="_13" access="public" location="f1:27" file="f1" line="27" inline="1" artificial="1"/>
+  <Constructor id="_46" name="NestedUnion" context="_13" access="public" location="f1:27" file="f1" line="27" inline="1" artificial="1">
+    <Argument type="_92" location="f1:27" file="f1" line="27"/>
+  </Constructor>
+  <OperatorMethod id="_47" name="=" returns="_93" context="_13" access="public" location="f1:27" file="f1" line="27" inline="1" artificial="1" mangled="??4NestedUnion@@QEAAAEAT0@AEBT0@@Z">
+    <Argument type="_92" location="f1:27" file="f1" line="27"/>
+  </OperatorMethod>
+  <Destructor id="_48" name="NestedUnion" context="_13" access="public" location="f1:27" file="f1" line="27" inline="1" artificial="1"/>
+  <Struct id="_49" name="" context="_14" access="public" location="f1:40" file="f1" line="40" members="_94 _95 _96 _97 _98 _99 _100" size="64" align="32"/>
+  <Field id="_50" name="structured" type="_101" context="_14" access="public" location="f1:46" file="f1" line="46" offset="0"/>
+  <Constructor id="_51" name="DeepUnion" context="_14" access="public" location="f1:39" file="f1" line="39" inline="1" artificial="1"/>
+  <Constructor id="_52" name="DeepUnion" context="_14" access="public" location="f1:39" file="f1" line="39" inline="1" artificial="1">
+    <Argument type="_102" location="f1:39" file="f1" line="39"/>
+  </Constructor>
+  <OperatorMethod id="_53" name="=" returns="_103" context="_14" access="public" location="f1:39" file="f1" line="39" inline="1" artificial="1" mangled="??4DeepUnion@@QEAAAEAT0@AEBT0@@Z">
+    <Argument type="_102" location="f1:39" file="f1" line="39"/>
+  </OperatorMethod>
+  <Destructor id="_54" name="DeepUnion" context="_14" access="public" location="f1:39" file="f1" line="39" inline="1" artificial="1"/>
+  <Field id="_55" name="isa" type="_104" context="_17" access="public" offset="0"/>
+  <Field id="_56" name="flags" type="_60" context="_17" access="public" offset="64"/>
+  <Field id="_57" name="str" type="_105" context="_17" access="public" offset="128"/>
+  <Field id="_58" name="length" type="_106" context="_17" access="public" offset="192"/>
+  <FundamentalType id="_60" name="int" size="32" align="32"/>
+  <FundamentalType id="_61" name="float" size="32" align="32"/>
+  <ReferenceType id="_62" type="_10c" size="64" align="64"/>
+  <CvQualifiedType id="_10c" type="_10" const="1"/>
+  <ReferenceType id="_63" type="_10" size="64" align="64"/>
+  <Field id="_64" name="int_val" type="_60" context="_27" access="public" location="f1:11" file="f1" line="11" offset="0"/>
+  <Field id="_65" name="float_val" type="_61" context="_27" access="public" location="f1:12" file="f1" line="12" offset="0"/>
+  <Field id="_66" name="bytes" type="_107" context="_27" access="public" location="f1:13" file="f1" line="13" offset="0"/>
+  <Constructor id="_67" name="Payload" context="_27" access="public" location="f1:10" file="f1" line="10" inline="1" artificial="1"/>
+  <Constructor id="_68" name="Payload" context="_27" access="public" location="f1:10" file="f1" line="10" inline="1" artificial="1">
+    <Argument type="_108" location="f1:10" file="f1" line="10"/>
+  </Constructor>
+  <OperatorMethod id="_69" name="=" returns="_109" context="_27" access="public" location="f1:10" file="f1" line="10" inline="1" artificial="1" mangled="??4Payload@Packet@@QEAAAEAT01@AEBT01@@Z">
+    <Argument type="_108" location="f1:10" file="f1" line="10"/>
+  </OperatorMethod>
+  <Destructor id="_70" name="Payload" context="_27" access="public" location="f1:10" file="f1" line="10" inline="1" artificial="1"/>
+  <ElaboratedType id="_71" type="_27"/>
+  <ReferenceType id="_72" type="_11c" size="64" align="64"/>
+  <CvQualifiedType id="_11c" type="_11" const="1"/>
+  <ReferenceType id="_73" type="_11" size="64" align="64"/>
+  <Field id="_74" name="d" type="_110" context="_34" access="public" location="f1:21" file="f1" line="21" offset="0"/>
+  <Field id="_75" name="l" type="_106" context="_34" access="public" location="f1:22" file="f1" line="22" offset="0"/>
+  <Constructor id="_76" name="" context="_34" access="public" location="f1:20" file="f1" line="20" inline="1" artificial="1"/>
+  <Constructor id="_77" name="" context="_34" access="public" location="f1:20" file="f1" line="20" inline="1" artificial="1">
+    <Argument type="_111" location="f1:20" file="f1" line="20"/>
+  </Constructor>
+  <OperatorMethod id="_78" name="=" returns="_112" context="_34" access="public" location="f1:20" file="f1" line="20" inline="1" artificial="1" mangled="??4&lt;unnamed-type-$S1&gt;@Mixed@@QEAAAEAT01@AEBT01@@Z">
+    <Argument type="_111" location="f1:20" file="f1" line="20"/>
+  </OperatorMethod>
+  <Destructor id="_79" name="" context="_34" access="public" location="f1:20" file="f1" line="20" inline="1" artificial="1"/>
+  <ReferenceType id="_80" type="_12c" size="64" align="64"/>
+  <CvQualifiedType id="_12c" type="_12" const="1"/>
+  <ReferenceType id="_81" type="_12" size="64" align="64"/>
+  <Field id="_82" name="c" type="_59" context="_43" access="public" location="f1:30" file="f1" line="30" offset="0"/>
+  <FundamentalType id="_59" name="char" size="8" align="8"/>
+  <Union id="_83" context="_43" access="public" location="f1:31" file="f1" line="31" members="_113 _114 _115 _116 _117 _118" size="32" align="32"/>
+  <Field id="_84" name="" type="_83" context="_43" access="public" location="f1:31" file="f1" line="31" offset="32"/>
+  <Unimplemented id="_85" kind="IndirectField"/>
+  <Unimplemented id="_86" kind="IndirectField"/>
+  <Constructor id="_87" name="" context="_43" access="public" location="f1:29" file="f1" line="29" inline="1" artificial="1"/>
+  <Constructor id="_88" name="" context="_43" access="public" location="f1:29" file="f1" line="29" inline="1" artificial="1">
+    <Argument type="_119" location="f1:29" file="f1" line="29"/>
+  </Constructor>
+  <OperatorMethod id="_89" name="=" returns="_120" context="_43" access="public" location="f1:29" file="f1" line="29" inline="1" artificial="1" mangled="??4&lt;unnamed-type-nested&gt;@NestedUnion@@QEAAAEAU01@AEBU01@@Z">
+    <Argument type="_119" location="f1:29" file="f1" line="29"/>
+  </OperatorMethod>
+  <Destructor id="_90" name="" context="_43" access="public" location="f1:29" file="f1" line="29" inline="1" artificial="1"/>
+  <ElaboratedType id="_91" type="_43"/>
+  <ReferenceType id="_92" type="_13c" size="64" align="64"/>
+  <CvQualifiedType id="_13c" type="_13" const="1"/>
+  <ReferenceType id="_93" type="_13" size="64" align="64"/>
+  <Field id="_94" name="header" type="_60" context="_49" access="public" location="f1:41" file="f1" line="41" offset="0"/>
+  <Union id="_95" name="" context="_49" access="public" location="f1:42" file="f1" line="42" members="_121 _122 _123 _124 _125 _126" size="32" align="32"/>
+  <Field id="_96" name="inner_union" type="_127" context="_49" access="public" location="f1:45" file="f1" line="45" offset="32"/>
+  <Constructor id="_97" name="" context="_49" access="public" location="f1:40" file="f1" line="40" inline="1" artificial="1"/>
+  <Constructor id="_98" name="" context="_49" access="public" location="f1:40" file="f1" line="40" inline="1" artificial="1">
+    <Argument type="_128" location="f1:40" file="f1" line="40"/>
+  </Constructor>
+  <OperatorMethod id="_99" name="=" returns="_129" context="_49" access="public" location="f1:40" file="f1" line="40" inline="1" artificial="1" mangled="??4&lt;unnamed-type-structured&gt;@DeepUnion@@QEAAAEAU01@AEBU01@@Z">
+    <Argument type="_128" location="f1:40" file="f1" line="40"/>
+  </OperatorMethod>
+  <Destructor id="_100" name="" context="_49" access="public" location="f1:40" file="f1" line="40" inline="1" artificial="1"/>
+  <ElaboratedType id="_101" type="_49"/>
+  <ReferenceType id="_102" type="_14c" size="64" align="64"/>
+  <CvQualifiedType id="_14c" type="_14" const="1"/>
+  <ReferenceType id="_103" type="_14" size="64" align="64"/>
+  <PointerType id="_104" type="_60c" size="64" align="64"/>
+  <CvQualifiedType id="_60c" type="_60" const="1"/>
+  <PointerType id="_105" type="_59c" size="64" align="64"/>
+  <CvQualifiedType id="_59c" type="_59" const="1"/>
+  <FundamentalType id="_106" name="long int" size="32" align="32"/>
+  <ArrayType id="_107" min="0" max="3" type="_59"/>
+  <ReferenceType id="_108" type="_27c" size="64" align="64"/>
+  <CvQualifiedType id="_27c" type="_27" const="1"/>
+  <ReferenceType id="_109" type="_27" size="64" align="64"/>
+  <FundamentalType id="_110" name="double" size="64" align="64"/>
+  <ReferenceType id="_111" type="_34c" size="64" align="64"/>
+  <CvQualifiedType id="_34c" type="_34" const="1"/>
+  <ReferenceType id="_112" type="_34" size="64" align="64"/>
+  <Field id="_113" name="inner_i" type="_60" context="_83" access="public" location="f1:32" file="f1" line="32" offset="0"/>
+  <Field id="_114" name="inner_f" type="_61" context="_83" access="public" location="f1:33" file="f1" line="33" offset="0"/>
+  <Constructor id="_115" name="" context="_83" access="public" location="f1:31" file="f1" line="31" inline="1" artificial="1"/>
+  <Constructor id="_116" name="" context="_83" access="public" location="f1:31" file="f1" line="31" inline="1" artificial="1">
+    <Argument type="_130" location="f1:31" file="f1" line="31"/>
+  </Constructor>
+  <OperatorMethod id="_117" name="=" returns="_131" context="_83" access="public" location="f1:31" file="f1" line="31" inline="1" artificial="1" mangled="??4&lt;unnamed-type-$S2&gt;@&lt;unnamed-type-nested&gt;@NestedUnion@@QEAAAEAT012@AEBT012@@Z">
+    <Argument type="_130" location="f1:31" file="f1" line="31"/>
+  </OperatorMethod>
+  <Destructor id="_118" name="" context="_83" access="public" location="f1:31" file="f1" line="31" inline="1" artificial="1"/>
+  <ReferenceType id="_119" type="_43c" size="64" align="64"/>
+  <CvQualifiedType id="_43c" type="_43" const="1"/>
+  <ReferenceType id="_120" type="_43" size="64" align="64"/>
+  <Field id="_121" name="a" type="_60" context="_95" access="public" location="f1:43" file="f1" line="43" offset="0"/>
+  <Field id="_122" name="b" type="_61" context="_95" access="public" location="f1:44" file="f1" line="44" offset="0"/>
+  <Constructor id="_123" name="" context="_95" access="public" location="f1:42" file="f1" line="42" inline="1" artificial="1"/>
+  <Constructor id="_124" name="" context="_95" access="public" location="f1:42" file="f1" line="42" inline="1" artificial="1">
+    <Argument type="_132" location="f1:42" file="f1" line="42"/>
+  </Constructor>
+  <OperatorMethod id="_125" name="=" returns="_133" context="_95" access="public" location="f1:42" file="f1" line="42" inline="1" artificial="1" mangled="??4&lt;unnamed-type-inner_union&gt;@&lt;unnamed-type-structured&gt;@DeepUnion@@QEAAAEAT012@AEBT012@@Z">
+    <Argument type="_132" location="f1:42" file="f1" line="42"/>
+  </OperatorMethod>
+  <Destructor id="_126" name="" context="_95" access="public" location="f1:42" file="f1" line="42" inline="1" artificial="1"/>
+  <ElaboratedType id="_127" type="_95"/>
+  <ReferenceType id="_128" type="_49c" size="64" align="64"/>
+  <CvQualifiedType id="_49c" type="_49" const="1"/>
+  <ReferenceType id="_129" type="_49" size="64" align="64"/>
+  <ReferenceType id="_130" type="_83c" size="64" align="64"/>
+  <CvQualifiedType id="_83c" type="_83" const="1"/>
+  <ReferenceType id="_131" type="_83" size="64" align="64"/>
+  <ReferenceType id="_132" type="_95c" size="64" align="64"/>
+  <CvQualifiedType id="_95c" type="_95" const="1"/>
+  <ReferenceType id="_133" type="_95" size="64" align="64"/>
+  <File id="f0" name="&lt;builtin&gt;"/>
+  <File id="f1" name="\\VBoxSvr\vbox\castxml\headers\unions.h"/>
+</CastXML>
