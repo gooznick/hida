@@ -1,6 +1,7 @@
 from typing import List
 from .data import *
 
+
 def write_c_header_from_definitions(definitions):
     """
     Generate a C-compatible header file (as string) from a list of definitions.
@@ -10,9 +11,9 @@ def write_c_header_from_definitions(definitions):
         "#pragma once",
         "#include <stdint.h>",
         "#ifdef __cplusplus",
-        "extern \"C\" {",
+        'extern "C" {',
         "#endif",
-        ""
+        "",
     ]
 
     def flat_name(t):
@@ -23,7 +24,11 @@ def write_c_header_from_definitions(definitions):
             lines.append(f"typedef struct {flat_name(d)} {{")
             for f in d.fields:
                 typename = f.type.fullname.replace("::", "__")
-                arr = "" if not f.elements else "[" + "][".join(map(str, f.elements)) + "]"
+                arr = (
+                    ""
+                    if not f.elements
+                    else "[" + "][".join(map(str, f.elements)) + "]"
+                )
                 lines.append(f"    {typename} {f.name}{arr};")
             lines.append(f"}} {flat_name(d)};")
             lines.append("")
@@ -32,7 +37,11 @@ def write_c_header_from_definitions(definitions):
             lines.append(f"typedef union {flat_name(d)} {{")
             for f in d.fields:
                 typename = f.type.fullname.replace("::", "__")
-                arr = "" if not f.elements else "[" + "][".join(map(str, f.elements)) + "]"
+                arr = (
+                    ""
+                    if not f.elements
+                    else "[" + "][".join(map(str, f.elements)) + "]"
+                )
                 lines.append(f"    {typename} {f.name}{arr};")
             lines.append(f"}} {flat_name(d)};")
             lines.append("")
@@ -57,10 +66,5 @@ def write_c_header_from_definitions(definitions):
                 val = f"'{val}'" if len(val) == 1 else f'"{val}"'
             lines.append(f"#define {d.name} {val}")
 
-    lines += [
-        "",
-        "#ifdef __cplusplus",
-        "} // extern \"C\"",
-        "#endif"
-    ]
+    lines += ["", "#ifdef __cplusplus", '} // extern "C"', "#endif"]
     return "\n".join(lines)

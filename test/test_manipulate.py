@@ -2,15 +2,29 @@ import os
 import pytest
 from typing import List
 
-from hida import parse,find_type_by_name, validate_definitions, filter_by_source_regexes, fill_bitfield_holes_with_padding, fill_struct_holes_with_padding_bytes, flatten_namespaces, resolve_typedefs, filter_connected_definitions
-from hida import DefinitionBase, ClassDefinition
+from hida import (
+    parse,
+    find_type_by_name,
+    validate_definitions,
+    filter_by_source_regexes,
+    fill_bitfield_holes_with_padding,
+    fill_struct_holes_with_padding_bytes,
+    flatten_namespaces,
+    resolve_typedefs,
+    filter_connected_definitions,
+    DefinitionBase,
+    ClassDefinition,
+)
 
 here = os.path.dirname(__file__)
+
 
 def test_fill_bitfield_holes_with_padding(cxplat):
     # Parse the header
     result = parse(
-        os.path.join(here, os.pardir, "headers", cxplat.directory, "bitfield_holes.xml"),
+        os.path.join(
+            here, os.pardir, "headers", cxplat.directory, "bitfield_holes.xml"
+        ),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -38,7 +52,9 @@ def test_fill_bitfield_holes_with_padding(cxplat):
     assert len(pads) >= 1, "Expected at least one __pad field"
 
     # Verify the pad fills the correct hole
-    assert any(p.size_in_bits == 23 for p in pads), "Expected 23-bit padding in Holey struct"
+    assert any(
+        p.size_in_bits == 23 for p in pads
+    ), "Expected 23-bit padding in Holey struct"
 
     # Also check Packed has no padding
     packed = find_type_by_name(result, "Packed")
@@ -48,7 +64,8 @@ def test_fill_bitfield_holes_with_padding(cxplat):
     assert before == after, "No padding should be inserted into Packed"
 
     validate_definitions(result)
-    
+
+
 def test_fill_struct_holes_with_padding_bytes_multiple_structs(cxplat):
     result = parse(
         os.path.join(here, os.pardir, "headers", cxplat.directory, "holes_real.xml"),
@@ -64,13 +81,19 @@ def test_fill_struct_holes_with_padding_bytes_multiple_structs(cxplat):
 
     pads = [f for f in holey.fields if f.name.startswith("__pad")]
     assert pads, "Expected padding in 'Holey'"
-    assert any(p.elements == (3,) or p.elements == () for p in pads), "Expected 3-byte padding field"
-    assert any(p.elements == (2,) or p.elements == () for p in pads), "Expected 2-byte trailing padding"
+    assert any(
+        p.elements == (3,) or p.elements == () for p in pads
+    ), "Expected 3-byte padding field"
+    assert any(
+        p.elements == (2,) or p.elements == () for p in pads
+    ), "Expected 2-byte trailing padding"
 
     # --- Packed Struct ---
     packed = find_type_by_name(filled_defs, "Packed")
     assert packed is not None and isinstance(packed, ClassDefinition)
-    assert not any(f.name.startswith("__pad") for f in packed.fields), "No padding should be added to 'Packed'"
+    assert not any(
+        f.name.startswith("__pad") for f in packed.fields
+    ), "No padding should be added to 'Packed'"
 
     # --- MultiHoles Struct ---
     multi = find_type_by_name(filled_defs, "MultiHoles")
@@ -78,7 +101,9 @@ def test_fill_struct_holes_with_padding_bytes_multiple_structs(cxplat):
 
     pads = [f for f in multi.fields if f.name.startswith("__pad")]
     assert pads, "Expected padding in 'MultiHoles'"
-    assert any(p.size_in_bits % 8 == 0 for p in pads), "All padding fields should be byte aligned"
+    assert any(
+        p.size_in_bits % 8 == 0 for p in pads
+    ), "All padding fields should be byte aligned"
 
     # Sanity checks
     for struct in [holey, multi]:
@@ -89,9 +114,12 @@ def test_fill_struct_holes_with_padding_bytes_multiple_structs(cxplat):
                 assert field.type.fullname == "uint8_t"
                 assert isinstance(field.elements, tuple)
 
+
 def test_flatten_namespaces(cxplat):
     result = parse(
-        os.path.join(here, os.pardir, "headers", cxplat.directory, "namespaced_types.xml"),
+        os.path.join(
+            here, os.pardir, "headers", cxplat.directory, "namespaced_types.xml"
+        ),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -104,9 +132,12 @@ def test_flatten_namespaces(cxplat):
     assert "Beta__Extra" in names
     assert all(d.namespace == () for d in flattened)
 
+
 def test_resolve_typedefs(cxplat):
     result = parse(
-        os.path.join(here, os.pardir, "headers", cxplat.directory, "typedef_remove.xml"),
+        os.path.join(
+            here, os.pardir, "headers", cxplat.directory, "typedef_remove.xml"
+        ),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -127,7 +158,9 @@ def test_resolve_typedefs(cxplat):
         dims = f.elements
         assert f.name in expected, f"Unexpected field: {f.name}"
         exp_type, exp_dims = expected[f.name]
-        assert base_type == exp_type, f"{f.name}: expected type {exp_type}, got {base_type}"
+        assert (
+            base_type == exp_type
+        ), f"{f.name}: expected type {exp_type}, got {base_type}"
         assert dims == exp_dims, f"{f.name}: expected dims {exp_dims}, got {dims}"
 
     # Ensure typedefs are removed
@@ -137,7 +170,6 @@ def test_resolve_typedefs(cxplat):
     assert "Alias2" not in names
     assert "MyArray" not in names
     assert "MyArray2D" not in names
-
 
 
 @pytest.fixture
@@ -164,8 +196,6 @@ def test_exclude_regex(sample_definitions):
     assert all(d.name != "A" for d in result)
 
 
-
-
 def test_no_filters(sample_definitions):
     # No filtering: return all
     result = filter_by_source_regexes(sample_definitions)
@@ -174,12 +204,17 @@ def test_no_filters(sample_definitions):
 
 def test_include_as_list(sample_definitions):
     # List of includes: both user and system headers
-    result = filter_by_source_regexes(sample_definitions, include=[r"/usr/", r"/home/user/"])
+    result = filter_by_source_regexes(
+        sample_definitions, include=[r"/usr/", r"/home/user/"]
+    )
     names = [d.name for d in result]
     assert "A" in names and "B" in names
 
+
 def test_filter_connected_definitions(cxplat):
-    path = os.path.join(here, os.pardir, "headers", cxplat.directory, "connected_filter.xml")
+    path = os.path.join(
+        here, os.pardir, "headers", cxplat.directory, "connected_filter.xml"
+    )
     all_defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
     validate_definitions(all_defs)
 
@@ -190,7 +225,11 @@ def test_filter_connected_definitions(cxplat):
     expected_types = {"Main", "Payload", "Wrapper", "Nested", "Status"}
 
     remaining_names = {d.fullname for d in connected}
-    assert expected_types.issubset(remaining_names), f"Missing expected types: {expected_types - remaining_names}"
+    assert expected_types.issubset(
+        remaining_names
+    ), f"Missing expected types: {expected_types - remaining_names}"
 
     # Ensure unrelated types are not included
-    assert "Unused" not in remaining_names, "Disconnected type 'Unused' should have been removed"
+    assert (
+        "Unused" not in remaining_names
+    ), "Disconnected type 'Unused' should have been removed"

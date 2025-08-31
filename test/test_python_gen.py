@@ -3,24 +3,46 @@ import tempfile
 import importlib.util
 import pytest
 
-from hida import parse, validate_definitions, filter_by_source_regexes, get_system_include_regexes
-from hida import generate_python_code_from_definitions, write_code_to_file, verify_struct_sizes
-from hida import ClassDefinition, UnionDefinition
+from hida import (
+    parse,
+    validate_definitions,
+    filter_by_source_regexes,
+    generate_python_code_from_definitions,
+    write_code_to_file,
+    verify_struct_sizes,
+    ClassDefinition,
+    UnionDefinition,
+    get_system_include_regexes,
+)
 
 
 here = os.path.dirname(__file__)
 
-def load_and_verify_header(header_basename: str, cxplat, use_bool=True, skip_failed_parsing=True, remove_unknown=True):
+
+def load_and_verify_header(
+    header_basename: str,
+    cxplat,
+    use_bool=True,
+    skip_failed_parsing=True,
+    remove_unknown=True,
+):
     """
     Loads, converts, and verifies a header by its base XML filename.
     """
-    header_path = os.path.join(here, os.pardir, "headers", cxplat.directory, header_basename)
-    result = parse(header_path, use_bool=use_bool, skip_failed_parsing=skip_failed_parsing, remove_unknown=remove_unknown)
+    header_path = os.path.join(
+        here, os.pardir, "headers", cxplat.directory, header_basename
+    )
+    result = parse(
+        header_path,
+        use_bool=use_bool,
+        skip_failed_parsing=skip_failed_parsing,
+        remove_unknown=remove_unknown,
+    )
 
     assert isinstance(result, list), f"{header_basename} parsing did not return a list"
-    
+
     result = filter_by_source_regexes(result, exclude=get_system_include_regexes())
-    
+
     validate_definitions(result)
 
     code = generate_python_code_from_definitions(result, assert_size=cxplat.native)
@@ -34,32 +56,43 @@ def load_and_verify_header(header_basename: str, cxplat, use_bool=True, skip_fai
         spec.loader.exec_module(module)
 
         if cxplat.native:
-            verify_struct_sizes([d for d in result if isinstance(d, (ClassDefinition, UnionDefinition))], module)
+            verify_struct_sizes(
+                [
+                    d
+                    for d in result
+                    if isinstance(d, (ClassDefinition, UnionDefinition))
+                ],
+                module,
+            )
 
     return result  # Optionally return parsed result
 
-@pytest.mark.parametrize("filename", [
-    "basic.xml",
-    "class.xml",
-    "basics.xml",
-    "basic_types.xml",
-    "typedefs.xml",
-    "typedef_struct.xml",
-    "namespaces.xml",
-    "pointers.xml",
-    "std_types_pointers.xml",
-    "arrays.xml",
-    "enums.xml",
-    "constants.xml",
-    "all_types.xml",
-    "includes.xml",
-    "unions.xml",
-    "bitfields.xml",
-    "bitfields_basic.xml",
-    "holes_real.xml",
-    "fixed_width.xml",
-    "typedef_remove.xml",
-    "complicated.xml",
-])
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "basic.xml",
+        "class.xml",
+        "basics.xml",
+        "basic_types.xml",
+        "typedefs.xml",
+        "typedef_struct.xml",
+        "namespaces.xml",
+        "pointers.xml",
+        "std_types_pointers.xml",
+        "arrays.xml",
+        "enums.xml",
+        "constants.xml",
+        "all_types.xml",
+        "includes.xml",
+        "unions.xml",
+        "bitfields.xml",
+        "bitfields_basic.xml",
+        "holes_real.xml",
+        "fixed_width.xml",
+        "typedef_remove.xml",
+        "complicated.xml",
+    ],
+)
 def test_header_xml_to_python_and_verify(filename, cxplat):
     load_and_verify_header(filename, cxplat)

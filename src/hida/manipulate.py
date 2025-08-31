@@ -12,16 +12,16 @@ def get_system_include_regexes() -> List[str]:
     Includes common Windows and Unix/GCC/Clang paths.
     """
     return [
-        r"builtin",               
-        r".*\\Program Files\\.*",                # VS STL, Windows SDK
+        r"builtin",
+        r".*\\Program Files\\.*",  # VS STL, Windows SDK
         r".*\\Microsoft Visual Studio\\.*",
         r".*\\Windows Kits\\.*",
         r".*\\vcpkg\\installed\\.*?\\include\\.*",
-        r".*/Program Files/.*",                # VS STL, Windows SDK
+        r".*/Program Files/.*",  # VS STL, Windows SDK
         r".*/Microsoft Visual Studio/.*",
         r".*/Windows Kits/.*",
-        r".*/vcpkg/installed/.*?/include/.*",        # linux
-        r"^<builtin>",               
+        r".*/vcpkg/installed/.*?/include/.*",  # linux
+        r"^<builtin>",
         r"^/usr/include/",
         r"^/usr/local/include/",
         r"^/usr/lib/clang/.*/include/",
@@ -34,7 +34,7 @@ def get_system_include_regexes() -> List[str]:
 def filter_by_source_regexes(
     definitions: List[DefinitionBase],
     include: Optional[Union[str, List[str]]] = None,
-    exclude: Optional[Union[str, List[str]]] = None
+    exclude: Optional[Union[str, List[str]]] = None,
 ) -> List[DefinitionBase]:
     """
     Filters definitions based on regexes matching their `source` field.
@@ -58,7 +58,6 @@ def filter_by_source_regexes(
         return True
 
     return [d for d in definitions if should_keep(d)]
-
 
 
 def fill_bitfield_holes_with_padding(definitions):
@@ -100,14 +99,16 @@ def fill_bitfield_holes_with_padding(definitions):
         struct_end = d.size * 8
         if prev_end < struct_end:
             pad_size = struct_end - prev_end
-            new_fields.append(Field(
-                name=f"__pad{pad_counter}",
-                type=TypeBase(name="uint8_t"),
-                elements=(),
-                bitoffset=prev_end,
-                size_in_bits=pad_size,
-                bitfield=True,
-            ))
+            new_fields.append(
+                Field(
+                    name=f"__pad{pad_counter}",
+                    type=TypeBase(name="uint8_t"),
+                    elements=(),
+                    bitoffset=prev_end,
+                    size_in_bits=pad_size,
+                    bitfield=True,
+                )
+            )
             pad_counter += 1
 
         # Create a new instance with updated fields
@@ -147,7 +148,9 @@ def fill_struct_holes_with_padding_bytes(definitions):
                 hole_size = start - prev_end
                 byte_count = hole_size // 8
                 if hole_size % 8 != 0:
-                    raise ValueError(f"Cannot pad non-byte-aligned hole of size {hole_size} bits")
+                    raise ValueError(
+                        f"Cannot pad non-byte-aligned hole of size {hole_size} bits"
+                    )
 
                 pad_field = Field(
                     name=f"__pad{pad_counter}",
@@ -183,10 +186,12 @@ def fill_struct_holes_with_padding_bytes(definitions):
 
     return result
 
+
 from collections import defaultdict
 from dataclasses import replace
 from dataclasses import replace
 from typing import List
+
 
 def flatten_namespaces(definitions: List[TypeBase]) -> List[TypeBase]:
     """
@@ -213,9 +218,13 @@ def resolve_typedefs(definitions):
 
     Supports nested typedefs and typedefs of arrays.
     """
-    typedef_map = {td.name: td for td in definitions if isinstance(td, TypedefDefinition)}
+    typedef_map = {
+        td.name: td for td in definitions if isinstance(td, TypedefDefinition)
+    }
 
-    def resolve_type(typ: TypeBase, elements: Tuple[int] = ()) -> Tuple[TypeBase, Tuple[int]]:
+    def resolve_type(
+        typ: TypeBase, elements: Tuple[int] = ()
+    ) -> Tuple[TypeBase, Tuple[int]]:
         seen = set()
         while typ.name in typedef_map:
             if typ.name in seen:
@@ -268,6 +277,7 @@ def build_type_dependency_graph(definitions: List[TypeBase]) -> Dict[str, Set[st
 
     return graph
 
+
 def sort_definitions_topologically(definitions: List[TypeBase]) -> List[TypeBase]:
     """
     Reorders the definitions so all dependencies are defined before use.
@@ -296,7 +306,10 @@ def sort_definitions_topologically(definitions: List[TypeBase]) -> List[TypeBase
 
     return result
 
-def filter_connected_definitions(definitions: List[TypeBase], roots: Union[str, List[str]]) -> List[TypeBase]:
+
+def filter_connected_definitions(
+    definitions: List[TypeBase], roots: Union[str, List[str]]
+) -> List[TypeBase]:
     """
     Filters the definitions list to include only those reachable from the given root type(s),
     based on field, typedef, or constant dependencies.
@@ -317,4 +330,3 @@ def filter_connected_definitions(definitions: List[TypeBase], roots: Union[str, 
         stack.extend(graph.get(current, []))
 
     return [d for d in definitions if d.fullname in visited]
-

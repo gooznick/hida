@@ -2,19 +2,27 @@ from dataclasses import dataclass, field
 from typing import Tuple, Optional, Union
 from enum import Enum, auto
 
+
 @dataclass(frozen=True)
 class TypeBase:
     name: str  # Name of the symbol (type, enum, typedef, etc.)
     namespace: Tuple[str] = field(
         default_factory=tuple
     )  # nested namespaces (tuple if none)
-    
+
     @property
     def fullname(self) -> str:
-        return "::".join(list(self.namespace) + [self.name]) if self.namespace else self.name    
+        return (
+            "::".join(list(self.namespace) + [self.name])
+            if self.namespace
+            else self.name
+        )
+
+
 @dataclass(frozen=True)
 class DefinitionBase(TypeBase):
-    source: str = "" # Source ID from the CastXML document
+    source: str = ""  # Source ID from the CastXML document
+
 
 @dataclass(frozen=True)
 class Field:
@@ -54,7 +62,9 @@ class UnionDefinition(DefinitionBase):
 
 @dataclass(frozen=True)
 class TypedefDefinition(DefinitionBase):
-    type: TypeBase = field(default_factory=TypeBase) # Actual type the typedef refers to
+    type: TypeBase = field(
+        default_factory=TypeBase
+    )  # Actual type the typedef refers to
     elements: Tuple[int] = field(
         default_factory=tuple
     )  # Array dimensions (empty if scalar)
@@ -62,5 +72,5 @@ class TypedefDefinition(DefinitionBase):
 
 @dataclass(frozen=True)
 class ConstantDefinition(DefinitionBase):
-    type: TypeBase = field(default_factory=TypeBase) # C/C++ type of the constant
-    value: Union[int, float, str] =  "" # Value of the constant
+    type: TypeBase = field(default_factory=TypeBase)  # C/C++ type of the constant
+    value: Union[int, float, str] = ""  # Value of the constant

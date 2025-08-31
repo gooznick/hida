@@ -5,15 +5,15 @@ here = os.path.dirname(__file__)
 
 sys.path.insert(0, os.path.join(here, os.pardir))
 
-from hida import parse, validate_definitions
-from hida import ClassDefinition, find_type_by_name
-
+from hida import parse, validate_definitions, ClassDefinition, find_type_by_name
 
 
 def test_complicated(cxplat):
     result = parse(
-        os.path.join(here, os.pardir, 'headers', cxplat.directory, 'complicated.xml'),
-        use_bool=True, skip_failed_parsing=True, remove_unknown=True
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "complicated.xml"),
+        use_bool=True,
+        skip_failed_parsing=True,
+        remove_unknown=True,
     )
 
     assert isinstance(result, list), "Expected list of parsed definitions"
@@ -30,46 +30,37 @@ def test_complicated(cxplat):
         "b": "bool",
         "i32": "int32_t",
         "u64": "uint64_t",
-
         # Wide chars
         "wch": ("int32_t", "uint32_t", "int16_t"),
         "ch16": ("int16_t", "uint16_t"),
         "ch32": ("int32_t", "uint32_t"),
-
         # Arrays
         "a1": ("int32_t", (3,)),
         "a2": ("float", (2, 2)),
         "a3": ("double", (2, 2, 2)),
         "a4": ("int8_t", (2, 2, 2, 2)),
-
         # Pointers
         "p_i": "void*",
         "pp_f": "void*",
         "p_cstr": "void*",
         "p_void": "void*",
         "p_str": "void*",
-
         # Function pointers
         "callback": "void*",
         "handlers": ("void*", (2,)),
-
         # Typedefs
         "my_i": "int32_t",
         "my_ul": "uint32_t" if cxplat.windows else "uint64_t",
         "fp": "void*",
         "pt": "void*",
         # "pts": ("Point", (5,)),  # Uncomment if Point is available and properly typed
-
         # Enums
         "e1": "SimpleEnum",
         "e2": "ScopedEnum",
-
         # Union
         "mix": "MixedUnion",
-
         # Namespaced
         "ns": "Outer::Inner::Namespaced",
-
         # Bitfield struct
         "bits": "BitfieldStruct",
     }
@@ -88,17 +79,23 @@ def test_complicated(cxplat):
 
         if isinstance(expected, tuple) and isinstance(expected[1], (list, tuple)):
             expected_type, expected_dims = expected
-            assert type_matches(field.type, expected_type), \
-                f"{name}: expected type {expected_type}, got {field.type.fullname}"
-            assert field.elements == expected_dims, \
-                f"{name}: expected dimensions {expected_dims}, got {field.elements}"
+            assert type_matches(
+                field.type, expected_type
+            ), f"{name}: expected type {expected_type}, got {field.type.fullname}"
+            assert (
+                field.elements == expected_dims
+            ), f"{name}: expected dimensions {expected_dims}, got {field.elements}"
         else:
-            assert type_matches(field.type, expected), \
-                f"{name}: expected type {expected}, got {field.type.fullname}"
-            assert field.elements == (), f"{name}: expected scalar, got array {field.elements}"
+            assert type_matches(
+                field.type, expected
+            ), f"{name}: expected type {expected}, got {field.type.fullname}"
+            assert (
+                field.elements == ()
+            ), f"{name}: expected scalar, got array {field.elements}"
 
-        assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, \
-            f"{name}: invalid bit size"
+        assert (
+            isinstance(field.size_in_bits, int) and field.size_in_bits > 0
+        ), f"{name}: invalid bit size"
 
     # Ensure related types exist
     assert find_type_by_name(result, "MixedUnion"), "Union MixedUnion missing"

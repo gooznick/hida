@@ -1,6 +1,14 @@
 from typing import List
 
-from hida import TypeBase, TypedefDefinition, ConstantDefinition, ClassDefinition, UnionDefinition, EnumDefinition
+from hida import (
+    TypeBase,
+    TypedefDefinition,
+    ConstantDefinition,
+    ClassDefinition,
+    UnionDefinition,
+    EnumDefinition,
+)
+
 
 def to_c_type(t: TypeBase) -> str:
     name = t.name
@@ -8,20 +16,33 @@ def to_c_type(t: TypeBase) -> str:
 
     # Replace int32_t → std::int32_t (etc.) if it looks like a fixed-width type
     fixed_types = {
-        "int8_t", "int16_t", "int32_t", "int64_t",
-        "uint8_t", "uint16_t", "uint32_t", "uint64_t"
+        "int8_t",
+        "int16_t",
+        "int32_t",
+        "int64_t",
+        "uint8_t",
+        "uint16_t",
+        "uint32_t",
+        "uint64_t",
     }
     if name in fixed_types and not ns:
         ns = ["std"]
 
     return "::".join(ns + [name]) if ns else name
 
+
 def write_header_from_definitions(definitions: List[TypeBase]) -> str:
     lines = ["#pragma once", ""]
 
     fixed_width_names = {
-        "int8_t", "int16_t", "int32_t", "int64_t",
-        "uint8_t", "uint16_t", "uint32_t", "uint64_t"
+        "int8_t",
+        "int16_t",
+        "int32_t",
+        "int64_t",
+        "uint8_t",
+        "uint16_t",
+        "uint32_t",
+        "uint64_t",
     }
 
     def uses_fixed_width_types(defn):
@@ -32,7 +53,6 @@ def write_header_from_definitions(definitions: List[TypeBase]) -> str:
         return False
 
     needs_cstdint = any(uses_fixed_width_types(d) for d in definitions)
-
 
     if needs_cstdint:
         lines.append("#include <cstdint>")

@@ -8,6 +8,7 @@ import platform
 
 windows = platform.system() == "Windows"
 
+
 def run_castxml_on_headers(
     input_dir: Path, output_dir: Path, castxml_path: str = "castxml"
 ):
@@ -25,24 +26,18 @@ def run_castxml_on_headers(
             tmp_cpp.write(f'#include "{header_file}"\n')
             tmp_cpp_path = tmp_cpp.name
 
-        
-        cmd = [
-            castxml_path,
-            "--castxml-output=1"]
+        cmd = [castxml_path, "--castxml-output=1"]
         if windows:
-            cmd += [
-                "--castxml-cc-msvc", 'cl', "-std=c++17"
-            ]
+            cmd += ["--castxml-cc-msvc", "cl", "-std=c++17"]
         else:
-            cmd += [
-                "--std=c++17"
+            cmd += ["--std=c++17"]
+        cmd.extend(
+            [
+                "-o",
+                str(output_file),
+                tmp_cpp_path,
             ]
-        cmd.extend([
-            "-o",
-            str(output_file),
-            tmp_cpp_path,
-        ])
-
+        )
 
         try:
             subprocess.run(cmd, check=True)

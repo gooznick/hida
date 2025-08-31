@@ -24,7 +24,7 @@ def find_type_by_name(data_structs, name, fallback_to_name=True):
     """
     Finds and returns the first ClassDefinition, UnionDefinition, EnumDefinition,
     or TypedefDefinition with the given full name (including namespaces).
-    
+
     If not found and fallback_to_name is True, tries to match just the base name.
     Returns None if not found.
     """
@@ -42,7 +42,6 @@ def find_type_by_name(data_structs, name, fallback_to_name=True):
                 return item
 
     return None
-
 
 
 def validate_class_definition(cls: ClassDefinition, types):
@@ -75,7 +74,8 @@ def validate_class_definition(cls: ClassDefinition, types):
             )
 
         if types != None and (
-            not field.type.fullname in types and not field.type.fullname in builtin_types
+            not field.type.fullname in types
+            and not field.type.fullname in builtin_types
         ):
             raise ValueError(
                 f"Field '{field.name}' in class '{cls.name}' has unknown type '{field.type}'"
@@ -127,7 +127,7 @@ def validate_typedef_definition(td: TypedefDefinition, types):
         raise ValueError(f"Typedef '{td.name}': definition must be a non-empty string")
 
     if types != None and (
-        not td.type.fullname in types and not td.type.fullname  in builtin_types
+        not td.type.fullname in types and not td.type.fullname in builtin_types
     ):
         raise ValueError(f"Typedef '{td.name}': unknown type '{td.type}'")
 
@@ -203,7 +203,8 @@ def validate_union_definition(u: UnionDefinition, types):
                 f"Union '{u.name}': field '{field.name}' has invalid or empty type"
             )
         if types != None and (
-            field.type.fullname not in types and field.type.fullname not in builtin_types
+            field.type.fullname not in types
+            and field.type.fullname not in builtin_types
         ):
             raise ValueError(
                 f"Union '{u.name}': field '{field.name}' has unknown type '{field.type}'"
@@ -272,17 +273,23 @@ def verify_size(definitions):
                 total_bits = field.size_in_bits * count
 
                 if field.bitoffset < prev_end:
-                    raise ValueError(f"{d.name}: Field '{field.name}' overlaps previous field at bit offset {field.bitoffset}")
+                    raise ValueError(
+                        f"{d.name}: Field '{field.name}' overlaps previous field at bit offset {field.bitoffset}"
+                    )
                 prev_end = field.bitoffset + total_bits
 
             if d.size * 8 < prev_end:
-                raise ValueError(f"{d.name}: Struct size too small ({d.size} bytes) for last field ending at bit {prev_end}")
+                raise ValueError(
+                    f"{d.name}: Struct size too small ({d.size} bytes) for last field ending at bit {prev_end}"
+                )
 
         elif isinstance(d, UnionDefinition):
             max_bits = 0
             for field in d.fields:
                 if field.bitoffset != 0:
-                    raise ValueError(f"{d.name}: Union field '{field.name}' must start at bit offset 0")
+                    raise ValueError(
+                        f"{d.name}: Union field '{field.name}' must start at bit offset 0"
+                    )
 
                 count = 1
                 for dim in field.elements:
@@ -293,7 +300,9 @@ def verify_size(definitions):
                     max_bits = total_bits
 
             if d.size * 8 < max_bits:
-                raise ValueError(f"{d.name}: Union size too small ({d.size} bytes) for largest field ({max_bits} bits)")
+                raise ValueError(
+                    f"{d.name}: Union size too small ({d.size} bytes) for largest field ({max_bits} bits)"
+                )
 
 
 def find_struct_holes(definitions):
@@ -340,7 +349,6 @@ def find_struct_holes(definitions):
     return result
 
 
-
 def remove_typedefs(definitions):
     """
     Replaces all typedef usage with their original type name
@@ -348,9 +356,7 @@ def remove_typedefs(definitions):
     """
     # 1. Build typedef mapping: typedef_name → actual_type
     typedef_map = {
-        td.name: td.type
-        for td in definitions
-        if isinstance(td, TypedefDefinition)
+        td.name: td.type for td in definitions if isinstance(td, TypedefDefinition)
     }
 
     # 2. Replace typedefs in fields
@@ -362,6 +368,7 @@ def remove_typedefs(definitions):
 
     # 3. Remove TypedefDefinition instances
     return [d for d in definitions if not isinstance(d, TypedefDefinition)]
+
 
 def validate_definitions(definitions):
     """
@@ -396,5 +403,3 @@ def validate_definitions(definitions):
         if isinstance(defn, ConstantDefinition):
             validate_constant_definition(defn, types)
     verify_size(definitions)
-    
-

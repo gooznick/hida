@@ -5,13 +5,25 @@ here = os.path.dirname(__file__)
 
 sys.path.insert(0, os.path.join(here, os.pardir))
 
-from hida import parse, validate_definitions, find_type_by_name
-from hida import EnumDefinition, ClassDefinition, UnionDefinition, ConstantDefinition, TypedefDefinition, TypeBase
+from hida import (
+    EnumDefinition,
+    parse,
+    validate_definitions,
+    find_type_by_name,
+    ClassDefinition,
+    UnionDefinition,
+    ConstantDefinition,
+    TypedefDefinition,
+    TypeBase,
+)
 
 from hida.cast_xml_parse import CastXmlParse
 
+
 def test_basic(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "basic.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "basic.xml")
+    )
 
     assert isinstance(result, list), "Expected list of class definitions"
 
@@ -57,7 +69,9 @@ def test_basic(cxplat):
 
 
 def test_class(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "class.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "class.xml")
+    )
 
     assert isinstance(result, list), "Expected list of class definitions"
 
@@ -70,7 +84,9 @@ def test_class(cxplat):
 
 
 def test_basics(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "basics.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "basics.xml")
+    )
 
     assert isinstance(result, list), "Expected list of class definitions"
 
@@ -126,7 +142,6 @@ def test_all_basic_types(cxplat):
     struct_def = find_type_by_name(result, "AllBasicTypes")
     assert struct_def is not None, "Struct AllBasicTypes not found"
 
-
     expected_fields = [
         ("b", TypeBase("uint8_t")),  # or TypeBase("bool") if use_bool=True
         ("c", TypeBase("int8_t")),
@@ -158,8 +173,11 @@ def test_all_basic_types(cxplat):
 
     validate_definitions(result)
 
+
 def test_nested_structs(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "nested.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "nested.xml")
+    )
 
     assert isinstance(result, list), "Expected list of class definitions"
 
@@ -181,9 +199,10 @@ def test_nested_structs(cxplat):
     validate_definitions(result)
 
 
-
 def test_arrays(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "arrays.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "arrays.xml")
+    )
 
     assert isinstance(result, list), "Expected list of class definitions"
     validate_definitions(result)
@@ -199,22 +218,31 @@ def test_arrays(cxplat):
         ("d", "int32_t", (5, 6, 7, 8)),
     ]
 
-    assert len(b.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
+    assert len(b.fields) == len(
+        expected_fields
+    ), f"Expected {len(expected_fields)} fields"
 
     for idx, (name, type_str, elements) in enumerate(expected_fields):
         field = b.fields[idx]
         assert field.name == name, f"Expected field name '{name}', got '{field.name}'"
-        assert field.type.fullname == type_str, f"Expected type '{type_str}', got '{field.type.fullname}'"
-        assert field.elements == elements, f"Expected elements {elements}, got {field.elements}"
-        assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, f"Invalid size_in_bits for '{name}'"
+        assert (
+            field.type.fullname == type_str
+        ), f"Expected type '{type_str}', got '{field.type.fullname}'"
+        assert (
+            field.elements == elements
+        ), f"Expected elements {elements}, got {field.elements}"
+        assert (
+            isinstance(field.size_in_bits, int) and field.size_in_bits > 0
+        ), f"Invalid size_in_bits for '{name}'"
 
     assert b.size > 0, f"Struct B size must be positive, got {b.size}"
     validate_definitions(result)
 
 
-
 def test_pointers(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "pointers.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "pointers.xml")
+    )
 
     assert isinstance(result, list), "Expected list of class definitions"
     validate_definitions(result)
@@ -233,24 +261,34 @@ def test_pointers(cxplat):
         ("arr_func_ptr", "void*"),
     ]
 
-    assert len(struct_def.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
+    assert len(struct_def.fields) == len(
+        expected_fields
+    ), f"Expected {len(expected_fields)} fields"
 
     for idx, (name, expected_type) in enumerate(expected_fields):
         field = struct_def.fields[idx]
         assert field.name == name, f"Expected field name '{name}', got '{field.name}'"
-        assert field.type.fullname == expected_type, f"Expected type '{expected_type}' for field '{name}', got '{field.type.fullname}'"
+        assert (
+            field.type.fullname == expected_type
+        ), f"Expected type '{expected_type}' for field '{name}', got '{field.type.fullname}'"
         if name == "arr_func_ptr":
-            assert field.elements == (3,), f"Expected elements (3,) for 'arr_func_ptr', got {field.elements}"
+            assert field.elements == (
+                3,
+            ), f"Expected elements (3,) for 'arr_func_ptr', got {field.elements}"
         else:
-            assert field.elements == (), f"Expected scalar field for '{name}', got elements {field.elements}"
+            assert (
+                field.elements == ()
+            ), f"Expected scalar field for '{name}', got elements {field.elements}"
 
     validate_definitions(result)
+
 
 def test_typedefs(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "typedefs.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "typedefs.xml")
+    )
     assert isinstance(result, list), "Expected list of definitions"
     validate_definitions(result)
-
 
     expected_typedefs = {
         "MyInt": ("int32_t", ()),
@@ -275,11 +313,13 @@ def test_typedefs(cxplat):
         typedef = find_type_by_name(result, name)
         assert typedef is not None, f"Typedef {name} not found"
         if expected_type_name is not None:
-            assert typedef.type.fullname == expected_type_name, \
-                f"{name}: expected definition '{expected_type_name}', got '{typedef.type.fullname}'"
+            assert (
+                typedef.type.fullname == expected_type_name
+            ), f"{name}: expected definition '{expected_type_name}', got '{typedef.type.fullname}'"
 
-        assert typedef.elements == expected_elements, \
-            f"{name}: expected elements {expected_elements}, got {typedef.elements}"
+        assert (
+            typedef.elements == expected_elements
+        ), f"{name}: expected elements {expected_elements}, got {typedef.elements}"
 
     validate_definitions(result)
 
@@ -307,7 +347,6 @@ def test_typedef_struct_inline(cxplat):
     assert struct_def.fields[0].name == "x"
     assert struct_def.fields[0].type.fullname == "int32_t"
     validate_definitions(result)
-
 
 
 def test_namespaces(cxplat):
@@ -356,10 +395,11 @@ def test_namespaces(cxplat):
     validate_definitions(result)
 
 
-
 def test_std_types_pointers(cxplat):
     result = parse(
-        os.path.join(here, os.pardir, "headers", cxplat.directory, "std_types_pointers.xml"),
+        os.path.join(
+            here, os.pardir, "headers", cxplat.directory, "std_types_pointers.xml"
+        ),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -375,16 +415,23 @@ def test_std_types_pointers(cxplat):
         ("s", "void*"),
     ]
 
-    assert len(struct_a.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
+    assert len(struct_a.fields) == len(
+        expected_fields
+    ), f"Expected {len(expected_fields)} fields"
 
     for idx, (name, expected_type) in enumerate(expected_fields):
         field = struct_a.fields[idx]
         assert field.name == name, f"Expected field '{name}', got '{field.name}'"
-        assert field.type.fullname == expected_type, f"Field '{name}' expected type '{expected_type}', got '{field.type.fullname}'"
+        assert (
+            field.type.fullname == expected_type
+        ), f"Field '{name}' expected type '{expected_type}', got '{field.type.fullname}'"
         assert field.elements == (), f"Field '{name}' should not be an array"
 
+
 def test_remove_unknown_behavior(cxplat):
-    xml_path = os.path.join(here, os.pardir, "headers", cxplat.directory, "std_types.xml")
+    xml_path = os.path.join(
+        here, os.pardir, "headers", cxplat.directory, "std_types.xml"
+    )
 
     # ✅ Case: skip_failed_parsing and remove_unknown enabled — should work
     result = parse(xml_path, skip_failed_parsing=True, remove_unknown=True)
@@ -469,9 +516,10 @@ def test_fixed_width_structs(cxplat):
         assert s.size > 0, f"{struct_name}: size must be positive"
 
 
-
 def test_enums(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "enums.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "enums.xml")
+    )
 
     assert isinstance(result, list), "Expected list of definitions"
     validate_definitions(result)
@@ -531,7 +579,9 @@ def test_enums(cxplat):
 
 
 def test_unions(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "unions.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "unions.xml")
+    )
 
     assert isinstance(result, list), "Expected list of class and union definitions"
     validate_definitions(result)
@@ -547,7 +597,9 @@ def test_unions(cxplat):
     packet = find_type_by_name(result, "Packet")
     assert packet is not None, "Struct Packet not found"
     assert isinstance(packet, ClassDefinition)
-    assert any(f.name == "data" for f in packet.fields), "Expected union field 'data' in Packet"
+    assert any(
+        f.name == "data" for f in packet.fields
+    ), "Expected union field 'data' in Packet"
 
     # Test struct with anonymous union
     mixed = find_type_by_name(result, "Mixed")
@@ -555,23 +607,32 @@ def test_unions(cxplat):
     assert isinstance(mixed, ClassDefinition)
     anon = find_type_by_name(result, mixed.fields[1].type.fullname)
     assert anon is not None, "Mixed anon union not found"
-    assert set(f.name for f in anon.fields).intersection({"d", "l"}), "Missing anonymous union fields in Mixed"
+    assert set(f.name for f in anon.fields).intersection(
+        {"d", "l"}
+    ), "Missing anonymous union fields in Mixed"
 
     # Test nested union
     nested_union = find_type_by_name(result, "NestedUnion")
     assert nested_union is not None, "NestedUnion not found"
     assert isinstance(nested_union, UnionDefinition)
-    assert any("nested" in f.name for f in nested_union.fields), "Missing nested struct in NestedUnion"
+    assert any(
+        "nested" in f.name for f in nested_union.fields
+    ), "Missing nested struct in NestedUnion"
 
     # Test deep union
     deep = find_type_by_name(result, "DeepUnion")
     assert deep is not None, "DeepUnion not found"
     assert isinstance(deep, UnionDefinition)
-    assert any("structured" in f.name for f in deep.fields), "Missing structured field in DeepUnion"
+    assert any(
+        "structured" in f.name for f in deep.fields
+    ), "Missing structured field in DeepUnion"
+
 
 def test_bitfields(cxplat):
     result = parse(
-        os.path.join(here, os.pardir, "headers", cxplat.directory, "bitfields_basic.xml")
+        os.path.join(
+            here, os.pardir, "headers", cxplat.directory, "bitfields_basic.xml"
+        )
     )
 
     assert isinstance(result, list), "Expected list of class definitions"
@@ -587,18 +648,30 @@ def test_bitfields(cxplat):
         ("reserved", "uint32_t", 6, True),
     ]
 
-    assert len(s.fields) == len(expected_fields), f"Expected {len(expected_fields)} fields"
+    assert len(s.fields) == len(
+        expected_fields
+    ), f"Expected {len(expected_fields)} fields"
 
-    for idx, (name, expected_type, size_in_bits, bitfield) in enumerate(expected_fields):
+    for idx, (name, expected_type, size_in_bits, bitfield) in enumerate(
+        expected_fields
+    ):
         f = s.fields[idx]
         assert f.name == name, f"Field {idx} expected name '{name}', got '{f.name}'"
-        assert f.type.fullname == expected_type, f"Field '{name}' expected type '{expected_type}', got '{f.type.fullname}'"
-        assert f.size_in_bits == size_in_bits, f"Field '{name}' expected size {size_in_bits}, got {f.size_in_bits}"
-        assert f.bitfield == bitfield, f"Field '{name}' expected bitfield={bitfield}, got {f.bitfield}"
+        assert (
+            f.type.fullname == expected_type
+        ), f"Field '{name}' expected type '{expected_type}', got '{f.type.fullname}'"
+        assert (
+            f.size_in_bits == size_in_bits
+        ), f"Field '{name}' expected size {size_in_bits}, got {f.size_in_bits}"
+        assert (
+            f.bitfield == bitfield
+        ), f"Field '{name}' expected bitfield={bitfield}, got {f.bitfield}"
 
 
 def test_bitfields_complex(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "bitfields.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "bitfields.xml")
+    )
 
     assert isinstance(result, list), "Expected list of class definitions"
     validate_definitions(result)
@@ -606,7 +679,9 @@ def test_bitfields_complex(cxplat):
     # --- StatusFlags ---
     status = find_type_by_name(result, "StatusFlags")
     assert status is not None and len(status.fields) == 3
-    assert [(f.name, f.type.fullname, f.size_in_bits, f.bitfield) for f in status.fields] == [
+    assert [
+        (f.name, f.type.fullname, f.size_in_bits, f.bitfield) for f in status.fields
+    ] == [
         ("ready", "uint32_t", 1, True),
         ("error", "uint32_t", 1, True),
         ("reserved", "uint32_t", 6, True),
@@ -615,7 +690,9 @@ def test_bitfields_complex(cxplat):
     # --- ControlRegister ---
     ctrl = find_type_by_name(result, "ControlRegister")
     assert ctrl is not None and len(ctrl.fields) == 4
-    assert [(f.name, f.type.fullname, f.size_in_bits, f.bitfield) for f in ctrl.fields] == [
+    assert [
+        (f.name, f.type.fullname, f.size_in_bits, f.bitfield) for f in ctrl.fields
+    ] == [
         ("mode", "uint32_t", 3, True),
         ("speed", "int32_t", 5, True),
         ("enable", "uint32_t", 1, True),
@@ -664,7 +741,9 @@ def test_bitfields_complex(cxplat):
 
 
 def test_constants(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "constants.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "constants.xml")
+    )
 
     assert isinstance(result, list), "Expected list of definitions"
     validate_definitions(result)
@@ -681,13 +760,21 @@ def test_constants(cxplat):
     for name, (expected_type, expected_value) in expected_constants.items():
         const = find_type_by_name(result, name)
         assert const is not None, f"Constant '{name}' not found"
-        assert isinstance(const, ConstantDefinition), f"{name} is not a ConstantDefinition"
-        assert const.type.fullname == expected_type, f"{name}: expected type '{expected_type}', got '{const.type.fullname}'"
-        assert const.value == expected_value, f"{name}: expected value '{expected_value}', got '{const.value}'"
+        assert isinstance(
+            const, ConstantDefinition
+        ), f"{name} is not a ConstantDefinition"
+        assert (
+            const.type.fullname == expected_type
+        ), f"{name}: expected type '{expected_type}', got '{const.type.fullname}'"
+        assert (
+            const.value == expected_value
+        ), f"{name}: expected value '{expected_value}', got '{const.value}'"
 
 
 def test_struct_packing(cxplat):
-    result = parse(os.path.join(here, os.pardir, "headers", cxplat.directory, "packing.xml"))
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "packing.xml")
+    )
 
     assert isinstance(result, list), "Expected list of definitions"
     validate_definitions(result)
@@ -761,16 +848,22 @@ def test_all_basic_types_struct(cxplat):
         ("ptr", "void*"),
     ]
 
-    assert len(struct.fields) == len(expected_fields), \
-        f"Expected {len(expected_fields)} fields, got {len(struct.fields)}"
+    assert len(struct.fields) == len(
+        expected_fields
+    ), f"Expected {len(expected_fields)} fields, got {len(struct.fields)}"
 
     for idx, (name, expected_type) in enumerate(expected_fields):
         field = struct.fields[idx]
-        assert field.name == name, f"Field {idx} name mismatch: expected '{name}', got '{field.name}'"
-        assert is_equiv(field.type, expected_type), \
-            f"Field '{name}' type mismatch: expected '{expected_type}', got '{field.type.fullname}'"
-        assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, \
-            f"Field '{name}' has invalid size"
+        assert (
+            field.name == name
+        ), f"Field {idx} name mismatch: expected '{name}', got '{field.name}'"
+        assert is_equiv(
+            field.type, expected_type
+        ), f"Field '{name}' type mismatch: expected '{expected_type}', got '{field.type.fullname}'"
+        assert (
+            isinstance(field.size_in_bits, int) and field.size_in_bits > 0
+        ), f"Field '{name}' has invalid size"
+
 
 def test_includes(cxplat):
     result = parse(
@@ -789,7 +882,11 @@ def test_includes(cxplat):
 
     field = struct.fields[0]
     assert field.name == "id", f"Expected field name 'id', got '{field.name}'"
-    assert field.type.fullname == "int32_t", f"Expected type 'int32_t', got '{field.type.fullname}'"
+    assert (
+        field.type.fullname == "int32_t"
+    ), f"Expected type 'int32_t', got '{field.type.fullname}'"
     assert field.elements == (), "Expected no array elements"
-    assert isinstance(field.size_in_bits, int) and field.size_in_bits > 0, "Invalid size_in_bits"
+    assert (
+        isinstance(field.size_in_bits, int) and field.size_in_bits > 0
+    ), "Invalid size_in_bits"
     assert not field.bitfield, "Expected 'id' not to be a bitfield"
