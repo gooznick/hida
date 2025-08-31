@@ -1,7 +1,6 @@
 import re
-from typing import List, Optional, Union, Dict, Set
+from typing import List, Optional, Union, Dict, Set, Iterable, Tuple
 from collections import defaultdict
-from dataclasses import replace
 from dataclasses import replace
 from typing import List
 
@@ -328,3 +327,161 @@ def filter_connected_definitions(
         stack.extend(graph.get(current, []))
 
     return [d for d in definitions if d.fullname in visited]
+
+
+def flatten_structs(
+    definitions: List[TypeBase],
+    targets: Union[str, List[str]],
+    *,
+    separator: str = "__",
+    flatten_arrays: bool = False,
+) -> List[TypeBase]:
+    """
+    For each target struct/union, inline fields of nested struct/union members into
+    the parent so the result is 'flat'. Names are prefixed with the containing field
+    name and `separator`. Arrays of nested structs are skipped unless `flatten_arrays=True`.
+
+    Example: parent.field (struct S) with S.a, S.b  ->  parent.field__a, parent.field__b
+    """
+    if isinstance(targets, str):
+        targets = [targets]
+
+    # Resolve fullnames and quick lookup
+    defs_by_fullname: Dict[str, TypeBase] = {d.fullname: d for d in definitions}
+    names = set(targets)
+    # allow matching by short name too
+    targets_full: Set[str] = {
+        d.fullname for d in definitions
+        if isinstance(d, (ClassDefinition, UnionDefinition)) and (d.name in names or d.fullname in names)
+    }
+
+    def is_composite(fullname: str) -> bool:
+        d = defs_by_fullname.get(fullname)
+        return isinstance(d, (ClassDefinition, UnionDefinition))
+
+    def flatten_fields(parent_bitoff: int, prefix: str, f: Field) -> Iterable[Field]:
+        """
+        Yield flattened fields for a single field `f` in the parent.
+        """
+        ref = defs_by_fullname.get(f.type.fullname)
+        if not isinstance(ref, (ClassDefinition, UnionDefinition)):
+            # Not a composite -> keep as is, but with original name and offsets.
+            yield f
+            return
+
+        # Array of composites?
+        if f.elements and not flatten_arrays:
+            # Leave the composite field untouched (documented behavior)
+            yield f
+            return
+
+        # Compute stride for each element if we flatten arrays of composites
+        elem_stride_bits = (ref.size * 8) if isinstance(ref, (ClassDefinition, UnionDefinition)) else 0
+
+        # Helper to emit subfields for a specific array element index prefix (or no index)
+        def emit_subfields(name_prefix: str, elem_bit_base: int):
+            for sf in sorted(ref.fields, key=lambda x: x.bitoffset):
+                new_name = f"{name_prefix}{separator}{sf.name}" if name_prefix else sf.name
+                new_bit = parent_bitoff + f.bitoffset + elem_bit_base + sf.bitoffset
+                # If a subfield is itself composite, recurse (deep flatten)
+                if is_composite(sf.type.fullname) and (sf.elements == ()):
+                    yield from flatten_fields(parent_bitoff + f.bitoffset + elem_bit_base, new_name, sf)
+                else:
+                    yield replace(sf, name=new_name, bitoffset=new_bit)
+
+        if not f.elements:
+            # Single composite
+            yield from emit_subfields(f.name, 0)
+        else:
+            # Flatten arrays of composites: unroll with index suffixes
+            from itertools import product
+            dims = list(f.elements)
+            # linearize multi-d indices to a bitoffset; compute index -> stride
+            def linear_index(idxs: Tuple[int, ...], dims: List[int]) -> int:
+                stride = 1
+                idx = 0
+                for i, d in zip(reversed(idxs), reversed(dims)):
+                    idx += i * stride
+                    stride *= d
+                return idx
+
+            for idxs in product(*[range(d) for d in dims]):
+                lin = linear_index(idxs, dims)
+                elem_base = lin * elem_stride_bits
+                idx_suffix = "".join(f"[{i}]" for i in idxs)
+                yield from emit_subfields(f"{f.name}{idx_suffix}", elem_base)
+
+    new_defs: List[TypeBase] = []
+    for d in definitions:
+        if not isinstance(d, (ClassDefinition, UnionDefinition)) or d.fullname not in targets_full:
+            new_defs.append(d)
+            continue
+
+        flat_fields: List[Field] = []
+        for f in sorted(d.fields, key=lambda x: x.bitoffset):
+            # If field refers to composite, flatten; else keep
+            ref = defs_by_fullname.get(f.type.fullname)
+            if isinstance(ref, (ClassDefinition, UnionDefinition)):
+                flat_fields.extend(list(flatten_fields(0, "", f)))
+            else:
+                flat_fields.append(f)
+
+        # Keep order by bitoffset, produce a new definition with flattened fields
+        flat_fields.sort(key=lambda x: x.bitoffset)
+        new_defs.append(replace(d, fields=tuple(flat_fields)))
+
+    return new_defs
+
+def remove_enums(
+    definitions: List[TypeBase],
+    *,
+    default_int_type: str = "int",
+) -> List[TypeBase]:
+    """
+    Replace all uses of EnumDefinition with an integer type and drop the enum definitions.
+    Tries `enum.underlying_type` (if present), otherwise uses `default_int_type`.
+    """
+    # Build enum -> replacement type map
+    enum_map: Dict[str, TypeBase] = {}
+    for d in definitions:
+        if isinstance(d, EnumDefinition):
+            # Try to discover an underlying type; adapt to your datamodel
+            underlying = getattr(d, "underlying_type", None) or getattr(d, "type", None)
+            if isinstance(underlying, TypeBase):
+                enum_map[d.fullname] = underlying
+            elif isinstance(underlying, str):
+                enum_map[d.fullname] = TypeBase(name=underlying)
+            else:
+                enum_map[d.fullname] = TypeBase(name=default_int_type)
+
+    def subst_type(t: TypeBase) -> TypeBase:
+        # Replace if this type is an enum (match by fullname or by name as fallback)
+        if t.fullname in enum_map:
+            return enum_map[t.fullname]
+        # Some IRs might not have fullname filled on TypeBase; match by name
+        if t.name in {defs_by_name[k].name for k in enum_map.keys()} if (defs_by_name := {d.fullname: d for d in definitions if isinstance(d, EnumDefinition)}) else set():
+            # find the first matching by name; if multiple enums share a short name in different namespaces,
+            # prefer not to guess—keep original type in that rare case.
+            candidates = [enum_map[k] for k, ed in defs_by_name.items() if ed.name == t.name and k in enum_map]
+            if len(candidates) == 1:
+                return candidates[0]
+        return t
+
+    out: List[TypeBase] = []
+    for d in definitions:
+        if isinstance(d, EnumDefinition):
+            # drop enum definitions
+            continue
+        elif isinstance(d, (ClassDefinition, UnionDefinition)):
+            new_fields = tuple(
+                replace(f, type=subst_type(f.type))
+                for f in d.fields
+            )
+            out.append(replace(d, fields=new_fields))
+        elif isinstance(d, TypedefDefinition):
+            out.append(replace(d, type=subst_type(d.type)))
+        elif isinstance(d, ConstantDefinition):
+            out.append(replace(d, type=subst_type(d.type)))
+        else:
+            out.append(d)
+    return out

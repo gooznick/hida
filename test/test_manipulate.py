@@ -1,6 +1,9 @@
 import os
 import pytest
 from typing import List
+from pathlib import Path
+import re
+import pytest
 
 from hida import (
     parse,
@@ -14,6 +17,9 @@ from hida import (
     filter_connected_definitions,
     DefinitionBase,
     ClassDefinition,
+    UnionDefinition,
+    flatten_structs,
+    remove_enums
 )
 
 here = os.path.dirname(__file__)
@@ -233,3 +239,164 @@ def test_filter_connected_definitions(cxplat):
     assert (
         "Unused" not in remaining_names
     ), "Disconnected type 'Unused' should have been removed"
+
+
+
+
+HERE = Path(__file__).parent
+XML_DIR = HERE / "xml"
+
+
+
+def _get_struct(defs, name: str):
+    for d in defs:
+        if isinstance(d, (ClassDefinition, UnionDefinition)):
+            if d.name == name or d.fullname.endswith(name):
+                return d
+    raise AssertionError(f"Struct/union {name} not found in defs")
+
+def _field_names(defn):
+    return [f.name for f in defn.fields]
+
+
+# -----------------------------
+# flatten_structs manipulator
+# -----------------------------
+def test_flatten_structs_basic(cxplat):
+    path = os.path.join(
+        here, os.pardir, "headers", cxplat.directory, "flatten.xml"
+    )
+    defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
+    validate_definitions(defs)
+    
+    # Sanity before: Wrapper has a composite field `inner`
+    wrapper = _get_struct(defs, "Wrapper")
+    assert any(f.name == "inner" for f in wrapper.fields), "Expected composite field 'inner' before flattening"
+
+    # Apply flattening on just Wrapper
+    defs2 = flatten_structs(defs, targets=["Wrapper"])  # or ["demo::Wrapper"]
+
+    wrapper2 = _get_struct(defs2, "Wrapper")
+    names2 = _field_names(wrapper2)
+
+    # After: `inner` field should be replaced by `inner__a` and `inner__b`
+    assert "inner" not in names2, "Composite field should be flattened and removed"
+    assert "inner__a" in names2, "Flattened member missing: inner__a"
+    assert "inner__b" in names2, "Flattened member missing: inner__b"
+
+    # x and y should still be present
+    assert "x" in names2 and "y" in names2
+
+    # The array-of-struct example should remain unflattened by default
+    wrapper_arr = _get_struct(defs2, "WrapperArr")
+    assert any(f.name == "items" for f in wrapper_arr.fields), "Array field should remain unless flatten_arrays=True"
+
+
+def _get_struct(defs, name_or_suffix: str):
+    for d in defs:
+        if isinstance(d, (ClassDefinition, UnionDefinition)):
+            if d.name == name_or_suffix or d.fullname.endswith(name_or_suffix):
+                return d
+    raise AssertionError(f"Struct/union {name_or_suffix} not found")
+
+def _field_names(defn):
+    return [f.name for f in defn.fields]
+
+# -----------------------------
+# flatten_structs – extra coverage
+# -----------------------------
+
+def test_flatten_structs_fullname_and_separator(cxplat):
+    """Flatten by fullname and with a custom separator."""
+    path = os.path.join(here, os.pardir, "headers", cxplat.directory, "flatten.xml")
+    defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
+    validate_definitions(defs)
+
+    # Use fullname (namespace)::Wrapper if present
+    # We allow either exact or suffix match “::Wrapper”
+    target_fullname = None
+    for d in defs:
+        if isinstance(d, (ClassDefinition, UnionDefinition)) and d.name == "Wrapper":
+            target_fullname = d.fullname
+            break
+    assert target_fullname is not None
+
+    defs2 = flatten_structs(defs, targets=[target_fullname], separator="__FL__")
+    wrapper2 = _get_struct(defs2, "Wrapper")
+    names2 = _field_names(wrapper2)
+
+    assert "inner" not in names2
+    assert "inner__FL__a" in names2
+    assert "inner__FL__b" in names2
+    assert "x" in names2 and "y" in names2
+
+
+def test_flatten_structs_arrays_offsets(cxplat):
+    """
+    When flattening arrays of composites (flatten_arrays=True), we expect:
+      - original array field removed
+      - per-element fields with index suffixes present
+      - bitoffsets differ by struct element stride (size_in_bits of Inner)
+    """
+    path = os.path.join(here, os.pardir, "headers", cxplat.directory, "flatten.xml")
+    defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
+    validate_definitions(defs)
+
+    inner = _get_struct(defs, "Inner")
+    inner_stride_bits = inner.size * 8  # size is in bytes
+
+    defs2 = flatten_structs(defs, targets=["WrapperArr"], flatten_arrays=True)
+    warr = _get_struct(defs2, "WrapperArr")
+    names = _field_names(warr)
+
+    # original array field should be gone
+    assert "items" not in names
+
+    # flattened element fields must exist
+    need = ["items[0]__a", "items[0]__b", "items[1]__a", "items[1]__b"]
+    for n in need:
+        assert n in names, f"missing flattened array member {n}"
+
+    # Check offsets stride between [0] and [1]
+    f_by_name = {f.name: f for f in warr.fields}
+    off_a0 = f_by_name["items[0]__a"].bitoffset
+    off_a1 = f_by_name["items[1]__a"].bitoffset
+    off_b0 = f_by_name["items[0]__b"].bitoffset
+    off_b1 = f_by_name["items[1]__b"].bitoffset
+
+    assert off_a1 - off_a0 == inner_stride_bits, "wrong stride for items[*]__a"
+    assert off_b1 - off_b0 == inner_stride_bits, "wrong stride for items[*]__b"
+
+# -----------------------------
+# remove_enums manipulator
+# -----------------------------
+def test_remove_enums_basic(cxplat):
+    path = os.path.join(
+        here, os.pardir, "headers", cxplat.directory, "flat_enum.xml"
+    )
+    defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
+
+    # Confirm the enum exists before transformation
+    enum_names_before = {d.fullname for d in defs if d.__class__.__name__ == "EnumDefinition"}
+    assert any(n.endswith("Color") for n in enum_names_before), "Expected an EnumDefinition 'Color' before removal"
+
+    # Apply removal
+    defs2 = remove_enums(defs)
+
+    # All enums should be gone
+    enum_names_after = {d.fullname for d in defs2 if d.__class__.__name__ == "EnumDefinition"}
+    assert not enum_names_after, f"Enum definitions remain after remove_enums: {enum_names_after}"
+
+    # Fields that used to be enums should now be integer-typed (not the enum name)
+    uses = _get_struct(defs2, "UsesColor")
+    fields = {f.name: f for f in uses.fields}
+
+    assert "c1" in fields and "c2" in fields and "n" in fields
+
+    # Their TypeBase name should no longer be 'Color' (or namespaced Color)
+    for fname in ("c1", "c2"):
+        tname = fields[fname].type.name
+        assert "Color" not in tname, f"{fname} still has enum name after remove_enums (got type {tname})"
+
+    # And the plain byte field remains unchanged
+    assert fields["n"].type.name in {"uint8_t", "unsigned char", "unsigned char __attribute__((__vector_size__(1)))"}

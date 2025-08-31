@@ -19,6 +19,8 @@ from .manipulate import (
     flatten_namespaces,
     resolve_typedefs,
     filter_connected_definitions,
+    flatten_structs, 
+    remove_enums
 )
 
 from .c_header_gen import write_c_header_from_definitions
@@ -43,6 +45,8 @@ __all__ = [
     "flatten_namespaces",
     "resolve_typedefs",
     "filter_connected_definitions",
+    "flatten_structs",
+    "remove_enums",
     # header_gen
     "write_header_from_definitions",
     # c_header_gen
