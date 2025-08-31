@@ -14,11 +14,14 @@ def get_system_include_regexes() -> List[str]:
     """
     return [
         r"builtin",               
-        r"\\Program Files\\",                # VS STL, Windows SDK
-        r"\\Microsoft Visual Studio\\",
-        r"\\Windows Kits\\",
-        r"\\vcpkg\\installed\\.*?\\include\\",
-        # linux
+        r".*\\Program Files\\.*",                # VS STL, Windows SDK
+        r".*\\Microsoft Visual Studio\\.*",
+        r".*\\Windows Kits\\.*",
+        r".*\\vcpkg\\installed\\.*?\\include\\.*",
+        r".*/Program Files/.*",                # VS STL, Windows SDK
+        r".*/Microsoft Visual Studio/.*",
+        r".*/Windows Kits/.*",
+        r".*/vcpkg/installed/.*?/include/.*",        # linux
         r"^<builtin>",               
         r"^/usr/include/",
         r"^/usr/local/include/",
