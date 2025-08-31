@@ -5,13 +5,15 @@ from cast_xml_parse import CastXmlParse, parse
 
 import os
 import pytest
+import castxml_platform 
+
 
 here = os.path.dirname(__file__)
 
 def test_fill_bitfield_holes_with_padding():
     # Parse the header
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "bitfield_holes.xml"),
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "bitfield_holes.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -52,7 +54,7 @@ def test_fill_bitfield_holes_with_padding():
     
 def test_fill_struct_holes_with_padding_bytes_multiple_structs():
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "holes_real.xml"),
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "holes_real.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -92,7 +94,7 @@ def test_fill_struct_holes_with_padding_bytes_multiple_structs():
 
 def test_flatten_namespaces():
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "namespaced_types.xml"),
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "namespaced_types.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -107,7 +109,7 @@ def test_flatten_namespaces():
 
 def test_resolve_typedefs():
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "typedef_remove.xml"),
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "typedef_remove.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -180,7 +182,7 @@ def test_include_as_list(sample_definitions):
     assert "A" in names and "B" in names
 
 def test_filter_connected_definitions():
-    path = os.path.join(here, os.pardir, "headers", "castxml", "connected_filter.xml")
+    path = os.path.join(here, os.pardir, "headers", castxml_platform.directory, "connected_filter.xml")
     all_defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
     validate_definitions(all_defs)
 

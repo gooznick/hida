@@ -8,13 +8,11 @@ sys.path.insert(0, os.path.join(here, os.pardir))
 from cast_xml_parse import CastXmlParse, parse
 from data import *
 from data_helpers import *
+import castxml_platform
 
-import platform
-
-windows = platform.system() == "Windows"
 
 def test_basic():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "basic.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "basic.xml"))
 
     assert isinstance(result, list), "Expected list of class definitions"
 
@@ -60,7 +58,7 @@ def test_basic():
 
 
 def test_class():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "class.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "class.xml"))
 
     assert isinstance(result, list), "Expected list of class definitions"
 
@@ -73,7 +71,7 @@ def test_class():
 
 
 def test_basics():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "basics.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "basics.xml"))
 
     assert isinstance(result, list), "Expected list of class definitions"
 
@@ -121,7 +119,7 @@ def test_normalize_integral_type():
 
 def test_all_basic_types():
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "basic_types.xml")
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "basic_types.xml")
     )
 
     assert isinstance(result, list), "Expected list of class definitions"
@@ -129,7 +127,6 @@ def test_all_basic_types():
     struct_def = find_type_by_name(result, "AllBasicTypes")
     assert struct_def is not None, "Struct AllBasicTypes not found"
 
-    windows = platform.system() == "Windows"
 
     expected_fields = [
         ("b", TypeBase("uint8_t")),  # or TypeBase("bool") if use_bool=True
@@ -140,8 +137,8 @@ def test_all_basic_types():
         ("us", TypeBase("uint16_t")),
         ("i", TypeBase("int32_t")),
         ("ui", TypeBase("uint32_t")),
-        ("l", TypeBase("int32_t" if windows else "int64_t")),
-        ("ul", TypeBase("uint32_t" if windows else "uint64_t")),
+        ("l", TypeBase("int32_t" if castxml_platform.windows else "int64_t")),
+        ("ul", TypeBase("uint32_t" if castxml_platform.windows else "uint64_t")),
         ("ll", TypeBase("int64_t")),
         ("ull", TypeBase("uint64_t")),
         ("f", TypeBase("float")),
@@ -163,7 +160,7 @@ def test_all_basic_types():
     validate_definitions(result)
 
 def test_nested_structs():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "nested.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "nested.xml"))
 
     assert isinstance(result, list), "Expected list of class definitions"
 
@@ -187,7 +184,7 @@ def test_nested_structs():
 
 
 def test_arrays():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "arrays.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "arrays.xml"))
 
     assert isinstance(result, list), "Expected list of class definitions"
     validate_definitions(result)
@@ -218,7 +215,7 @@ def test_arrays():
 
 
 def test_pointers():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "pointers.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "pointers.xml"))
 
     assert isinstance(result, list), "Expected list of class definitions"
     validate_definitions(result)
@@ -251,15 +248,14 @@ def test_pointers():
     validate_definitions(result)
 
 def test_typedefs():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "typedefs.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "typedefs.xml"))
     assert isinstance(result, list), "Expected list of definitions"
     validate_definitions(result)
 
-    windows = platform.system() == "Windows"
 
     expected_typedefs = {
         "MyInt": ("int32_t", ()),
-        "MyULong": ("uint32_t" if windows else "uint64_t", ()),
+        "MyULong": ("uint32_t" if castxml_platform.windows else "uint64_t", ()),
         "FloatPtr": ("void*", ()),
         "FuncPtr": ("void*", ()),
         "PointPtr": ("void*", ()),
@@ -291,7 +287,7 @@ def test_typedefs():
 
 def test_typedef_struct_inline():
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "typedef_struct.xml")
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "typedef_struct.xml")
     )
 
     assert isinstance(result, list), "Expected list of definitions"
@@ -317,7 +313,7 @@ def test_typedef_struct_inline():
 
 def test_namespaces():
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "namespaces.xml")
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "namespaces.xml")
     )
 
     assert isinstance(result, list), "Expected list of class definitions"
@@ -364,7 +360,7 @@ def test_namespaces():
 
 def test_std_types_pointers():
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "std_types_pointers.xml"),
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "std_types_pointers.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -389,7 +385,7 @@ def test_std_types_pointers():
         assert field.elements == (), f"Field '{name}' should not be an array"
 
 def test_remove_unknown_behavior():
-    xml_path = os.path.join(here, os.pardir, "headers", "castxml", "std_types.xml")
+    xml_path = os.path.join(here, os.pardir, "headers", castxml_platform.directory, "std_types.xml")
 
     # ✅ Case: skip_failed_parsing and remove_unknown enabled — should work
     result = parse(xml_path, skip_failed_parsing=True, remove_unknown=True)
@@ -414,7 +410,7 @@ def test_remove_unknown_behavior():
 
 def test_fixed_width_structs():
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "fixed_width.xml")
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "fixed_width.xml")
     )
 
     assert isinstance(result, list), "Expected list of class definitions"
@@ -476,7 +472,7 @@ def test_fixed_width_structs():
 
 
 def test_enums():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "enums.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "enums.xml"))
 
     assert isinstance(result, list), "Expected list of definitions"
     validate_definitions(result)
@@ -536,7 +532,7 @@ def test_enums():
 
 
 def test_unions():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "unions.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "unions.xml"))
 
     assert isinstance(result, list), "Expected list of class and union definitions"
     validate_definitions(result)
@@ -576,7 +572,7 @@ def test_unions():
 
 def test_bitfields():
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "bitfields_basic.xml")
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "bitfields_basic.xml")
     )
 
     assert isinstance(result, list), "Expected list of class definitions"
@@ -603,7 +599,7 @@ def test_bitfields():
 
 
 def test_bitfields_complex():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "bitfields.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "bitfields.xml"))
 
     assert isinstance(result, list), "Expected list of class definitions"
     validate_definitions(result)
@@ -669,7 +665,7 @@ def test_bitfields_complex():
 
 
 def test_constants():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "constants.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "constants.xml"))
 
     assert isinstance(result, list), "Expected list of definitions"
     validate_definitions(result)
@@ -692,7 +688,7 @@ def test_constants():
 
 
 def test_struct_packing():
-    result = parse(os.path.join(here, os.pardir, "headers", "castxml", "packing.xml"))
+    result = parse(os.path.join(here, os.pardir, "headers", castxml_platform.directory, "packing.xml"))
 
     assert isinstance(result, list), "Expected list of definitions"
     validate_definitions(result)
@@ -715,11 +711,9 @@ def test_struct_packing():
         ), f"{name}: expected size {expected_size}, got {struct.size}"
 
 
-import platform
-
 def test_all_basic_types_struct():
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "all_types.xml"),
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "all_types.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -730,8 +724,6 @@ def test_all_basic_types_struct():
     struct = find_type_by_name(result, "AllTypes")
     assert struct is not None, "Struct AllTypes not found"
     assert isinstance(struct, ClassDefinition)
-
-    windows = platform.system() == "Windows"
 
     # Allow platform-dependent width aliases
     def is_equiv(actual_type, expected):
@@ -752,8 +744,8 @@ def test_all_basic_types_struct():
         ("us", "uint16_t"),
         ("i", "int32_t"),
         ("ui", "uint32_t"),
-        ("l", "int32_t" if windows else "int64_t"),
-        ("ul", "uint32_t" if windows else "uint64_t"),
+        ("l", "int32_t" if castxml_platform.windows else "int64_t"),
+        ("ul", "uint32_t" if castxml_platform.windows else "uint64_t"),
         ("ll", "int64_t"),
         ("ull", "uint64_t"),
         ("i8", "int8_t"),
@@ -783,7 +775,7 @@ def test_all_basic_types_struct():
 
 def test_includes():
     result = parse(
-        os.path.join(here, os.pardir, "headers", "castxml", "includes.xml"),
+        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "includes.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )

@@ -11,6 +11,7 @@ from data import *
 from manipulate import filter_by_source_regexes, get_system_include_regexes
 from c_header_gen import write_c_header_from_definitions
 import pytest
+import castxml_platform
 
 
 @pytest.mark.parametrize("filename", [
@@ -37,7 +38,7 @@ import pytest
     "complicated.xml",
 ])
 def test_c_header_generation(filename):
-    xml_path = os.path.join(here, os.pardir, "headers", "castxml", filename)
+    xml_path = os.path.join(here, os.pardir, "headers", castxml_platform.directory, filename)
     definitions = parse(xml_path, skip_failed_parsing=True, remove_unknown=True)
     definitions = filter_by_source_regexes(definitions, exclude=get_system_include_regexes())
     validate_definitions(definitions)

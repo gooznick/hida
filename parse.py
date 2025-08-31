@@ -65,6 +65,7 @@ def is_system_header(file_name: str) -> bool:
         "/usr/",
         "/x86_64-linux-gnu/",
         "/castxml/",
+        "/MSVC/",
         "<built-in>",
         "<command-line>",
         "<builtin>",
@@ -73,7 +74,6 @@ def is_system_header(file_name: str) -> bool:
 
 
 def filter_out_system_headers(elements: Dict[str, ET.Element]) -> Dict[str, ET.Element]:
-    return elements
     system_file_ids = set()
     for elem_id, elem in elements.items():
         if elem.tag == "File":

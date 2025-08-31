@@ -6,13 +6,15 @@ from cast_xml_parse import CastXmlParse, parse
 from data_helpers import *
 from manipulate import *
 from python_gen import *
+import castxml_platform
+
 here = os.path.dirname(__file__)
 
 def load_and_verify_header(header_basename: str, use_bool=True, skip_failed_parsing=True, remove_unknown=True):
     """
     Loads, converts, and verifies a header by its base XML filename.
     """
-    header_path = os.path.join(here, os.pardir, "headers", "castxml", header_basename)
+    header_path = os.path.join(here, os.pardir, "headers", castxml_platform.directory, header_basename)
     result = parse(header_path, use_bool=use_bool, skip_failed_parsing=skip_failed_parsing, remove_unknown=remove_unknown)
 
     assert isinstance(result, list), f"{header_basename} parsing did not return a list"

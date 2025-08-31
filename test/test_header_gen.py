@@ -10,11 +10,12 @@ from cast_xml_parse import parse
 from data_helpers import *
 from manipulate import *
 from header_gen import write_header_from_definitions
+import castxml_platform
 
 here = os.path.dirname(__file__)
 
 def load_convert_compile_header(header_basename: str):
-    xml_path = os.path.join(here, os.pardir, "headers", "castxml", header_basename)
+    xml_path = os.path.join(here, os.pardir, "headers", castxml_platform.directory, header_basename)
 
     # Parse
     result = parse(xml_path, use_bool=True, skip_failed_parsing=True, remove_unknown=True)

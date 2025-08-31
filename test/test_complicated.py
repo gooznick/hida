@@ -8,15 +8,11 @@ sys.path.insert(0, os.path.join(here, os.pardir))
 from cast_xml_parse import CastXmlParse, parse
 from data import *
 from data_helpers import *
-
-import platform
-
-windows = platform.system() == "Windows"
-import platform
+import castxml_platform
 
 def test_complicated():
     result = parse(
-        os.path.join(here, os.pardir, 'headers', 'castxml', 'complicated.xml'),
+        os.path.join(here, os.pardir, 'headers', castxml_platform.directory, 'complicated.xml'),
         use_bool=True, skip_failed_parsing=True, remove_unknown=True
     )
 
@@ -26,8 +22,6 @@ def test_complicated():
     struct = find_type_by_name(result, "Everything")
     assert struct is not None, "Struct 'Everything' not found"
     assert isinstance(struct, ClassDefinition)
-
-    windows = platform.system() == "Windows"
 
     expected_fields = {
         # Basic + fixed-width
@@ -61,7 +55,7 @@ def test_complicated():
 
         # Typedefs
         "my_i": "int32_t",
-        "my_ul": "uint32_t" if windows else "uint64_t",
+        "my_ul": "uint32_t" if castxml_platform.windows else "uint64_t",
         "fp": "void*",
         "pt": "void*",
         # "pts": ("Point", (5,)),  # Uncomment if Point is available and properly typed
