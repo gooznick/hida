@@ -1,5 +1,9 @@
 import re
 from typing import List, Optional, Union, Dict, Set
+from collections import defaultdict
+from dataclasses import replace
+from dataclasses import replace
+from typing import List
 
 from dataclasses import replace
 
@@ -185,12 +189,6 @@ def fill_struct_holes_with_padding_bytes(definitions):
         result.append(replace(d, fields=tuple(new_fields)))
 
     return result
-
-
-from collections import defaultdict
-from dataclasses import replace
-from dataclasses import replace
-from typing import List
 
 
 def flatten_namespaces(definitions: List[TypeBase]) -> List[TypeBase]:

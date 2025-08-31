@@ -12,6 +12,10 @@ license = { text = "MIT" }
 authors = [{ name = "gooznick" }]
 dependencies = []  # add your runtime deps here
 
+[project.scripts]
+hida-castxml = "hida.castxml_cli:main"
+hida = "hida.cli:main"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 

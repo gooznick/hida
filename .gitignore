@@ -45,3 +45,5 @@ test/__pycache__/
 # --- Project specific ---
 .python-version
 *.zip
+*.json
+
