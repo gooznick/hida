@@ -23,7 +23,7 @@ def load_and_verify_header(header_basename: str, use_bool=True, skip_failed_pars
     
     validate_definitions(result)
 
-    code = generate_python_code_from_definitions(result, assert_size=True)
+    code = generate_python_code_from_definitions(result, assert_size=castxml_platform.native)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         py_file = os.path.join(tmpdir, "generated.py")
@@ -33,7 +33,8 @@ def load_and_verify_header(header_basename: str, use_bool=True, skip_failed_pars
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
-        verify_struct_sizes([d for d in result if isinstance(d, (ClassDefinition, UnionDefinition))], module)
+        if castxml_platform.native:
+            verify_struct_sizes([d for d in result if isinstance(d, (ClassDefinition, UnionDefinition))], module)
 
     return result  # Optionally return parsed result
 
