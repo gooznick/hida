@@ -8,11 +8,10 @@ sys.path.insert(0, os.path.join(here, os.pardir))
 from cast_xml_parse import CastXmlParse, parse
 from data import *
 from data_helpers import *
-import castxml_platform
 
-def test_complicated():
+def test_complicated(cxplat):
     result = parse(
-        os.path.join(here, os.pardir, 'headers', castxml_platform.directory, 'complicated.xml'),
+        os.path.join(here, os.pardir, 'headers', cxplat.directory, 'complicated.xml'),
         use_bool=True, skip_failed_parsing=True, remove_unknown=True
     )
 
@@ -55,7 +54,7 @@ def test_complicated():
 
         # Typedefs
         "my_i": "int32_t",
-        "my_ul": "uint32_t" if castxml_platform.windows else "uint64_t",
+        "my_ul": "uint32_t" if cxplat.windows else "uint64_t",
         "fp": "void*",
         "pt": "void*",
         # "pts": ("Point", (5,)),  # Uncomment if Point is available and properly typed

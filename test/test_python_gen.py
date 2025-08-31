@@ -6,15 +6,14 @@ from cast_xml_parse import CastXmlParse, parse
 from data_helpers import *
 from manipulate import *
 from python_gen import *
-import castxml_platform
 
 here = os.path.dirname(__file__)
 
-def load_and_verify_header(header_basename: str, use_bool=True, skip_failed_parsing=True, remove_unknown=True):
+def load_and_verify_header(header_basename: str, cxplat, use_bool=True, skip_failed_parsing=True, remove_unknown=True):
     """
     Loads, converts, and verifies a header by its base XML filename.
     """
-    header_path = os.path.join(here, os.pardir, "headers", castxml_platform.directory, header_basename)
+    header_path = os.path.join(here, os.pardir, "headers", cxplat.directory, header_basename)
     result = parse(header_path, use_bool=use_bool, skip_failed_parsing=skip_failed_parsing, remove_unknown=remove_unknown)
 
     assert isinstance(result, list), f"{header_basename} parsing did not return a list"
@@ -23,7 +22,7 @@ def load_and_verify_header(header_basename: str, use_bool=True, skip_failed_pars
     
     validate_definitions(result)
 
-    code = generate_python_code_from_definitions(result, assert_size=castxml_platform.native)
+    code = generate_python_code_from_definitions(result, assert_size=cxplat.native)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         py_file = os.path.join(tmpdir, "generated.py")
@@ -33,7 +32,7 @@ def load_and_verify_header(header_basename: str, use_bool=True, skip_failed_pars
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
-        if castxml_platform.native:
+        if cxplat.native:
             verify_struct_sizes([d for d in result if isinstance(d, (ClassDefinition, UnionDefinition))], module)
 
     return result  # Optionally return parsed result
@@ -61,5 +60,5 @@ def load_and_verify_header(header_basename: str, use_bool=True, skip_failed_pars
     "typedef_remove.xml",
     "complicated.xml",
 ])
-def test_header_xml_to_python_and_verify(filename):
-    load_and_verify_header(filename)
+def test_header_xml_to_python_and_verify(filename, cxplat):
+    load_and_verify_header(filename, cxplat)

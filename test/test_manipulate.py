@@ -5,15 +5,14 @@ from cast_xml_parse import CastXmlParse, parse
 
 import os
 import pytest
-import castxml_platform 
 
 
 here = os.path.dirname(__file__)
 
-def test_fill_bitfield_holes_with_padding():
+def test_fill_bitfield_holes_with_padding(cxplat):
     # Parse the header
     result = parse(
-        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "bitfield_holes.xml"),
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "bitfield_holes.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -52,9 +51,9 @@ def test_fill_bitfield_holes_with_padding():
 
     validate_definitions(result)
     
-def test_fill_struct_holes_with_padding_bytes_multiple_structs():
+def test_fill_struct_holes_with_padding_bytes_multiple_structs(cxplat):
     result = parse(
-        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "holes_real.xml"),
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "holes_real.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -92,9 +91,9 @@ def test_fill_struct_holes_with_padding_bytes_multiple_structs():
                 assert field.type.fullname == "uint8_t"
                 assert isinstance(field.elements, tuple)
 
-def test_flatten_namespaces():
+def test_flatten_namespaces(cxplat):
     result = parse(
-        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "namespaced_types.xml"),
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "namespaced_types.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -107,9 +106,9 @@ def test_flatten_namespaces():
     assert "Beta__Extra" in names
     assert all(d.namespace == () for d in flattened)
 
-def test_resolve_typedefs():
+def test_resolve_typedefs(cxplat):
     result = parse(
-        os.path.join(here, os.pardir, "headers", castxml_platform.directory, "typedef_remove.xml"),
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "typedef_remove.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -181,8 +180,8 @@ def test_include_as_list(sample_definitions):
     names = [d.name for d in result]
     assert "A" in names and "B" in names
 
-def test_filter_connected_definitions():
-    path = os.path.join(here, os.pardir, "headers", castxml_platform.directory, "connected_filter.xml")
+def test_filter_connected_definitions(cxplat):
+    path = os.path.join(here, os.pardir, "headers", cxplat.directory, "connected_filter.xml")
     all_defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
     validate_definitions(all_defs)
 

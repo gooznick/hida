@@ -10,12 +10,11 @@ from cast_xml_parse import parse
 from data_helpers import *
 from manipulate import *
 from header_gen import write_header_from_definitions
-import castxml_platform
 
 here = os.path.dirname(__file__)
 
-def load_convert_compile_header(header_basename: str):
-    xml_path = os.path.join(here, os.pardir, "headers", castxml_platform.directory, header_basename)
+def load_convert_compile_header(header_basename: str, cxplat):
+    xml_path = os.path.join(here, os.pardir, "headers", cxplat.directory, header_basename)
 
     # Parse
     result = parse(xml_path, use_bool=True, skip_failed_parsing=True, remove_unknown=True)
@@ -70,5 +69,5 @@ def load_convert_compile_header(header_basename: str):
     "fixed_width.xml",
     "complicated.xml",
 ])
-def test_generated_header_compiles(filename):
-    load_convert_compile_header(filename)
+def test_generated_header_compiles(filename, cxplat):
+    load_convert_compile_header(filename, cxplat)
