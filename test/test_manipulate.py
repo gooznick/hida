@@ -1,7 +1,7 @@
 import os
 import pytest
 from typing import List
-from pathlib import Path
+from pathlib import Path, PurePath
 import re
 import pytest
 
@@ -19,7 +19,8 @@ from hida import (
     ClassDefinition,
     UnionDefinition,
     flatten_structs,
-    remove_enums
+    remove_enums,
+    remove_source
 )
 
 here = os.path.dirname(__file__)
@@ -400,3 +401,43 @@ def test_remove_enums_basic(cxplat):
 
     # And the plain byte field remains unchanged
     assert fields["n"].type.name in {"uint8_t", "unsigned char", "unsigned char __attribute__((__vector_size__(1)))"}
+
+
+
+@pytest.mark.parametrize("xml_name,struct_name", [
+    ("flatten.xml",   "Wrapper"),
+    ("flat_enum.xml", "UsesColor"),
+])
+def test_remove_source_default_empties_source(cxplat, xml_name, struct_name):
+    path = os.path.join(here, os.pardir, "headers", cxplat.directory, xml_name)
+    defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
+    validate_definitions(defs)
+
+    target = _get_struct(defs, struct_name)
+    before = target.source
+    # sanity: usually a path; allow empty in rare cases
+    assert before is not None
+
+    defs2 = remove_source(defs)  # default -> empty string
+    target2 = _get_struct(defs2, struct_name)
+    assert target2.source == "", "remove_source() should blank out source by default"
+
+@pytest.mark.parametrize("xml_name,struct_name", [
+    ("flatten.xml",   "Wrapper"),
+    ("flat_enum.xml", "UsesColor"),
+])
+def test_remove_source_header_only_keeps_basename(cxplat, xml_name, struct_name):
+    path = os.path.join(here, os.pardir, "headers", cxplat.directory, xml_name)
+    defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
+    validate_definitions(defs)
+
+    target = _get_struct(defs, struct_name)
+    before = (target.source or "").strip().strip('"').strip("'")
+    expected = (
+        before if (before.startswith("<") and before.endswith(">"))
+        else (PurePath(before).name if before else "")
+    )
+
+    defs2 = remove_source(defs, header_only=True)
+    target2 = _get_struct(defs2, struct_name)
+    assert target2.source == expected, f"expected basename '{expected}', got '{target2.source}'"

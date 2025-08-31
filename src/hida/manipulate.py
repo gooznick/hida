@@ -1,9 +1,7 @@
 import re
 from typing import List, Optional, Union, Dict, Set, Iterable, Tuple
+from pathlib import PurePath
 from collections import defaultdict
-from dataclasses import replace
-from typing import List
-
 from dataclasses import replace
 
 from .data import *
@@ -484,4 +482,33 @@ def remove_enums(
             out.append(replace(d, type=subst_type(d.type)))
         else:
             out.append(d)
+    return out
+
+
+
+
+def remove_source(definitions: List[DefinitionBase], *, header_only: bool = False) -> List[DefinitionBase]:
+    """
+    Rewrite `source` for all definitions:
+      - header_only = False (default): set source to empty string "".
+      - header_only = True: keep only the header's basename (no directories).
+        Angle-bracket pseudo-paths (e.g., "<built-in>") are preserved as-is.
+
+    Returns a NEW list with updated instances.
+    """
+    out = []
+    for d in definitions:
+        s = d.source or ""
+        if not header_only:
+            new_s = ""
+        else:
+            s_stripped = s.strip().strip('"').strip("'")
+            if s_stripped.startswith("<") and s_stripped.endswith(">"):
+                new_s = s_stripped  # keep pseudo-sources like <built-in>
+            elif s_stripped:
+                # PurePath is OS-agnostic; handles both "/" and "\".
+                new_s = PurePath(s_stripped).name
+            else:
+                new_s = ""
+        out.append(replace(d, source=new_s))
     return out
