@@ -8,6 +8,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence, Tuple
+import sys
 
 _IS_WINDOWS = platform.system() == "Windows"
 
@@ -82,7 +83,9 @@ def run_castxml_for_header(
     Run castxml for a single header, writing XML to xml_out.
     Creates a temporary TU that #includes the header.
 
-    Raises CastxmlRunError on failure; returns CastxmlResult on success.
+    On failure, raises CastxmlRunError and **preserves** the temporary TU file
+    so the user can debug (and prints a message with its path).
+    On success, the temporary file is deleted.
     """
     header = header.resolve()
     xml_out = xml_out.resolve()
@@ -90,19 +93,19 @@ def run_castxml_for_header(
 
     cx = find_castxml(castxml_bin)
 
-    # Create a temporary .cpp that includes the header (robust against headers needing TU context).
-    tmp_cpp_path = None
+    tmp_cpp_path: Optional[Path] = None
+    success = False  # <- track outcome
+
     try:
-        with tempfile.NamedTemporaryFile(
-            suffix=".cpp", mode="w", delete=False
-        ) as tmp_cpp:
+        # Create a temporary .cpp that includes the header
+        with tempfile.NamedTemporaryFile(suffix=".cpp", mode="w", delete=False) as tmp_cpp:
             tmp_cpp.write(f'#include "{header}"\n')
             tmp_cpp_path = Path(tmp_cpp.name)
 
         cmd: List[str] = [cx, "--castxml-output=1"]
 
         if _IS_WINDOWS:
-            # Use MSVC front-end by default; /std:c++17 for MSVC, not -std=c++17
+            # MSVC front-end uses /std:c++17 style
             cmd += ["--castxml-cc-msvc", "cl", f"/std:{cpp_std}"]
         else:
             cmd += [f"--std={cpp_std}"]
@@ -114,18 +117,15 @@ def run_castxml_for_header(
         # Output and input TU
         cmd += ["-o", str(xml_out), str(tmp_cpp_path)]
 
-        # Extra args forwarded (placed near the end, before source is OK too)
+        # Extra args (insert early so they’re visible in the printout)
         if extra_args:
-            cmd[1:1] = list(
-                extra_args
-            )  # insert after executable for visibility; harmless
+            cmd[1:1] = list(extra_args)
 
-        # Print full command (shell-like)
-        print("$", _format_cmd(cmd))
+        # Show the full command
+        print("Running castxml command:\n$", _format_cmd(cmd))
 
-        proc = subprocess.run(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
         result = CastxmlResult(
             header=header,
             xml_out=xml_out,
@@ -136,11 +136,21 @@ def run_castxml_for_header(
         )
 
         if proc.returncode != 0:
+            # Keep the temp TU for debugging and tell the user
+            if tmp_cpp_path is not None:
+                sys.stderr.write(
+                    f"\n[castxml] Failure (rc={proc.returncode}). "
+                    f"Temporary TU preserved at:\n  {tmp_cpp_path}\n"
+                    f"You can re-run (or inspect/preprocess) with the same command:\n  $ {_format_cmd(cmd)}\n\n"
+                )
             raise CastxmlRunError(result)
 
+        success = True
         return result
+
     finally:
-        if tmp_cpp_path and tmp_cpp_path.exists():
+        # Only delete the temp TU if we succeeded
+        if success and tmp_cpp_path and tmp_cpp_path.exists():
             try:
                 tmp_cpp_path.unlink()
             except Exception:

@@ -82,7 +82,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--xml-out",
         type=Path,
         default=None,
-        help="Where to write the intermediate XML if input is a header.",
+        help="Where to write the intermediate XML (if input is a header).",
     )
     g_in.add_argument(
         "--castxml",
@@ -286,18 +286,15 @@ def main(argv: Optional[List[str]] = None) -> int:
             tf.close()
             xml_path = tmp_xml
 
-        try:
-            run_castxml_for_header(
-                header=input_path,
-                xml_out=xml_path,
-                castxml_bin=find_castxml(args.castxml),
-                include_dirs=args.include,
-                extra_args=extra,
-                cpp_std=args.std,
-            )
-        except CastxmlRunError as e:
-            # Runner already prints detailed error; propagate code
-            return e.result.returncode
+        run_castxml_for_header(
+            header=input_path,
+            xml_out=xml_path,
+            castxml_bin=find_castxml(args.castxml),
+            include_dirs=args.include,
+            extra_args=extra,
+            cpp_std=args.std,
+        )
+
 
     # 2) Parse XML → defs
     if json_path:
