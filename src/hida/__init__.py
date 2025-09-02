@@ -13,6 +13,7 @@ from .data_helpers import validate_definitions, find_type_by_name
 from .data import *
 from .manipulate import (
     filter_by_source_regexes,
+    filter_by_name_regexes,
     get_system_include_regexes,
     fill_bitfield_holes_with_padding,
     fill_struct_holes_with_padding_bytes,
@@ -42,6 +43,7 @@ __all__ = [
     # manipulate
     "filter_by_source_regexes",
     "get_system_include_regexes",
+    "filter_by_name_regexes",
     "fill_bitfield_holes_with_padding",
     "fill_struct_holes_with_padding_bytes",
     "flatten_namespaces",

@@ -4,6 +4,7 @@ from pathlib import PurePath
 from collections import defaultdict
 from dataclasses import replace
 
+
 from .data import *
 
 
@@ -56,6 +57,52 @@ def filter_by_source_regexes(
             return any(p.search(defn.source) for p in include_patterns)
         if exclude_patterns:
             return not any(p.search(defn.source) for p in exclude_patterns)
+        return True
+
+    return [d for d in definitions if should_keep(d)]
+
+
+def filter_by_name_regexes(
+    definitions: List[DefinitionBase],
+    include: Optional[Union[str, Iterable[str]]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    *,
+    use_fullname: bool = False,
+    flags: int = 0,  # e.g., re.IGNORECASE
+) -> List[DefinitionBase]:
+    """
+    Filters definitions based on regexes matching their name.
+
+    - `include`: pattern or list of patterns. If provided, only matching names are kept.
+    - `exclude`: pattern or list of patterns. If provided, matching names are removed.
+    - `use_fullname`: if True, match against `defn.fullname` when available; otherwise `defn.name`.
+    - `flags`: regex flags (e.g., re.IGNORECASE).
+
+    Semantics mirror `filter_by_source_regexes`.
+    """
+
+    def _as_list(x: Optional[Union[str, Iterable[str]]]) -> List[str]:
+        if x is None:
+            return []
+        if isinstance(x, str):
+            return [x]
+        return list(x)
+
+    include_patterns = [re.compile(p, flags) for p in _as_list(include)]
+    exclude_patterns = [re.compile(p, flags) for p in _as_list(exclude)]
+
+    def _key(defn: DefinitionBase) -> str:
+        # Prefer fullname if requested and present; fall back to name; then empty string.
+        if use_fullname and hasattr(defn, "fullname") and defn.fullname is not None:
+            return str(defn.fullname)
+        return str(getattr(defn, "name", "") or "")
+
+    def should_keep(defn: DefinitionBase) -> bool:
+        name = _key(defn)
+        if include_patterns:
+            return any(p.search(name) for p in include_patterns)
+        if exclude_patterns:
+            return not any(p.search(name) for p in exclude_patterns)
         return True
 
     return [d for d in definitions if should_keep(d)]

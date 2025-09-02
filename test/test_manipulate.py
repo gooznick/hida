@@ -4,12 +4,14 @@ from typing import List
 from pathlib import Path, PurePath
 import re
 import pytest
+from types import SimpleNamespace
 
 from hida import (
     parse,
     find_type_by_name,
     validate_definitions,
     filter_by_source_regexes,
+    filter_by_name_regexes,
     fill_bitfield_holes_with_padding,
     fill_struct_holes_with_padding_bytes,
     flatten_namespaces,
@@ -217,6 +219,55 @@ def test_include_as_list(sample_definitions):
     names = [d.name for d in result]
     assert "A" in names and "B" in names
 
+
+
+
+# assumes: from yourmodule import filter_by_name_regexes
+
+def test_name_include_regex(sample_definitions):
+    # Keep only names A and B
+    result = filter_by_name_regexes(sample_definitions, include=r"^[AB]$")
+    assert {d.name for d in result} == {"A", "B"}
+
+def test_name_exclude_regex(sample_definitions):
+    # Drop names C and D
+    result = filter_by_name_regexes(sample_definitions, exclude=r"^[CD]$")
+    names = {d.name for d in result}
+    assert "C" not in names and "D" not in names
+
+def test_name_no_filters(sample_definitions):
+    # No filtering: return all
+    result = filter_by_name_regexes(sample_definitions)
+    assert len(result) == len(sample_definitions)
+
+def test_name_include_as_list(sample_definitions):
+    # Multiple include patterns
+    result = filter_by_name_regexes(sample_definitions, include=[r"^A$", r"^E$"])
+    assert {d.name for d in result} == {"A", "E"}
+
+def test_name_case_insensitive():
+    # Case-insensitive include
+    defs = [
+        SimpleNamespace(name="foo",  source="x"),
+        SimpleNamespace(name="BAR",  source="y"),
+        SimpleNamespace(name="Baz",  source="z"),
+    ]
+    result = filter_by_name_regexes(defs, include=r"bar", flags=re.IGNORECASE)
+    assert [d.name for d in result] == ["BAR"]
+
+def test_name_use_fullname():
+    # Match against fullname instead of name
+    defs = [
+        SimpleNamespace(name="W", fullname="ns::Widget",       source="x"),
+        SimpleNamespace(name="I", fullname="internal::Impl",   source="y"),
+    ]
+    # Include by fullname prefix
+    res_inc = filter_by_name_regexes(defs, include=r"^ns::", use_fullname=True)
+    assert [d.name for d in res_inc] == ["W"]
+
+    # Exclude by fullname prefix
+    res_exc = filter_by_name_regexes(defs, exclude=r"^internal::", use_fullname=True)
+    assert all(d.name != "I" for d in res_exc)
 
 def test_filter_connected_definitions(cxplat):
     path = os.path.join(

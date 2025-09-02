@@ -17,17 +17,13 @@ from hida import (
     write_c_header_from_definitions,
     generate_python_code_from_definitions,
     dumps, load,
-)
-
-# Manipulators (import directly from module so you don't need to re-export in __init__)
-from hida.manipulate import (
     filter_by_source_regexes,
+    filter_by_name_regexes,
     fill_bitfield_holes_with_padding,
     fill_struct_holes_with_padding_bytes,
     flatten_namespaces,
     resolve_typedefs,
     filter_connected_definitions,
-    sort_definitions_topologically,
     flatten_structs,
     remove_enums,
     remove_source,
@@ -157,6 +153,20 @@ def build_parser() -> argparse.ArgumentParser:
     # MANIPULATORS
     g_m = p.add_argument_group("manipulators")
 
+    g_m.add_argument(
+        "--name-include",
+        action="append",
+        default=[],
+        metavar="REGEX",
+        help="Regex to include by definition name (repeatable). If provided, only matching names are kept.",
+    )
+    g_m.add_argument(
+        "--name-exclude",
+        action="append",
+        default=[],
+        metavar="REGEX",
+        help="Regex to exclude by definition name (repeatable).",
+    )
     # Source filters
     g_m.add_argument(
         "--source-include",
@@ -222,11 +232,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="Keep only definitions connected to these root types (repeat or pass multiple).",
     )
-    g_m.add_argument(
-        "--toposort",
-        action="store_true",
-        help="Reorder definitions topologically so dependencies come first.",
-    )
+
 
     # Padding
     g_m.add_argument(
@@ -360,6 +366,14 @@ def main(argv: Optional[List[str]] = None) -> int:
             defs, include=include_src or None, exclude=exclude_src or None
         )
 
+    # 3.2 Name-based filtering
+    include_name = [*args.name_include] if args.name_include else []
+    exclude_name = [*args.name_exclude] if args.name_exclude else []
+    if include_name or exclude_name:
+        defs = filter_by_name_regexes(
+            defs, include=include_name or None, exclude=exclude_name or None
+        )
+
     # 3.2 Typedefs and namespaces
     if args.resolve_typedefs:
         defs = resolve_typedefs(defs)
@@ -388,10 +402,6 @@ def main(argv: Optional[List[str]] = None) -> int:
     # 3.6 Focus/trim (after transforms so we keep only the needed set)
     if args.focus:
         defs = filter_connected_definitions(defs, args.focus)
-
-    # 3.7 Optional topological ordering
-    if args.toposort:
-        defs = sort_definitions_topologically(defs)
 
     # 3.8 Source scrubbing (presentation concern; do last)
     if args.remove_source or args.remove_source_basename:
