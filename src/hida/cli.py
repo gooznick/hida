@@ -7,6 +7,7 @@ import tempfile
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import List, Optional
+from textwrap import dedent
 
 # Public API you already expose in __init__.py
 from hida import (
@@ -20,7 +21,6 @@ from hida import (
 
 # Manipulators (import directly from module so you don't need to re-export in __init__)
 from hida.manipulate import (
-    get_system_include_regexes,
     filter_by_source_regexes,
     fill_bitfield_holes_with_padding,
     fill_struct_holes_with_padding_bytes,
@@ -52,23 +52,59 @@ def _write_text(path: Path, text: str) -> None:
 # ---------- CLI ----------
 
 
+# Nice help: defaults + preserved newlines/indent
+class _HelpFmt(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
+    pass
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="hida",
-        description="CastXML XML → Python/Header/JSON with IR manipulators.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=_HelpFmt,
         allow_abbrev=False,
+        description=dedent("""\
+            CastXML XML → Python/Header/JSON with IR manipulators.
+
+            INPUT MODES
+              • CastXML XML   : use an existing CastXML XML file
+              • JSON IR       : use a previously generated JSON IR file
+              • C/C++ header  : run CastXML on the header (see CASTXML FORWARDING)
+            """),
+        epilog=dedent("""\
+            CASTXML FORWARDING
+              Anything after a literal `--` on the command line is passed verbatim to CastXML
+              when the input is a header. The forwarded args are available as `args.castxml_args`.
+
+              Examples:
+                hida include/foo.hpp -I include -x build/foo.xml -- --castxml-cc-gnu g++ -DDEBUG
+                hida include/foo.hpp -- --std=c++20 -isystem /opt/clang/include/c++/v1
+
+            EXAMPLES
+              # Use an existing CastXML XML and emit Python:
+              hida build/foo.xml --python out.py
+
+              # Use a header (runs CastXML), keep intermediate XML, then emit a C++ header:
+              hida include/foo.hpp -I include -x build/foo.xml --header api.hpp
+
+              # Use a JSON IR:
+              hida api.json --header api.hpp
+            """),
+    )
+
+    # ──────────────────────────────
+    # POSITIONAL INPUT (first arg)  ← requirement #3
+    # ──────────────────────────────
+    p.add_argument(
+        "input",
+        type=Path,
+        help=(
+            "Input file: CastXML XML, JSON IR, or a C/C++ header. "  # ← requirement #4
+            "If a header is given, hida will invoke CastXML (see CASTXML FORWARDING below)."
+        ),
     )
 
     # INPUT
     g_in = p.add_argument_group("input")
-    g_in.add_argument(
-        "-i",
-        "--input",
-        type=Path,
-        required=True,
-        help="CastXML XML file OR a C/C++ header file. If header, hida runs CastXML via the runner.",
-    )
+
     g_in.add_argument(
         "-I",
         "--include",
@@ -95,12 +131,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="c++17",
         help="C++ language standard for CastXML (e.g., c++17, c++20).",
     )
-    g_in.add_argument(
-        "--cx",
-        action="append",
-        default=[],
-        help="Extra arg forwarded to CastXML/clang (repeatable). Unknown CLI args are forwarded too.",
-    )
+
 
     g_p = p.add_argument_group("parsing")
     g_p.add_argument(
@@ -131,18 +162,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--source-include",
         action="append",
         default=[],
-        help="Regex to include by 'source' path (repeatable). If given, only matching sources are kept.",
+        help="Regex to include by source file or the definition (repeatable). If given, only matching sources are kept.",
     )
     g_m.add_argument(
         "--source-exclude",
         action="append",
         default=[],
-        help="Regex to exclude by 'source' path (repeatable).",
-    )
-    g_m.add_argument(
-        "--exclude-system",
-        action="store_true",
-        help="Also exclude common system/builtin sources.",
+        help="Regex to exclude by source file or the definition (repeatable).",
     )
 
     # Typedef + namespaces
@@ -264,7 +290,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = build_parser()
     # We want to forward unknown flags to CastXML, so use parse_known_args
     args, unknown = parser.parse_known_args(argv)
-    extra = list(args.cx or []) + list(unknown or [])
+    extra = list(unknown or [])
 
     # Require at least one output
     if not any([args.python, args.header, args.c_header, args.json]):
@@ -329,8 +355,6 @@ def main(argv: Optional[List[str]] = None) -> int:
     # 3.1 Source-based filtering
     include_src = [*args.source_include] if args.source_include else []
     exclude_src = [*args.source_exclude] if args.source_exclude else []
-    if args.exclude_system:
-        exclude_src += get_system_include_regexes()
     if include_src or exclude_src:
         defs = filter_by_source_regexes(
             defs, include=include_src or None, exclude=exclude_src or None
