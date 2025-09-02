@@ -102,6 +102,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Extra arg forwarded to CastXML/clang (repeatable). Unknown CLI args are forwarded too.",
     )
 
+    g_p = p.add_argument_group("parsing")
+    g_p.add_argument(
+        "--use_bool",
+        action="store_true",
+        help="Use bool as a type.",
+    )
+    g_p.add_argument(
+        "--do_not_ignore_system",
+        action="store_true",
+        help="Do not ignore system includes.",
+    )
+    g_p.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Write parsing warnings.",
+    )
+    g_p.add_argument(
+        "--do_not_skip_failed_parsing",
+        action="store_true",
+        help="Error if failed to parse.",
+    )
     # MANIPULATORS
     g_m = p.add_argument_group("manipulators")
 
@@ -300,7 +321,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     if json_path:
         defs = load(json_path)
     else:
-        defs = parse(str(xml_path))
+        defs = parse(str(xml_path),use_bool=args.use_bool,do_not_ignore_system=args.do_not_ignore_system,
+                    verbose=args.verbose, skip_failed_parsing=not args.do_not_skip_failed_parsing )
 
     # 3) Manipulations (order chosen to be practical)
 

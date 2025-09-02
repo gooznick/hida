@@ -11,7 +11,7 @@ class CastXmlParse:
     def __init__(
         self,
         use_bool=False,
-        skip_failed_parsing=False,
+        skip_failed_parsing=True,
         do_not_ignore_system=False,
         remove_unknown=True,
         verbose=False,

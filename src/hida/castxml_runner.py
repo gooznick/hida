@@ -108,7 +108,7 @@ def run_castxml_for_header(
             # MSVC front-end uses /std:c++17 style
             cmd += ["--castxml-cc-msvc", "cl", f"/std:{cpp_std}"]
         else:
-            cmd += [f"--std={cpp_std}"]
+            cmd += ["--castxml-cc-gnu" ,"g++", f"--std={cpp_std}"]
 
         # Includes
         for inc in include_dirs:
