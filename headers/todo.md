@@ -49,3 +49,12 @@
 * add scope/namespace list [name may have :: in it, as in struct<std::is_same>]
 * if struct has member "incomplete" with value "1" - ignore it
 * autoremove system headers sources
+
+- flags in the CLI has errors (source is ommitted by default, regex, cx)
+- error message when catxml command fails (+dont remove the temp !)
+- constant is not float - not error by default
+- remove unknown things (ie !)
+- Add -I as a parameter, explicit
+- Ignore errors
+- Flag to focus + remove others
+
