@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional, Union, Dict, Set, Iterable, Tuple
+from typing import List, Optional, Union, Dict, Set, Iterable, Tuple, Sequence
 from pathlib import PurePath
 from collections import defaultdict
 from dataclasses import replace
@@ -235,22 +235,50 @@ def fill_struct_holes_with_padding_bytes(definitions):
     return result
 
 
-def flatten_namespaces(definitions: List[TypeBase]) -> List[TypeBase]:
+
+def _flattened_name(ns: Sequence[str], name: str, sep: str = "__") -> str:
+    parts = list(ns or ())
+    return (sep.join(parts) + sep + name) if parts else name
+
+def _flatten_type(t: TypeBase, sep: str) -> TypeBase:
+    """Return a copy of t with namespace folded into name and namespace cleared."""
+    return replace(t, name=_flattened_name(t.namespace, t.name, sep), namespace=())
+
+def flatten_namespaces(definitions: List[TypeBase], sep: str = "__") -> List[TypeBase]:
     """
-    Returns a new list of definitions with flattened names (namespace removed),
-    and the namespace path added to the name using '__' separator.
+    Walk the list and return new items whose `name` includes the namespace
+    (joined by `sep`) and whose `namespace` is cleared.
+
+    Also rewrites any *embedded type references* (fields / typedef / constant)
+    by producing flattened copies of those types on the fly.
+    No global mapping is used.
     """
-    flattened = []
+    out: List[TypeBase] = []
 
     for d in definitions:
-        if hasattr(d, "namespace") and d.namespace:
-            prefix = "__".join(d.namespace)
-            new_name = f"{prefix}__{d.name}"
-        else:
-            new_name = d.name
-        flattened.append(replace(d, name=new_name, namespace=()))
+        # Start with a flattened copy of the definition itself
+        nd = replace(d, name=_flattened_name(d.namespace, d.name, sep), namespace=())
 
-    return flattened
+        # Fix embedded references per kind
+        if isinstance(nd, (ClassDefinition, UnionDefinition)) and d.fields:
+            new_fields = tuple(
+                replace(f, type=_flatten_type(f.type, sep)) for f in d.fields
+            )
+            nd = replace(nd, fields=new_fields)
+
+        elif isinstance(nd, TypedefDefinition):
+            nd = replace(nd, type=_flatten_type(d.type, sep))
+
+        elif isinstance(nd, ConstantDefinition):
+            nd = replace(nd, type=_flatten_type(d.type, sep))
+
+        # EnumDefinition has no embedded type references to adjust
+
+        out.append(nd)
+
+    return out
+
+
 
 
 def resolve_typedefs(definitions):

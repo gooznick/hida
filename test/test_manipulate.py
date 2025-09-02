@@ -141,6 +141,26 @@ def test_flatten_namespaces(cxplat):
     assert "Beta__Extra" in names
     assert all(d.namespace == () for d in flattened)
 
+def test_flatten_namespaces2(cxplat):
+    result = parse(
+        os.path.join(
+            here, os.pardir, "headers", cxplat.directory, "namespaces.xml"
+        ),
+        skip_failed_parsing=True,
+        remove_unknown=True,
+    )
+
+    # Full flatten
+    flattened = flatten_namespaces(result)
+    
+    assert not any([d.name for d in flattened if ":" in d.name])
+    assert not any([1 for d in flattened if d.namespace])
+    for c in [d for d in flattened if isinstance(d, ClassDefinition)]:
+        assert not any([1 for d in c.fields if ":" in d.name])
+        assert not any([1 for d in c.fields if d.type.namespace])
+    validate_definitions(flattened)
+
+
 
 def test_resolve_typedefs(cxplat):
     result = parse(

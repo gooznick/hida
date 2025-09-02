@@ -58,3 +58,8 @@
 - Ignore errors
 - Flag to focus + remove others
 
+
+ERROR: File "setup.py" not found. Directory cannot be installed in editable mode: /home/liaraschafer/dev/p-test/hatch-test
+(A "pyproject.toml" file was found, but editable mode currently requires a setup.py based build.)
+
+python -m pip install -U pip setuptools wheel
