@@ -108,127 +108,170 @@ def filter_by_name_regexes(
     return [d for d in definitions if should_keep(d)]
 
 
+from dataclasses import replace
+from typing import List, Tuple
+
+# --- Helper ---------------------------------------------------------------
+
+def _emit_pad_fields(pad_bits: int, *, bitoffset: int, name_prefix: str) -> List[Field]:
+    """
+    Emit padding as:
+      - [optional] array of `uint8_t` for full bytes
+      - [optional] trailing bitfield of `uint8_t` for remainder < 8
+    """
+    if pad_bits <= 0:
+        return []
+
+    fields: List[Field] = []
+    bytes_count, rem_bits = divmod(pad_bits, 8)
+
+    u8 = TypeBase(name="uint8_t", namespace=())
+
+    if bytes_count > 0:
+        fields.append(
+            Field(
+                name=f"{name_prefix}_bytes",
+                type=u8,
+                elements=(bytes_count,),       # array of bytes
+                bitoffset=bitoffset,
+                size_in_bits=8 * bytes_count,  # total size of array
+                bitfield=False,
+            )
+        )
+        bitoffset += 8 * bytes_count
+
+    if rem_bits > 0:  # 1..7
+        fields.append(
+            Field(
+                name=f"{name_prefix}_bits",
+                type=u8,
+                elements=(),
+                bitoffset=bitoffset,
+                size_in_bits=rem_bits,         # width of the bitfield
+                bitfield=True,
+            )
+        )
+
+    return fields
+
+
+# --- 1) Fill bitfield holes (arbitrary alignment) ------------------------
+
 def fill_bitfield_holes_with_padding(definitions):
     """
     Returns a new list of definitions where each struct/union has bitfield holes
     filled with synthetic __padN fields.
+
+    Holes may be non-byte-aligned; we emit uint8_t[N] + optional uint8_t:<r>.
     """
     pad_counter = 0
     updated = []
 
     for d in definitions:
-        if not isinstance(d, (ClassDefinition, UnionDefinition)):
+        if not isinstance(d, (ClassDefinition, UnionDefinition)) or not d.fields:
             updated.append(d)
             continue
 
-        if not d.fields:
-            updated.append(d)
-            continue
+        new_fields: List[Field] = []
+        prev_end = 0  # in bits
 
-        new_fields = []
-        prev_end = 0
-
+        # Sort by starting bit offset
         for f in sorted(d.fields, key=lambda f: f.bitoffset):
+            # If there is a hole before this field, pad it
             if f.bitoffset > prev_end:
-                pad_size = f.bitoffset - prev_end
-                pad_field = Field(
-                    name=f"__pad{pad_counter}",
-                    type=TypeBase(name="uint8_t"),
-                    elements=(),
-                    bitoffset=prev_end,
-                    size_in_bits=pad_size,
-                    bitfield=True,
+                hole = f.bitoffset - prev_end
+                new_fields.extend(
+                    _emit_pad_fields(
+                        hole,
+                        bitoffset=prev_end,
+                        name_prefix=f"__pad{pad_counter}",
+                    )
                 )
-                new_fields.append(pad_field)
                 pad_counter += 1
-            new_fields.append(f)
-            prev_end = max(prev_end, f.bitoffset + f.size_in_bits)
 
+            new_fields.append(f)
+            # Advance prev_end to the end of this field (accounting for arrays)
+            count = 1
+            for dim in getattr(f, "elements", ()) or ():
+                count *= dim
+            field_total_bits = f.size_in_bits * max(1, count)
+            prev_end = max(prev_end, f.bitoffset + field_total_bits)
+
+        # Tail hole up to struct size
         struct_end = d.size * 8
         if prev_end < struct_end:
-            pad_size = struct_end - prev_end
-            new_fields.append(
-                Field(
-                    name=f"__pad{pad_counter}",
-                    type=TypeBase(name="uint8_t"),
-                    elements=(),
+            tail = struct_end - prev_end
+            new_fields.extend(
+                _emit_pad_fields(
+                    tail,
                     bitoffset=prev_end,
-                    size_in_bits=pad_size,
-                    bitfield=True,
+                    name_prefix=f"__pad{pad_counter}",
                 )
             )
             pad_counter += 1
 
-        # Create a new instance with updated fields
         updated.append(replace(d, fields=tuple(new_fields)))
 
     return updated
 
 
+# --- 2) Fill struct holes with padding bytes (now supports non-byte holes) ---
+
 def fill_struct_holes_with_padding_bytes(definitions):
     """
-    Returns new definitions list with hole-filling padding fields of type 'uint8_t',
-    inserted as scalars or arrays depending on size.
+    Returns new definitions list with hole-filling padding fields of type 'uint8_t'.
+
+    Unlike the old version, this supports non-byte-aligned holes:
+    - emits `uint8_t[N]` for full bytes
+    - plus a trailing `uint8_t:<r>` bitfield (1..7) when needed
     """
     result = []
     pad_counter = 0
 
     for d in definitions:
-        if not isinstance(d, (ClassDefinition, UnionDefinition)):
+        if not isinstance(d, (ClassDefinition, UnionDefinition)) or not d.fields:
             result.append(d)
             continue
 
-        if not d.fields:
-            result.append(d)
-            continue
+        new_fields: List[Field] = []
+        prev_end = 0  # in bits
 
-        new_fields = []
-        prev_end = 0
+        for f in sorted(d.fields, key=lambda x: x.bitoffset):
+            start = f.bitoffset
 
-        for field in sorted(d.fields, key=lambda f: f.bitoffset):
-            count = 1
-            for dim in field.elements:
-                count *= dim
-            field_size = field.size_in_bits * count
-            start = field.bitoffset
-
+            # Hole before field?
             if start > prev_end:
-                hole_size = start - prev_end
-                byte_count = hole_size // 8
-                if hole_size % 8 != 0:
-                    raise ValueError(
-                        f"Cannot pad non-byte-aligned hole of size {hole_size} bits"
+                hole = start - prev_end
+                new_fields.extend(
+                    _emit_pad_fields(
+                        hole,
+                        bitoffset=prev_end,
+                        name_prefix=f"__pad{pad_counter}",
                     )
-
-                pad_field = Field(
-                    name=f"__pad{pad_counter}",
-                    type=TypeBase(name="uint8_t"),
-                    elements=(byte_count,) if byte_count > 1 else (),
-                    bitoffset=prev_end,
-                    size_in_bits=hole_size,
-                    bitfield=False,
                 )
-                new_fields.append(pad_field)
                 pad_counter += 1
 
-            new_fields.append(field)
-            prev_end = max(prev_end, start + field_size)
+            new_fields.append(f)
 
+            # Advance prev_end by total size (handle arrays)
+            count = 1
+            for dim in getattr(f, "elements", ()) or ():
+                count *= dim
+            field_total_bits = f.size_in_bits * max(1, count)
+            prev_end = max(prev_end, start + field_total_bits)
+
+        # Trailing hole up to declared size
         struct_end = d.size * 8
         if prev_end < struct_end:
-            hole_size = struct_end - prev_end
-            byte_count = hole_size // 8
-            if hole_size % 8 != 0:
-                raise ValueError(f"Trailing hole not byte-aligned ({hole_size} bits)")
-            pad_field = Field(
-                name=f"__pad{pad_counter}",
-                type=TypeBase(name="uint8_t"),
-                elements=(byte_count,) if byte_count > 1 else (),
-                bitoffset=prev_end,
-                size_in_bits=hole_size,
-                bitfield=False,
+            tail = struct_end - prev_end
+            new_fields.extend(
+                _emit_pad_fields(
+                    tail,
+                    bitoffset=prev_end,
+                    name_prefix=f"__pad{pad_counter}",
+                )
             )
-            new_fields.append(pad_field)
+            pad_counter += 1
 
         result.append(replace(d, fields=tuple(new_fields)))
 

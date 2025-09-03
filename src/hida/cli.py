@@ -245,7 +245,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Fill byte-aligned struct holes with uint8_t padding members/arrays.",
     )
-
+    g_m.add_argument(
+        "--pad",
+        action="store_true",
+        help="Both --pad-struct-holes and --pad-bitfield-holes.",
+    )
     # Source scrubbing
     mx = g_m.add_mutually_exclusive_group()
     mx.add_argument(
@@ -394,6 +398,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         )
 
     # 3.5 Padding (after flatten so new holes can be handled)
+    if args.pad:
+        defs = fill_bitfield_holes_with_padding(defs)
+        defs = fill_struct_holes_with_padding_bytes(defs)
+
     if args.pad_bitfield_holes:
         defs = fill_bitfield_holes_with_padding(defs)
     if args.pad_struct_holes:
