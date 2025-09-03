@@ -296,6 +296,10 @@ def test_filter_connected_definitions(cxplat):
     all_defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
     validate_definitions(all_defs)
 
+    # check fail if non exist
+    with pytest.raises(RuntimeError):
+        filter_connected_definitions(all_defs, "not_exist")
+
     # Prune everything except what's needed by Main
     connected = filter_connected_definitions(all_defs, "Main")
 
@@ -395,6 +399,10 @@ def test_flatten_structs_fullname_and_separator(cxplat):
             target_fullname = d.fullname
             break
     assert target_fullname is not None
+
+    # fail if not exception
+    with pytest.raises(RuntimeError):
+        flatten_structs(defs, targets="no_such_struct")
 
     defs2 = flatten_structs(defs, targets=[target_fullname], separator="__FL__")
     wrapper2 = _get_struct(defs2, "Wrapper")

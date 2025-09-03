@@ -388,10 +388,11 @@ def filter_connected_definitions(
         roots = [roots]
 
     graph = build_type_dependency_graph(definitions)
-    name_to_def = {d.fullname: d for d in definitions}
     visited = set()
     stack = list(roots)
-
+    if not any([graph.get(v, None) for v in stack]):
+        raise RuntimeError(f"Could not find any known struct in roots {roots}")
+    
     while stack:
         current = stack.pop()
         if current in visited:
@@ -495,6 +496,7 @@ def flatten_structs(
                 yield from emit_subfields(f"{f.name}{idx_suffix}", elem_base)
 
     new_defs: List[TypeBase] = []
+    no_change = True
     for d in definitions:
         if (
             not isinstance(d, (ClassDefinition, UnionDefinition))
@@ -503,6 +505,7 @@ def flatten_structs(
             new_defs.append(d)
             continue
 
+        no_change = False
         flat_fields: List[Field] = []
         for f in sorted(d.fields, key=lambda x: x.bitoffset):
             # If field refers to composite, flatten; else keep
@@ -516,6 +519,8 @@ def flatten_structs(
         flat_fields.sort(key=lambda x: x.bitoffset)
         new_defs.append(replace(d, fields=tuple(flat_fields)))
 
+    if no_change:
+        raise RuntimeError(f"Could not find any known struct in targets {targets}")
     return new_defs
 
 
