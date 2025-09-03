@@ -702,7 +702,7 @@ def flatten_structs(
 def remove_enums(
     definitions: List[TypeBase],
     *,
-    default_int_type: str = "int",
+    default_int_type: str = "int32_t",
 ) -> List[TypeBase]:
     """
     Replace all uses of EnumDefinition with an integer type and drop the enum definitions.

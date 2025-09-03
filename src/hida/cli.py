@@ -201,7 +201,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     g_m.add_argument(
         "--enum-int-type",
-        default="int",
+        default="int32_t",
         help="Fallback integer type to use for enums with unknown underlying type.",
     )
 
