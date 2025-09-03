@@ -32,6 +32,7 @@ from .python_gen import (
     write_code_to_file,
     verify_struct_sizes,
 )
+from .python_gen import generate as python_generate
 from .ir_json import dump, dumps, load, loads
 
 __all__ = [
@@ -60,6 +61,7 @@ __all__ = [
     "generate_python_code_from_definitions",
     "write_code_to_file",
     "verify_struct_sizes",
+    "python_generate",
     # data
     "DefinitionBase",
     "ClassDefinition",

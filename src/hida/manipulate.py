@@ -157,12 +157,87 @@ def _emit_pad_fields(pad_bits: int, *, bitoffset: int, name_prefix: str) -> List
 
 # --- 1) Fill bitfield holes (arbitrary alignment) ------------------------
 
+from dataclasses import replace
+from typing import List, Optional
+
+# --- helpers --------------------------------------------------------------
+
+def _bitwidth_for_type(t: TypeBase) -> Optional[int]:
+    """
+    Best-effort inference of the storage bit-width for a bitfield's underlying type.
+    Works for fixed-width names and common C integral types (LP64-ish defaults).
+    Returns None if unknown.
+    """
+    name = t.fullname if hasattr(t, "fullname") else t.name
+
+    # Fixed-width standard types
+    if name.endswith("_t"):
+        for k in ("8", "16", "32", "64"):
+            if name.endswith(f"{k}_t") and ("int" in name):
+                return int(k)
+
+    # Very common aliases
+    table = {
+        "unsigned char": 8, "signed char": 8, "char": 8, "uint8_t": 8, "int8_t": 8,
+        "unsigned short": 16, "short": 16, "uint16_t": 16, "int16_t": 16,
+        "unsigned int": 32, "int": 32, "uint32_t": 32, "int32_t": 32,
+        "unsigned long": 64, "long": 64, "uint64_t": 64, "int64_t": 64,
+        "unsigned long long": 64, "long long": 64,
+    }
+    return table.get(name, None)
+
+def _emit_same_type_bitfield_pad_slices(
+    hole_bits: int,
+    bitoffset: int,
+    counter: int,
+    pad_underlying_type: TypeBase,
+) -> List[Field]:
+    """
+    Emit padding as a sequence of SAME-TYPE bitfields:
+      - k slices of width = min(remaining, TYPE_WIDTH)
+    Never arrays, never non-bitfield scalars.
+    """
+    pads: List[Field] = []
+    if hole_bits <= 0:
+        return pads
+
+    type_bits = _bitwidth_for_type(pad_underlying_type)
+    if not type_bits or type_bits <= 0:
+        # Fall back conservatively to 8 if unknown; still correct & safe
+        type_bits = 8
+
+    emitted = 0
+    slice_idx = 0
+    while emitted < hole_bits:
+        width = min(type_bits, hole_bits - emitted)  # never exceed type storage
+        pads.append(
+            Field(
+                name=f"__pad{counter}_b{slice_idx}",
+                type=pad_underlying_type,     # EXACT same type as the original bitfield
+                elements=(),                  # never arrays
+                bitoffset=bitoffset + emitted,
+                size_in_bits=width,           # this bitfield's width
+                bitfield=True,
+            )
+        )
+        emitted += width
+        slice_idx += 1
+
+    return pads
+
+# --- main -----------------------------------------------------------------
+
 def fill_bitfield_holes_with_padding(definitions):
     """
-    Returns a new list of definitions where each struct/union has bitfield holes
-    filled with synthetic __padN fields.
+    Fill holes ONLY in places related to bitfields, using padding bitfields with the
+    EXACT SAME UNDERLYING TYPE as the adjacent original bitfield:
 
-    Holes may be non-byte-aligned; we emit uint8_t[N] + optional uint8_t:<r>.
+      • Hole BEFORE field F  -> pad iff F.bitfield == True, using F.type.
+      • Trailing hole (to struct end) -> pad iff last original field was bitfield,
+        using that last field's type.
+
+    Each pad is split into consecutive same-type bitfields whose width never exceeds
+    the storage bit-width of that type (e.g., uint16_t:16, uint32_t:32, uint8_t:8).
     """
     pad_counter = 0
     updated = []
@@ -173,46 +248,59 @@ def fill_bitfield_holes_with_padding(definitions):
             continue
 
         new_fields: List[Field] = []
-        prev_end = 0  # in bits
+        prev_end = 0  # bits
+        last_orig_bitfield_type: Optional[TypeBase] = None
 
-        # Sort by starting bit offset
-        for f in sorted(d.fields, key=lambda f: f.bitoffset):
-            # If there is a hole before this field, pad it
-            if f.bitoffset > prev_end:
-                hole = f.bitoffset - prev_end
-                new_fields.extend(
-                    _emit_pad_fields(
-                        hole,
-                        bitoffset=prev_end,
-                        name_prefix=f"__pad{pad_counter}",
-                    )
+        # Process fields in ascending bit offset
+        for f in sorted(d.fields, key=lambda x: x.bitoffset):
+            # If there is a hole before f, pad only if f is a bitfield,
+            # and use f.type as the padding type
+            if f.bitoffset > prev_end and getattr(f, "bitfield", False):
+                hole_bits = f.bitoffset - prev_end
+                pads = _emit_same_type_bitfield_pad_slices(
+                    hole_bits=hole_bits,
+                    bitoffset=prev_end,
+                    counter=pad_counter,
+                    pad_underlying_type=f.type,   # <-- exact same type as F
                 )
-                pad_counter += 1
+                if pads:
+                    new_fields.extend(pads)
+                    pad_counter += 1
 
+            # Emit the field itself
             new_fields.append(f)
-            # Advance prev_end to the end of this field (accounting for arrays)
+
+            # Track last original bitfield type (for potential trailing hole)
+            if getattr(f, "bitfield", False):
+                last_orig_bitfield_type = f.type
+
+            # Advance prev_end by total size (handle arrays if ever present)
             count = 1
             for dim in getattr(f, "elements", ()) or ():
                 count *= dim
             field_total_bits = f.size_in_bits * max(1, count)
             prev_end = max(prev_end, f.bitoffset + field_total_bits)
 
-        # Tail hole up to struct size
+        # Trailing hole up to struct size: pad only if the last original field was a bitfield,
+        # using its exact type
         struct_end = d.size * 8
-        if prev_end < struct_end:
-            tail = struct_end - prev_end
-            new_fields.extend(
-                _emit_pad_fields(
-                    tail,
-                    bitoffset=prev_end,
-                    name_prefix=f"__pad{pad_counter}",
-                )
+        if prev_end < struct_end and last_orig_bitfield_type is not None:
+            tail_bits = struct_end - prev_end
+            pads = _emit_same_type_bitfield_pad_slices(
+                hole_bits=tail_bits,
+                bitoffset=prev_end,
+                counter=pad_counter,
+                pad_underlying_type=last_orig_bitfield_type,  # <-- exact same type
             )
-            pad_counter += 1
+            if pads:
+                new_fields.extend(pads)
+                pad_counter += 1
 
         updated.append(replace(d, fields=tuple(new_fields)))
 
     return updated
+
+
 
 
 # --- 2) Fill struct holes with padding bytes (now supports non-byte holes) ---

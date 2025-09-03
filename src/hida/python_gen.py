@@ -138,12 +138,13 @@ def write_code_to_file(code: str, filename: str):
         f.write(code)
 
 
-def generate_and_verify(definitions, filename, verify_size=False):
-    code = generate_python_code_from_definitions(definitions, assert_size=verify_size)
+def generate(definitions, filename, assert_size=True, verify=False, verify_size=False):
+    code = generate_python_code_from_definitions(definitions, assert_size=assert_size)
     write_code_to_file(code, filename)
-    spec = importlib.util.spec_from_file_location("generated", filename)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    if verify or verify_size:
+        spec = importlib.util.spec_from_file_location("generated", filename)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
 
     if verify_size:
         verify_struct_sizes(

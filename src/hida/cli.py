@@ -15,7 +15,7 @@ from hida import (
     # emitters
     write_header_from_definitions,
     write_c_header_from_definitions,
-    generate_python_code_from_definitions,
+    python_generate,
     dumps, load,
     filter_by_source_regexes,
     filter_by_name_regexes,
@@ -290,6 +290,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--assert-size", action="store_true", help="Emit size asserts in Python output."
     )
     g_out.add_argument(
+        "--python-verify", action="store_true", help="Verify python output."
+    )
+    g_out.add_argument(
+        "--python-verify-size", action="store_true", help="Verify python output and size."
+    )
+    g_out.add_argument(
         "--compact-json", action="store_true", help="Compact JSON (no pretty indent)."
     )
 
@@ -417,8 +423,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # 4) Outputs
     if args.python:
-        code = generate_python_code_from_definitions(defs, assert_size=args.assert_size)
-        _write_text(args.python, code)
+        python_generate(defs, args.python, assert_size=args.assert_size, verify=args.python_verify, verify_size=args.python_verify_size)
         print(f"[hida] wrote {args.python}")
 
     if args.header:
