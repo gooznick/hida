@@ -413,9 +413,14 @@ def flatten_structs(
     """
     For each target struct/union, inline fields of nested struct/union members into
     the parent so the result is 'flat'. Names are prefixed with the containing field
-    name and `separator`. Arrays of nested structs are skipped unless `flatten_arrays=True`.
+    name and `separator`.
+
+    Arrays of nested structs/unions are:
+      - kept intact by default
+      - unrolled at ANY depth if `flatten_arrays=True`
 
     Example: parent.field (struct S) with S.a, S.b  ->  parent.field__a, parent.field__b
+    For arrays (when flatten_arrays=True): parent.arr[2] (struct S) -> parent.arr_0___a, parent.arr_1___a, ...
     """
     if isinstance(targets, str):
         targets = [targets]
@@ -423,7 +428,6 @@ def flatten_structs(
     # Resolve fullnames and quick lookup
     defs_by_fullname: Dict[str, TypeBase] = {d.fullname: d for d in definitions}
     names = set(targets)
-    # allow matching by short name too
     targets_full: Set[str] = {
         d.fullname
         for d in definitions
@@ -435,68 +439,109 @@ def flatten_structs(
         d = defs_by_fullname.get(fullname)
         return isinstance(d, (ClassDefinition, UnionDefinition))
 
-    def flatten_fields(parent_bitoff: int, prefix: str, f: Field) -> Iterable[Field]:
+    def flatten_fields(parent_base_bits: int, prefix: str, f: Field) -> Iterable[Field]:
         """
-        Yield flattened fields for a single field `f` in the parent.
+        Yield flattened fields for a single (possibly composite/array) field `f`, using
+        `parent_base_bits` as the bit base and `prefix` as the full name prefix that
+        must be preserved across recursion.
         """
         ref = defs_by_fullname.get(f.type.fullname)
         if not isinstance(ref, (ClassDefinition, UnionDefinition)):
-            # Not a composite -> keep as is, but with original name and offsets.
-            yield f
+            # Leaf (non-composite): keep, but apply prefix and adjusted offsets.
+            new_name = prefix or f.name
+            yield replace(f, name=new_name, bitoffset=parent_base_bits + f.bitoffset)
             return
 
-        # Array of composites?
-        if f.elements and not flatten_arrays:
-            # Leave the composite field untouched (documented behavior)
-            yield f
-            return
-
-        # Compute stride for each element if we flatten arrays of composites
-        elem_stride_bits = (
-            (ref.size * 8) if isinstance(ref, (ClassDefinition, UnionDefinition)) else 0
-        )
-
-        # Helper to emit subfields for a specific array element index prefix (or no index)
+        # Helper to emit subfields of the composite `ref` for a specific element base
         def emit_subfields(name_prefix: str, elem_bit_base: int):
+            base_name = name_prefix  # the accumulated name prefix
+            base_off = parent_base_bits + f.bitoffset + elem_bit_base
             for sf in sorted(ref.fields, key=lambda x: x.bitoffset):
-                new_name = (
-                    f"{name_prefix}{separator}{sf.name}" if name_prefix else sf.name
-                )
-                new_bit = parent_bitoff + f.bitoffset + elem_bit_base + sf.bitoffset
-                # If a subfield is itself composite, recurse (deep flatten)
-                if is_composite(sf.type.fullname) and (sf.elements == ()):
-                    yield from flatten_fields(
-                        parent_bitoff + f.bitoffset + elem_bit_base, new_name, sf
-                    )
-                else:
-                    yield replace(sf, name=new_name, bitoffset=new_bit)
+                sf_ref = defs_by_fullname.get(sf.type.fullname)
+                sf_is_comp = isinstance(sf_ref, (ClassDefinition, UnionDefinition))
 
+                if sf_is_comp:
+                    if sf.elements:
+                        # Inner array of composites
+                        if not flatten_arrays:
+                            # Keep the array as-is
+                            yield replace(
+                                sf,
+                                name=f"{base_name}{separator}{sf.name}",
+                                bitoffset=base_off + sf.bitoffset,
+                            )
+                        else:
+                            # Unroll inner composite array
+                            from itertools import product
+
+                            dims: List[int] = list(sf.elements)
+                            elem_stride_bits2 = sf_ref.size * 8
+
+                            def linear_index(idxs: Tuple[int, ...], dims: List[int]) -> int:
+                                stride = 1
+                                idx = 0
+                                for i, d in zip(reversed(idxs), reversed(dims)):
+                                    idx += i * stride
+                                    stride *= d
+                                return idx
+
+                            for idxs in product(*[range(d) for d in dims]):
+                                lin = linear_index(idxs, dims)
+                                elem_base2 = lin * elem_stride_bits2
+                                idx_suffix = "".join(f"_{i}_" for i in idxs)
+                                # Recurse into the composite element
+                                yield from flatten_fields(
+                                    base_off + sf.bitoffset + elem_base2,
+                                    f"{base_name}{separator}{sf.name}{idx_suffix}",
+                                    replace(sf, elements=()),  # same type, but treat as single element
+                                )
+                    else:
+                        # Simple composite field: recurse
+                        yield from flatten_fields(
+                            base_off,
+                            f"{base_name}{separator}{sf.name}",
+                            sf,
+                        )
+                else:
+                    # Primitive (or typedef to primitive); keep (we do NOT unroll scalar arrays)
+                    yield replace(
+                        sf,
+                        name=f"{base_name}{separator}{sf.name}",
+                        bitoffset=base_off + sf.bitoffset,
+                    )
+
+        # Top-level handling for `f` (which is composite here)
+        base_name = prefix or f.name
         if not f.elements:
             # Single composite
-            yield from emit_subfields(f.name, 0)
+            yield from emit_subfields(base_name, 0)
         else:
-            # Flatten arrays of composites: unroll with index suffixes
-            from itertools import product
+            # Array of composites at this level
+            if not flatten_arrays:
+                yield replace(f, name=base_name, bitoffset=parent_base_bits + f.bitoffset)
+            else:
+                from itertools import product
 
-            dims = list(f.elements)
+                dims: List[int] = list(f.elements)
+                elem_stride_bits = ref.size * 8
 
-            # linearize multi-d indices to a bitoffset; compute index -> stride
-            def linear_index(idxs: Tuple[int, ...], dims: List[int]) -> int:
-                stride = 1
-                idx = 0
-                for i, d in zip(reversed(idxs), reversed(dims)):
-                    idx += i * stride
-                    stride *= d
-                return idx
+                def linear_index(idxs: Tuple[int, ...], dims: List[int]) -> int:
+                    stride = 1
+                    idx = 0
+                    for i, d in zip(reversed(idxs), reversed(dims)):
+                        idx += i * stride
+                        stride *= d
+                    return idx
 
-            for idxs in product(*[range(d) for d in dims]):
-                lin = linear_index(idxs, dims)
-                elem_base = lin * elem_stride_bits
-                idx_suffix = "".join(f"_{i}_" for i in idxs)
-                yield from emit_subfields(f"{f.name}{idx_suffix}", elem_base)
+                for idxs in product(*[range(d) for d in dims]):
+                    lin = linear_index(idxs, dims)
+                    elem_base = lin * elem_stride_bits
+                    idx_suffix = "".join(f"_{i}_" for i in idxs)
+                    yield from emit_subfields(f"{base_name}{idx_suffix}", elem_base)
 
     new_defs: List[TypeBase] = []
     no_change = True
+
     for d in definitions:
         if (
             not isinstance(d, (ClassDefinition, UnionDefinition))
@@ -508,20 +553,19 @@ def flatten_structs(
         no_change = False
         flat_fields: List[Field] = []
         for f in sorted(d.fields, key=lambda x: x.bitoffset):
-            # If field refers to composite, flatten; else keep
             ref = defs_by_fullname.get(f.type.fullname)
             if isinstance(ref, (ClassDefinition, UnionDefinition)):
                 flat_fields.extend(list(flatten_fields(0, "", f)))
             else:
                 flat_fields.append(f)
 
-        # Keep order by bitoffset, produce a new definition with flattened fields
         flat_fields.sort(key=lambda x: x.bitoffset)
         new_defs.append(replace(d, fields=tuple(flat_fields)))
 
     if no_change:
         raise RuntimeError(f"Could not find any known struct in targets {targets}")
     return new_defs
+
 
 
 def remove_enums(

@@ -451,6 +451,21 @@ def test_flatten_structs_arrays_offsets(cxplat):
     assert off_b1 - off_b0 == inner_stride_bits, "wrong stride for items[*]__b"
 
 
+
+def test_flatten_nested(cxplat):
+
+    path = os.path.join(here, os.pardir, "headers", cxplat.directory, "flat_nested.xml")
+    defs = parse(path, skip_failed_parsing=True, remove_unknown=True)
+    validate_definitions(defs)
+
+    defs2 = flatten_structs(defs, targets=["A"], flatten_arrays=True)
+    warr = _get_struct(defs2, "A")
+    types = [f.type.name for f in warr.fields]
+
+    assert "C" not in types
+
+
+
 # -----------------------------
 # remove_enums manipulator
 # -----------------------------
