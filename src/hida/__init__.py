@@ -17,6 +17,8 @@ from .manipulate import (
     get_system_include_regexes,
     fill_bitfield_holes_with_padding,
     fill_struct_holes_with_padding_bytes,
+    find_struct_holes,
+    fail_if_hole,
     flatten_namespaces,
     resolve_typedefs,
     filter_connected_definitions,
@@ -53,6 +55,8 @@ __all__ = [
     "flatten_structs",
     "remove_enums",
     "remove_source",
+    "find_struct_holes",
+    "fail_if_hole",
     # header_gen
     "write_header_from_definitions",
     # c_header_gen

@@ -17,6 +17,8 @@ from hida import (
     flatten_namespaces,
     resolve_typedefs,
     filter_connected_definitions,
+    fail_if_hole,
+    find_struct_holes,
     DefinitionBase,
     ClassDefinition,
     UnionDefinition,
@@ -122,6 +124,82 @@ def test_fill_struct_holes_with_padding_bytes_multiple_structs(cxplat):
             if field.name.startswith("__pad"):
                 assert field.type.fullname == "uint8_t"
                 assert isinstance(field.elements, tuple)
+
+def test_find_holes_then_fill(cxplat):
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "holes_real.xml"),
+        skip_failed_parsing=True,
+        remove_unknown=True,
+    )
+
+    # 1) Detect holes before padding
+    holes_before = find_struct_holes(result)
+
+    holey = find_type_by_name(result, "Holey")
+    multi = find_type_by_name(result, "MultiHoles")
+    packed = find_type_by_name(result, "Packed")
+    assert holey and multi and packed
+
+    # Expect holes in Holey/MultiHoles, none in Packed
+    assert holey.fullname in holes_before and holes_before[holey.fullname], "Holey should have holes"
+    assert multi.fullname in holes_before and holes_before[multi.fullname], "MultiHoles should have holes"
+    assert packed.fullname not in holes_before, "Packed should have no holes"
+
+    # 2) Fill (byte padding version)
+    filled_bytes = fill_struct_holes_with_padding_bytes(result)
+    holes_after_bytes = find_struct_holes(filled_bytes)
+    assert holey.fullname not in holes_after_bytes, "All holes must be gone after byte padding"
+    assert multi.fullname not in holes_after_bytes, "All holes must be gone after byte padding"
+    assert packed.fullname not in holes_after_bytes
+
+    # Optionally, ensure pads now exist (sanity)
+    for name in (holey.fullname, multi.fullname):
+        d = next(x for x in filled_bytes if isinstance(x, (ClassDefinition, UnionDefinition)) and x.fullname == name)
+        assert any(f.name.startswith("__pad") for f in d.fields)
+
+
+def test_find_bitholes_then_fill(cxplat):
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "bitfield_holes.xml"),
+        skip_failed_parsing=True,
+        remove_unknown=True,
+    )
+
+    # 1) Detect holes before padding
+    holes_before = find_struct_holes(result)
+
+
+    # Expect holes 
+    assert holes_before
+
+    # 2) Fill 
+    filled = fill_bitfield_holes_with_padding(result)
+    holes_after = find_struct_holes(filled)
+    assert not holes_after
+
+
+
+
+
+def test_fail_if_hole_raises(cxplat):
+    # Parse headers -> raw definitions (before filling)
+    result = parse(
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "holes_real.xml"),
+        skip_failed_parsing=True,
+        remove_unknown=True,
+    )
+
+    # 'Holey' should have holes before filling
+    holey = find_type_by_name(result, "Holey")
+    assert holey is not None
+
+    with pytest.raises(RuntimeError) as excinfo:
+        fail_if_hole(result)
+
+    # Optional: check error message content
+    msg = str(excinfo.value)
+    assert "Holey" in msg
+    assert "hole" in msg.lower()
 
 
 def test_flatten_namespaces(cxplat):

@@ -108,9 +108,6 @@ def filter_by_name_regexes(
     return [d for d in definitions if should_keep(d)]
 
 
-from dataclasses import replace
-from typing import List, Tuple
-
 # --- Helper ---------------------------------------------------------------
 
 def _emit_pad_fields(pad_bits: int, *, bitoffset: int, name_prefix: str) -> List[Field]:
@@ -157,8 +154,6 @@ def _emit_pad_fields(pad_bits: int, *, bitoffset: int, name_prefix: str) -> List
 
 # --- 1) Fill bitfield holes (arbitrary alignment) ------------------------
 
-from dataclasses import replace
-from typing import List, Optional
 
 # --- helpers --------------------------------------------------------------
 
@@ -365,6 +360,95 @@ def fill_struct_holes_with_padding_bytes(definitions):
 
     return result
 
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+
+@dataclass(frozen=True)
+class Hole:
+    struct_fullname: str
+    start_bit: int
+    size_bits: int
+    before_field: Optional[str]  # name of field that starts after this hole; None for trailing
+    trailing: bool               # True iff this hole is the tail gap up to struct end
+
+def find_struct_holes(definitions: List[TypeBase]) -> Dict[str, List[Hole]]:
+    """
+    Scan composite types and return all 'holes' (bit gaps) per struct/union.
+    Works BEFORE padding is inserted.
+    """
+    holes: Dict[str, List[Hole]] = {}
+    for d in definitions:
+        if not isinstance(d, (ClassDefinition, UnionDefinition)) or not d.fields:
+            continue
+
+        prev_end = 0  # in bits
+        d_holes: List[Hole] = []
+
+        # Walk fields by starting bit offset
+        for f in sorted(d.fields, key=lambda x: x.bitoffset):
+            start = f.bitoffset
+            if start > prev_end:
+                d_holes.append(
+                    Hole(
+                        struct_fullname=d.fullname,
+                        start_bit=prev_end,
+                        size_bits=start - prev_end,
+                        before_field=f.name,
+                        trailing=False,
+                    )
+                )
+
+            # advance past this field (account for arrays)
+            count = 1
+            for dim in getattr(f, "elements", ()) or ():
+                count *= dim
+            field_total_bits = f.size_in_bits * max(1, count)
+            prev_end = max(prev_end, start + field_total_bits)
+
+        # Trailing hole up to declared size (size is in bytes)
+        struct_end = d.size * 8
+        if prev_end < struct_end:
+            d_holes.append(
+                Hole(
+                    struct_fullname=d.fullname,
+                    start_bit=prev_end,
+                    size_bits=struct_end - prev_end,
+                    before_field=None,
+                    trailing=True,
+                )
+            )
+
+        if d_holes:
+            holes[d.fullname] = d_holes
+
+    return holes
+
+
+def fail_if_hole(definitions):
+    """
+    Scan all composite types and raise HoleError if any hole is found.
+    The message lists struct fullname, hole start offset, size, and context.
+    """
+    holes = find_struct_holes(definitions)
+    if not holes:
+        return  # nothing to do
+
+    messages = []
+    for sname, hs in holes.items():
+        for h in hs:
+            if h.trailing:
+                ctx = f"trailing hole (from bit {h.start_bit} to end, {h.size_bits} bits)"
+            else:
+                ctx = (
+                    f"hole before field '{h.before_field}' "
+                    f"(bits {h.start_bit}..{h.start_bit + h.size_bits - 1}, "
+                    f"size {h.size_bits} bits)"
+                )
+            messages.append(f"{sname}: {ctx}")
+
+    raise RuntimeError(
+        "Holes detected in struct definitions:\n  " + "\n  ".join(messages)
+    )
 
 
 def _flattened_name(ns: Sequence[str], name: str, sep: str = "__") -> str:

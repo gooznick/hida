@@ -21,12 +21,14 @@ from hida import (
     filter_by_name_regexes,
     fill_bitfield_holes_with_padding,
     fill_struct_holes_with_padding_bytes,
+    fail_if_hole,
     flatten_namespaces,
     resolve_typedefs,
     filter_connected_definitions,
     flatten_structs,
     remove_enums,
     remove_source,
+
 )
 
 # CastXML runner
@@ -250,6 +252,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Both --pad-struct-holes and --pad-bitfield-holes.",
     )
+    g_m.add_argument(
+        "--fail-if-hole",
+        action="store_true",
+        help="Fail if holes found on some struct.",
+    )
     # Source scrubbing
     mx = g_m.add_mutually_exclusive_group()
     mx.add_argument(
@@ -420,6 +427,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     # 3.8 Source scrubbing (presentation concern; do last)
     if args.remove_source or args.remove_source_basename:
         defs = remove_source(defs, header_only=bool(args.remove_source_basename))
+
+    if args.fail_if_hole:
+        defs = fail_if_hole(defs)
 
     # 4) Outputs
     if args.python:
