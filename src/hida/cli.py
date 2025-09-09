@@ -137,12 +137,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     g_p = p.add_argument_group("parsing")
     g_p.add_argument(
-        "--use_bool",
+        "--use-bool",
         action="store_true",
         help="Use bool as a type.",
     )
     g_p.add_argument(
-        "--do_not_ignore_system",
+        "--do-not-ignore-system",
         action="store_true",
         help="Do not ignore system includes.",
     )
@@ -152,7 +152,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write parsing warnings.",
     )
     g_p.add_argument(
-        "--do_not_skip_failed_parsing",
+        "--do-not-skip-failed-parsing",
         action="store_true",
         help="Error if failed to parse.",
     )
@@ -438,7 +438,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         defs = remove_source(defs, header_only=bool(args.remove_source_basename))
 
     if args.fail_if_hole:
-        defs = fail_if_hole(defs)
+        fail_if_hole(defs)
 
     # 4) Outputs
     if args.python:
