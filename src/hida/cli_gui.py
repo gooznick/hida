@@ -191,14 +191,12 @@ class MainWindow(QW.QMainWindow):
         self.focus = LabeledLine("Focus root names:", pm_grid, 9)
 
         # Padding & scrubbing
-        self.pad_both = QW.QCheckBox("Pad BOTH bitfield & struct holes")
-        self.pad_bit = QW.QCheckBox("Pad bitfield holes only")
-        self.pad_struct = QW.QCheckBox("Pad struct holes only")
+        self.pad_bit = QW.QCheckBox("Pad bitfield holes")
+        self.pad_struct = QW.QCheckBox("Pad struct holes")
         self.fail_if_hole = QW.QCheckBox("Fail if hole")
-        pm_grid.addWidget(self.pad_both, 10, 0)
-        pm_grid.addWidget(self.pad_bit, 10, 1)
-        pm_grid.addWidget(self.pad_struct, 10, 2)
-        pm_grid.addWidget(self.fail_if_hole, 10, 3)
+        pm_grid.addWidget(self.pad_bit, 10, 0)
+        pm_grid.addWidget(self.pad_struct, 10, 1)
+        pm_grid.addWidget(self.fail_if_hole, 10, 2)
 
         self.rm_source = QW.QCheckBox("Remove source paths")
         self.rm_source_base = QW.QCheckBox("Keep only source basenames")
@@ -248,7 +246,7 @@ class MainWindow(QW.QMainWindow):
             self.name_inc.edit, self.name_exc.edit, self.src_inc.edit, self.src_exc.edit,
             self.resolve_typedefs, self.flatten_ns, self.remove_enums, self.enum_int_type,
             self.flatten_structs.edit, self.flatten_sep.edit, self.flatten_arrays,
-            self.focus.edit, self.pad_both, self.pad_bit, self.pad_struct, self.fail_if_hole,
+            self.focus.edit, self.pad_bit, self.pad_struct, self.fail_if_hole,
             self.rm_source, self.rm_source_base, self.py_out.edit, self.assert_size,
             self.py_verify, self.py_verify_size, self.hdr_out.edit, self.c_hdr_out.edit,
             self.json_out.edit, self.compact_json
@@ -312,13 +310,11 @@ class MainWindow(QW.QMainWindow):
         if foc:
             argv += ["--focus"] + foc
 
-        if self.pad_both.isChecked():
-            argv += ["--pad"]
-        else:
-            if self.pad_bit.isChecked():
-                argv += ["--pad-bitfield-holes"]
-            if self.pad_struct.isChecked():
-                argv += ["--pad-struct-holes"]
+
+        if self.pad_bit.isChecked():
+            argv += ["--pad-bitfield-holes"]
+        if self.pad_struct.isChecked():
+            argv += ["--pad-struct-holes"]
         if self.fail_if_hole.isChecked():
             argv += ["--fail-if-hole"]
 

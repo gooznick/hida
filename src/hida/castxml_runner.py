@@ -48,8 +48,7 @@ def find_castxml(explicit: Optional[str | Path] = None) -> str:
     """
     if explicit:
         p = Path(str(explicit))
-        if p.exists():
-            return str(p)
+        return str(p)
 
     env = os.getenv("CASTXML_BIN")
     if env and Path(env).exists():
