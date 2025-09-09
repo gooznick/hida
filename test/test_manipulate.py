@@ -125,6 +125,7 @@ def test_fill_struct_holes_with_padding_bytes_multiple_structs(cxplat):
                 assert field.type.fullname == "uint8_t"
                 assert isinstance(field.elements, tuple)
 
+
 def test_find_holes_then_fill(cxplat):
     result = parse(
         os.path.join(here, os.pardir, "headers", cxplat.directory, "holes_real.xml"),
@@ -141,26 +142,40 @@ def test_find_holes_then_fill(cxplat):
     assert holey and multi and packed
 
     # Expect holes in Holey/MultiHoles, none in Packed
-    assert holey.fullname in holes_before and holes_before[holey.fullname], "Holey should have holes"
-    assert multi.fullname in holes_before and holes_before[multi.fullname], "MultiHoles should have holes"
+    assert (
+        holey.fullname in holes_before and holes_before[holey.fullname]
+    ), "Holey should have holes"
+    assert (
+        multi.fullname in holes_before and holes_before[multi.fullname]
+    ), "MultiHoles should have holes"
     assert packed.fullname not in holes_before, "Packed should have no holes"
 
     # 2) Fill (byte padding version)
     filled_bytes = fill_struct_holes_with_padding_bytes(result)
     holes_after_bytes = find_struct_holes(filled_bytes)
-    assert holey.fullname not in holes_after_bytes, "All holes must be gone after byte padding"
-    assert multi.fullname not in holes_after_bytes, "All holes must be gone after byte padding"
+    assert (
+        holey.fullname not in holes_after_bytes
+    ), "All holes must be gone after byte padding"
+    assert (
+        multi.fullname not in holes_after_bytes
+    ), "All holes must be gone after byte padding"
     assert packed.fullname not in holes_after_bytes
 
     # Optionally, ensure pads now exist (sanity)
     for name in (holey.fullname, multi.fullname):
-        d = next(x for x in filled_bytes if isinstance(x, (ClassDefinition, UnionDefinition)) and x.fullname == name)
+        d = next(
+            x
+            for x in filled_bytes
+            if isinstance(x, (ClassDefinition, UnionDefinition)) and x.fullname == name
+        )
         assert any(f.name.startswith("__pad") for f in d.fields)
 
 
 def test_find_bitholes_then_fill(cxplat):
     result = parse(
-        os.path.join(here, os.pardir, "headers", cxplat.directory, "bitfield_holes.xml"),
+        os.path.join(
+            here, os.pardir, "headers", cxplat.directory, "bitfield_holes.xml"
+        ),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
@@ -168,17 +183,13 @@ def test_find_bitholes_then_fill(cxplat):
     # 1) Detect holes before padding
     holes_before = find_struct_holes(result)
 
-
-    # Expect holes 
+    # Expect holes
     assert holes_before
 
-    # 2) Fill 
+    # 2) Fill
     filled = fill_bitfield_holes_with_padding(result)
     holes_after = find_struct_holes(filled)
     assert not holes_after
-
-
-
 
 
 def test_fail_if_hole_raises(cxplat):
@@ -219,25 +230,23 @@ def test_flatten_namespaces(cxplat):
     assert "Beta__Extra" in names
     assert all(d.namespace == () for d in flattened)
 
+
 def test_flatten_namespaces2(cxplat):
     result = parse(
-        os.path.join(
-            here, os.pardir, "headers", cxplat.directory, "namespaces.xml"
-        ),
+        os.path.join(here, os.pardir, "headers", cxplat.directory, "namespaces.xml"),
         skip_failed_parsing=True,
         remove_unknown=True,
     )
 
     # Full flatten
     flattened = flatten_namespaces(result)
-    
+
     assert not any([d.name for d in flattened if ":" in d.name])
     assert not any([1 for d in flattened if d.namespace])
     for c in [d for d in flattened if isinstance(d, ClassDefinition)]:
         assert not any([1 for d in c.fields if ":" in d.name])
         assert not any([1 for d in c.fields if d.type.namespace])
     validate_definitions(flattened)
-
 
 
 def test_resolve_typedefs(cxplat):
@@ -318,14 +327,14 @@ def test_include_as_list(sample_definitions):
     assert "A" in names and "B" in names
 
 
-
-
 # assumes: from yourmodule import filter_by_name_regexes
+
 
 def test_name_include_regex(sample_definitions):
     # Keep only names A and B
     result = filter_by_name_regexes(sample_definitions, include=r"^[AB]$")
     assert {d.name for d in result} == {"A", "B"}
+
 
 def test_name_exclude_regex(sample_definitions):
     # Drop names C and D
@@ -333,31 +342,35 @@ def test_name_exclude_regex(sample_definitions):
     names = {d.name for d in result}
     assert "C" not in names and "D" not in names
 
+
 def test_name_no_filters(sample_definitions):
     # No filtering: return all
     result = filter_by_name_regexes(sample_definitions)
     assert len(result) == len(sample_definitions)
+
 
 def test_name_include_as_list(sample_definitions):
     # Multiple include patterns
     result = filter_by_name_regexes(sample_definitions, include=[r"^A$", r"^E$"])
     assert {d.name for d in result} == {"A", "E"}
 
+
 def test_name_case_insensitive():
     # Case-insensitive include
     defs = [
-        SimpleNamespace(name="foo",  source="x"),
-        SimpleNamespace(name="BAR",  source="y"),
-        SimpleNamespace(name="Baz",  source="z"),
+        SimpleNamespace(name="foo", source="x"),
+        SimpleNamespace(name="BAR", source="y"),
+        SimpleNamespace(name="Baz", source="z"),
     ]
     result = filter_by_name_regexes(defs, include=r"bar", flags=re.IGNORECASE)
     assert [d.name for d in result] == ["BAR"]
 
+
 def test_name_use_fullname():
     # Match against fullname instead of name
     defs = [
-        SimpleNamespace(name="W", fullname="ns::Widget",       source="x"),
-        SimpleNamespace(name="I", fullname="internal::Impl",   source="y"),
+        SimpleNamespace(name="W", fullname="ns::Widget", source="x"),
+        SimpleNamespace(name="I", fullname="internal::Impl", source="y"),
     ]
     # Include by fullname prefix
     res_inc = filter_by_name_regexes(defs, include=r"^ns::", use_fullname=True)
@@ -366,6 +379,7 @@ def test_name_use_fullname():
     # Exclude by fullname prefix
     res_exc = filter_by_name_regexes(defs, exclude=r"^internal::", use_fullname=True)
     assert all(d.name != "I" for d in res_exc)
+
 
 def test_filter_connected_definitions(cxplat):
     path = os.path.join(
@@ -529,7 +543,6 @@ def test_flatten_structs_arrays_offsets(cxplat):
     assert off_b1 - off_b0 == inner_stride_bits, "wrong stride for items[*]__b"
 
 
-
 def test_flatten_nested(cxplat):
 
     path = os.path.join(here, os.pardir, "headers", cxplat.directory, "flat_nested.xml")
@@ -541,7 +554,6 @@ def test_flatten_nested(cxplat):
     types = [f.type.name for f in warr.fields]
 
     assert "C" not in types
-
 
 
 # -----------------------------

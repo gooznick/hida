@@ -98,7 +98,9 @@ def run_castxml_for_header(
 
     try:
         # Create a temporary .cpp that includes the header
-        with tempfile.NamedTemporaryFile(suffix=".cpp", mode="w", delete=False) as tmp_cpp:
+        with tempfile.NamedTemporaryFile(
+            suffix=".cpp", mode="w", delete=False
+        ) as tmp_cpp:
             tmp_cpp.write(f'#include "{header}"\n')
             tmp_cpp_path = Path(tmp_cpp.name)
 
@@ -108,7 +110,7 @@ def run_castxml_for_header(
             # MSVC front-end uses /std:c++17 style
             cmd += ["--castxml-cc-msvc", "cl", f"/std:{cpp_std}"]
         else:
-            cmd += ["--castxml-cc-gnu" ,"g++", f"--std={cpp_std}"]
+            cmd += ["--castxml-cc-gnu", "g++", f"--std={cpp_std}"]
 
         # Includes
         for inc in include_dirs:
@@ -124,7 +126,9 @@ def run_castxml_for_header(
         # Show the full command
         print("Running castxml command:\n$", _format_cmd(cmd))
 
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        proc = subprocess.run(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
 
         result = CastxmlResult(
             header=header,

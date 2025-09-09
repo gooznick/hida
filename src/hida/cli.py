@@ -16,7 +16,8 @@ from hida import (
     write_header_from_definitions,
     write_c_header_from_definitions,
     python_generate,
-    dumps, load,
+    dumps,
+    load,
     filter_by_source_regexes,
     filter_by_name_regexes,
     fill_bitfield_holes_with_padding,
@@ -28,7 +29,6 @@ from hida import (
     flatten_structs,
     remove_enums,
     remove_source,
-
 )
 
 # CastXML runner
@@ -54,20 +54,24 @@ def _write_text(path: Path, text: str) -> None:
 class _HelpFmt(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
     pass
 
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="hida",
         formatter_class=_HelpFmt,
         allow_abbrev=False,
-        description=dedent("""\
+        description=dedent(
+            """\
             CastXML XML → Python/Header/JSON with IR manipulators.
 
             INPUT MODES
               • CastXML XML   : use an existing CastXML XML file
               • JSON IR       : use a previously generated JSON IR file
               • C/C++ header  : run CastXML on the header (see CASTXML FORWARDING)
-            """),
-        epilog=dedent("""\
+            """
+        ),
+        epilog=dedent(
+            """\
             CASTXML FORWARDING
               Anything after a literal `--` on the command line is passed verbatim to CastXML
               when the input is a header. The forwarded args are available as `args.castxml_args`.
@@ -85,7 +89,8 @@ def build_parser() -> argparse.ArgumentParser:
 
               # Use a JSON IR:
               hida api.json --header api.hpp
-            """),
+            """
+        ),
     )
 
     # ──────────────────────────────
@@ -129,7 +134,6 @@ def build_parser() -> argparse.ArgumentParser:
         default="c++17",
         help="C++ language standard for CastXML (e.g., c++17, c++20).",
     )
-
 
     g_p = p.add_argument_group("parsing")
     g_p.add_argument(
@@ -235,7 +239,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="Keep only definitions connected to these root types (repeat or pass multiple).",
     )
 
-
     # Padding
     g_m.add_argument(
         "--pad-bitfield-holes",
@@ -300,7 +303,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--python-verify", action="store_true", help="Verify python output."
     )
     g_out.add_argument(
-        "--python-verify-size", action="store_true", help="Verify python output and size."
+        "--python-verify-size",
+        action="store_true",
+        help="Verify python output and size.",
     )
     g_out.add_argument(
         "--compact-json", action="store_true", help="Compact JSON (no pretty indent)."
@@ -365,13 +370,17 @@ def main(argv: Optional[List[str]] = None) -> int:
             cpp_std=args.std,
         )
 
-
     # 2) Parse XML → defs
     if json_path:
         defs = load(json_path)
     else:
-        defs = parse(str(xml_path),use_bool=args.use_bool,do_not_ignore_system=args.do_not_ignore_system,
-                    verbose=args.verbose, skip_failed_parsing=not args.do_not_skip_failed_parsing )
+        defs = parse(
+            str(xml_path),
+            use_bool=args.use_bool,
+            do_not_ignore_system=args.do_not_ignore_system,
+            verbose=args.verbose,
+            skip_failed_parsing=not args.do_not_skip_failed_parsing,
+        )
 
     # 3) Manipulations (order chosen to be practical)
 
@@ -433,7 +442,13 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # 4) Outputs
     if args.python:
-        python_generate(defs, args.python, assert_size=args.assert_size, verify=args.python_verify, verify_size=args.python_verify_size)
+        python_generate(
+            defs,
+            args.python,
+            assert_size=args.assert_size,
+            verify=args.python_verify,
+            verify_size=args.python_verify_size,
+        )
         print(f"[hida] wrote {args.python}")
 
     if args.header:

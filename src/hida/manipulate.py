@@ -110,6 +110,7 @@ def filter_by_name_regexes(
 
 # --- Helper ---------------------------------------------------------------
 
+
 def _emit_pad_fields(pad_bits: int, *, bitoffset: int, name_prefix: str) -> List[Field]:
     """
     Emit padding as:
@@ -129,7 +130,7 @@ def _emit_pad_fields(pad_bits: int, *, bitoffset: int, name_prefix: str) -> List
             Field(
                 name=f"{name_prefix}_bytes",
                 type=u8,
-                elements=(bytes_count,),       # array of bytes
+                elements=(bytes_count,),  # array of bytes
                 bitoffset=bitoffset,
                 size_in_bits=8 * bytes_count,  # total size of array
                 bitfield=False,
@@ -144,7 +145,7 @@ def _emit_pad_fields(pad_bits: int, *, bitoffset: int, name_prefix: str) -> List
                 type=u8,
                 elements=(),
                 bitoffset=bitoffset,
-                size_in_bits=rem_bits,         # width of the bitfield
+                size_in_bits=rem_bits,  # width of the bitfield
                 bitfield=True,
             )
         )
@@ -156,6 +157,7 @@ def _emit_pad_fields(pad_bits: int, *, bitoffset: int, name_prefix: str) -> List
 
 
 # --- helpers --------------------------------------------------------------
+
 
 def _bitwidth_for_type(t: TypeBase) -> Optional[int]:
     """
@@ -173,13 +175,28 @@ def _bitwidth_for_type(t: TypeBase) -> Optional[int]:
 
     # Very common aliases
     table = {
-        "unsigned char": 8, "signed char": 8, "char": 8, "uint8_t": 8, "int8_t": 8,
-        "unsigned short": 16, "short": 16, "uint16_t": 16, "int16_t": 16,
-        "unsigned int": 32, "int": 32, "uint32_t": 32, "int32_t": 32,
-        "unsigned long": 64, "long": 64, "uint64_t": 64, "int64_t": 64,
-        "unsigned long long": 64, "long long": 64,
+        "unsigned char": 8,
+        "signed char": 8,
+        "char": 8,
+        "uint8_t": 8,
+        "int8_t": 8,
+        "unsigned short": 16,
+        "short": 16,
+        "uint16_t": 16,
+        "int16_t": 16,
+        "unsigned int": 32,
+        "int": 32,
+        "uint32_t": 32,
+        "int32_t": 32,
+        "unsigned long": 64,
+        "long": 64,
+        "uint64_t": 64,
+        "int64_t": 64,
+        "unsigned long long": 64,
+        "long long": 64,
     }
     return table.get(name, None)
+
 
 def _emit_same_type_bitfield_pad_slices(
     hole_bits: int,
@@ -208,10 +225,10 @@ def _emit_same_type_bitfield_pad_slices(
         pads.append(
             Field(
                 name=f"__pad{counter}_b{slice_idx}",
-                type=pad_underlying_type,     # EXACT same type as the original bitfield
-                elements=(),                  # never arrays
+                type=pad_underlying_type,  # EXACT same type as the original bitfield
+                elements=(),  # never arrays
                 bitoffset=bitoffset + emitted,
-                size_in_bits=width,           # this bitfield's width
+                size_in_bits=width,  # this bitfield's width
                 bitfield=True,
             )
         )
@@ -220,7 +237,9 @@ def _emit_same_type_bitfield_pad_slices(
 
     return pads
 
+
 # --- main -----------------------------------------------------------------
+
 
 def fill_bitfield_holes_with_padding(definitions):
     """
@@ -256,7 +275,7 @@ def fill_bitfield_holes_with_padding(definitions):
                     hole_bits=hole_bits,
                     bitoffset=prev_end,
                     counter=pad_counter,
-                    pad_underlying_type=f.type,   # <-- exact same type as F
+                    pad_underlying_type=f.type,  # <-- exact same type as F
                 )
                 if pads:
                     new_fields.extend(pads)
@@ -296,9 +315,8 @@ def fill_bitfield_holes_with_padding(definitions):
     return updated
 
 
-
-
 # --- 2) Fill struct holes with padding bytes (now supports non-byte holes) ---
+
 
 def fill_struct_holes_with_padding_bytes(definitions):
     """
@@ -360,16 +378,21 @@ def fill_struct_holes_with_padding_bytes(definitions):
 
     return result
 
+
 from dataclasses import dataclass
 from typing import Dict, List, Optional
+
 
 @dataclass(frozen=True)
 class Hole:
     struct_fullname: str
     start_bit: int
     size_bits: int
-    before_field: Optional[str]  # name of field that starts after this hole; None for trailing
-    trailing: bool               # True iff this hole is the tail gap up to struct end
+    before_field: Optional[
+        str
+    ]  # name of field that starts after this hole; None for trailing
+    trailing: bool  # True iff this hole is the tail gap up to struct end
+
 
 def find_struct_holes(definitions: List[TypeBase]) -> Dict[str, List[Hole]]:
     """
@@ -437,7 +460,9 @@ def fail_if_hole(definitions):
     for sname, hs in holes.items():
         for h in hs:
             if h.trailing:
-                ctx = f"trailing hole (from bit {h.start_bit} to end, {h.size_bits} bits)"
+                ctx = (
+                    f"trailing hole (from bit {h.start_bit} to end, {h.size_bits} bits)"
+                )
             else:
                 ctx = (
                     f"hole before field '{h.before_field}' "
@@ -455,9 +480,11 @@ def _flattened_name(ns: Sequence[str], name: str, sep: str = "__") -> str:
     parts = list(ns or ())
     return (sep.join(parts) + sep + name) if parts else name
 
+
 def _flatten_type(t: TypeBase, sep: str) -> TypeBase:
     """Return a copy of t with namespace folded into name and namespace cleared."""
     return replace(t, name=_flattened_name(t.namespace, t.name, sep), namespace=())
+
 
 def flatten_namespaces(definitions: List[TypeBase], sep: str = "__") -> List[TypeBase]:
     """
@@ -492,8 +519,6 @@ def flatten_namespaces(definitions: List[TypeBase], sep: str = "__") -> List[Typ
         out.append(nd)
 
     return out
-
-
 
 
 def resolve_typedefs(definitions):
@@ -607,7 +632,7 @@ def filter_connected_definitions(
     stack = list(roots)
     if not any([graph.get(v, None) for v in stack]):
         raise RuntimeError(f"Could not find any known struct in roots {roots}")
-    
+
     while stack:
         current = stack.pop()
         if current in visited:
@@ -692,7 +717,9 @@ def flatten_structs(
                             dims: List[int] = list(sf.elements)
                             elem_stride_bits2 = sf_ref.size * 8
 
-                            def linear_index(idxs: Tuple[int, ...], dims: List[int]) -> int:
+                            def linear_index(
+                                idxs: Tuple[int, ...], dims: List[int]
+                            ) -> int:
                                 stride = 1
                                 idx = 0
                                 for i, d in zip(reversed(idxs), reversed(dims)):
@@ -708,7 +735,9 @@ def flatten_structs(
                                 yield from flatten_fields(
                                     base_off + sf.bitoffset + elem_base2,
                                     f"{base_name}{separator}{sf.name}{idx_suffix}",
-                                    replace(sf, elements=()),  # same type, but treat as single element
+                                    replace(
+                                        sf, elements=()
+                                    ),  # same type, but treat as single element
                                 )
                     else:
                         # Simple composite field: recurse
@@ -733,7 +762,9 @@ def flatten_structs(
         else:
             # Array of composites at this level
             if not flatten_arrays:
-                yield replace(f, name=base_name, bitoffset=parent_base_bits + f.bitoffset)
+                yield replace(
+                    f, name=base_name, bitoffset=parent_base_bits + f.bitoffset
+                )
             else:
                 from itertools import product
 
@@ -780,7 +811,6 @@ def flatten_structs(
     if no_change:
         raise RuntimeError(f"Could not find any known struct in targets {targets}")
     return new_defs
-
 
 
 def remove_enums(
