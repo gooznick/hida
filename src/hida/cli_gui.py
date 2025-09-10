@@ -145,48 +145,18 @@ class MainWindow(QW.QMainWindow):
         tabs.addTab(tab_manip, "Parsing & Manipulators")
         manip_v = QW.QVBoxLayout(tab_manip)
 
-        pm_box = QW.QGroupBox("Parsing & Manipulators")
-        manip_v.addWidget(pm_box)
+        pm_box = QW.QGroupBox("")
+        manip_v.addWidget(pm_box, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
         pm_grid = QW.QGridLayout(pm_box)
 
-        # Row 0 flags (DASH-CASE)
-        self.use_bool = QW.QCheckBox("Use bool")
-        self.no_ignore_sys = QW.QCheckBox("Do not ignore system")
-        self.verbose = QW.QCheckBox("Verbose")
-        self.no_skip_failed = QW.QCheckBox("Do NOT skip failed parsing")
-        pm_grid.addWidget(self.use_bool, 0, 0)
-        pm_grid.addWidget(self.no_ignore_sys, 0, 1)
-        pm_grid.addWidget(self.verbose, 0, 2)
-        pm_grid.addWidget(self.no_skip_failed, 0, 3)
-
         # Regex filters
-        self.name_inc = LabeledLine("Name include regexes:", pm_grid, 1)
-        self.name_exc = LabeledLine("Name exclude regexes:", pm_grid, 2)
-        self.src_inc = LabeledLine("Source include regexes:", pm_grid, 3)
-        self.src_exc = LabeledLine("Source exclude regexes:", pm_grid, 4)
+        self.name_inc = LabeledLine("Name include regexes:", pm_grid, 0)
+        self.name_exc = LabeledLine("Name exclude regexes:", pm_grid, 1)
+        self.src_inc = LabeledLine("Source include regexes:", pm_grid, 2)
+        self.src_exc = LabeledLine("Source exclude regexes:", pm_grid, 3)
 
-        # Typedefs/namespaces
-        self.resolve_typedefs = QW.QCheckBox("Resolve typedefs")
-        self.flatten_ns = QW.QCheckBox("Flatten namespaces")
-        pm_grid.addWidget(self.resolve_typedefs, 5, 0)
-        pm_grid.addWidget(self.flatten_ns, 5, 1)
-
-        # Enums
-        self.remove_enums = QW.QCheckBox("Remove enums")
-        pm_grid.addWidget(self.remove_enums, 6, 0)
-        self.enum_int_type = QW.QLineEdit("int32_t")
-        pm_grid.addWidget(QW.QLabel("Enum int type:"), 6, 1)
-        pm_grid.addWidget(self.enum_int_type, 6, 2)
-
-        # Flatten
-        self.flatten_structs = LabeledLine("Flatten structs (names):", pm_grid, 7)
-        self.flatten_sep = LabeledLine("Flatten separator:", pm_grid, 8, None, placeholder="__")
-        self.flatten_sep.edit.setText("__")
-        self.flatten_arrays = QW.QCheckBox("Flatten arrays of composites")
-        pm_grid.addWidget(self.flatten_arrays, 8, 2)
-
-        # Focus
-        self.focus = LabeledLine("Focus root names:", pm_grid, 9)
+        self.flatten_structs = LabeledLine("Flatten structs (names):", pm_grid, 5)
+        self.focus = LabeledLine("Focus root names:", pm_grid, 6)
 
         # Padding & scrubbing
         self.pad_bit = QW.QCheckBox("Pad bitfield holes")
@@ -194,15 +164,38 @@ class MainWindow(QW.QMainWindow):
         self.fail_if_hole = QW.QCheckBox("Fail if hole")
         self.pad_bit.setChecked(True)
         self.pad_struct.setChecked(True)
-        
-        pm_grid.addWidget(self.pad_bit, 10, 0)
-        pm_grid.addWidget(self.pad_struct, 10, 1)
-        pm_grid.addWidget(self.fail_if_hole, 10, 2)
+        pm_grid.addWidget(self.pad_bit, 7, 0)
+        pm_grid.addWidget(self.pad_struct, 7, 1)
+        pm_grid.addWidget(self.fail_if_hole, 7, 2)
+
+
+        # Typedefs/namespaces
+        self.resolve_typedefs = QW.QCheckBox("Resolve typedefs")
+        self.flatten_ns = QW.QCheckBox("Flatten namespaces")
+        self.remove_enums = QW.QCheckBox("Remove enums")
+        pm_grid.addWidget(self.resolve_typedefs, 8, 0)
+        pm_grid.addWidget(self.flatten_ns, 8, 1)
+        pm_grid.addWidget(self.remove_enums, 8, 2)
+
+
+        # Flatten
+        self.flatten_arrays = QW.QCheckBox("Flatten arrays of composites")
+        pm_grid.addWidget(self.flatten_arrays, 9, 0)
 
         self.rm_source = QW.QCheckBox("Remove source paths")
         self.rm_source_base = QW.QCheckBox("Keep only source basenames")
-        pm_grid.addWidget(self.rm_source, 11, 0)
-        pm_grid.addWidget(self.rm_source_base, 11, 1)
+        pm_grid.addWidget(self.rm_source, 10, 0)
+        pm_grid.addWidget(self.rm_source_base, 10, 1)
+
+        # Row 0 flags (DASH-CASE)
+        self.use_bool = QW.QCheckBox("Use bool")
+        self.no_ignore_sys = QW.QCheckBox("Do not ignore system")
+        self.verbose = QW.QCheckBox("Verbose")
+        self.no_skip_failed = QW.QCheckBox("Do NOT skip failed parsing")
+        pm_grid.addWidget(self.use_bool, 11, 0)
+        pm_grid.addWidget(self.no_ignore_sys, 11, 1)
+        pm_grid.addWidget(self.verbose, 11, 2)
+        pm_grid.addWidget(self.no_skip_failed, 12, 0)
 
         manip_v.addStretch(1)
 
@@ -245,8 +238,8 @@ class MainWindow(QW.QMainWindow):
             self.inp.edit, self.inc.edit, self.xml_out.edit, self.castxml.edit, self.std.edit,
             self.use_bool, self.no_ignore_sys, self.verbose, self.no_skip_failed,
             self.name_inc.edit, self.name_exc.edit, self.src_inc.edit, self.src_exc.edit,
-            self.resolve_typedefs, self.flatten_ns, self.remove_enums, self.enum_int_type,
-            self.flatten_structs.edit, self.flatten_sep.edit, self.flatten_arrays,
+            self.resolve_typedefs, self.flatten_ns, self.remove_enums, 
+            self.flatten_structs.edit, self.flatten_arrays,
             self.focus.edit, self.pad_bit, self.pad_struct, self.fail_if_hole,
             self.rm_source, self.rm_source_base, self.py_out.edit, self.assert_size,
             self.py_verify, self.py_verify_size, self.hdr_out.edit, 
@@ -295,14 +288,11 @@ class MainWindow(QW.QMainWindow):
 
         if self.remove_enums.isChecked():
             argv += ["--remove-enums"]
-        if self.enum_int_type.text():
-            argv += ["--enum-int-type", self.enum_int_type.text()]
+
 
         fl = split_ws_csv(self.flatten_structs.text())
         if fl:
-            argv += ["--flatten-structs"] + fl
-        if self.flatten_sep.text():
-            argv += ["--flatten-sep", self.flatten_sep.text()]
+            argv += ["--flatten-structs"] 
         if self.flatten_arrays.isChecked():
             argv += ["--flatten-arrays"]
 
