@@ -321,9 +321,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     extra = list(unknown or [])
 
     # Require at least one output
-    if not any([args.python, args.header, args.c_header, args.json]):
+    if not any([args.python, args.header, args.c_header, args.json, args.xml_out]):
         parser.error(
-            "Choose at least one output: --python / --header / --c-header / --json"
+            "Choose at least one output: --python / --header / -x / --json"
         )
 
     # 1) Get XML: path directly or generate from header via runner

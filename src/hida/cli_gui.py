@@ -116,9 +116,8 @@ class MainWindow(QW.QMainWindow):
 
         self.inp = LabeledLine("Input (XML / JSON / Header):", io_grid, 0, "open_file")
         self.inc = LabeledLine("Include dirs (-I, space/comma):", io_grid, 1)
-        self.xml_out = LabeledLine("XML out (-x):", io_grid, 2, "save_file")
-        self.castxml = LabeledLine("CastXML path:", io_grid, 3, "open_file")
-        self.std = LabeledLine("C++ standard (--std):", io_grid, 4, None, placeholder="c++17")
+        self.castxml = LabeledLine("CastXML path:", io_grid, 2, "open_file")
+        self.std = LabeledLine("C++ standard (--std):", io_grid, 3, None, placeholder="c++17")
         self.std.edit.setText("c++17")
 
         # Outputs
@@ -130,15 +129,14 @@ class MainWindow(QW.QMainWindow):
         self.assert_size = QW.QCheckBox("Assert size")
         self.py_verify = QW.QCheckBox("Verify Python")
         self.py_verify_size = QW.QCheckBox("Verify size")
+
         out_grid.addWidget(self.assert_size, 1, 0)
         out_grid.addWidget(self.py_verify, 1, 1)
         out_grid.addWidget(self.py_verify_size, 1, 2)
 
         self.hdr_out = LabeledLine("C++ header out:", out_grid, 2, "save_file")
-        self.c_hdr_out = LabeledLine("C header out:", out_grid, 3, "save_file")
+        self.xml_out = LabeledLine("XML out (-x):", out_grid, 3, "save_file")
         self.json_out = LabeledLine("JSON IR out:", out_grid, 4, "save_file")
-        self.compact_json = QW.QCheckBox("Compact JSON")
-        out_grid.addWidget(self.compact_json, 4, 2)
 
         main_v.addStretch(1)
 
@@ -194,6 +192,9 @@ class MainWindow(QW.QMainWindow):
         self.pad_bit = QW.QCheckBox("Pad bitfield holes")
         self.pad_struct = QW.QCheckBox("Pad struct holes")
         self.fail_if_hole = QW.QCheckBox("Fail if hole")
+        self.pad_bit.setChecked(True)
+        self.pad_struct.setChecked(True)
+        
         pm_grid.addWidget(self.pad_bit, 10, 0)
         pm_grid.addWidget(self.pad_struct, 10, 1)
         pm_grid.addWidget(self.fail_if_hole, 10, 2)
@@ -248,8 +249,8 @@ class MainWindow(QW.QMainWindow):
             self.flatten_structs.edit, self.flatten_sep.edit, self.flatten_arrays,
             self.focus.edit, self.pad_bit, self.pad_struct, self.fail_if_hole,
             self.rm_source, self.rm_source_base, self.py_out.edit, self.assert_size,
-            self.py_verify, self.py_verify_size, self.hdr_out.edit, self.c_hdr_out.edit,
-            self.json_out.edit, self.compact_json
+            self.py_verify, self.py_verify_size, self.hdr_out.edit, 
+            self.json_out.edit
         ]
 
     def build_argv(self) -> list[str]:
@@ -262,8 +263,7 @@ class MainWindow(QW.QMainWindow):
         for inc in split_ws_csv(self.inc.text()):
             argv += ["-I", inc]
 
-        if self.xml_out.text():
-            argv += ["-x", self.xml_out.text()]
+
         if self.castxml.text():
             argv += ["--castxml", self.castxml.text()]
         if self.std.text():
@@ -325,6 +325,9 @@ class MainWindow(QW.QMainWindow):
 
         # Outputs
         any_out = False
+        if self.xml_out.text():
+            any_out = True
+            argv += ["-x", self.xml_out.text()]
         if self.py_out.text():
             any_out = True
             argv += ["--python", self.py_out.text()]
@@ -338,14 +341,9 @@ class MainWindow(QW.QMainWindow):
         if self.hdr_out.text():
             any_out = True
             argv += ["--header", self.hdr_out.text()]
-        if self.c_hdr_out.text():
-            any_out = True
-            argv += ["--c-header", self.c_hdr_out.text()]
         if self.json_out.text():
             any_out = True
             argv += ["--json", self.json_out.text()]
-            if self.compact_json.isChecked():
-                argv += ["--compact-json"]
 
         return argv if any_out else []
 
@@ -377,7 +375,7 @@ class MainWindow(QW.QMainWindow):
     def on_run(self):
         argv = self.build_argv()
         if not argv:
-            QW.QMessageBox.critical(self, "hida", "Pick an input and at least one output (Python/Header/C-header/JSON).")
+            QW.QMessageBox.critical(self, "hida", "Pick an input and at least one output (Python/Header/XML/JSON).")
             return
 
         parts = [f"\"{a}\"" if (" " in a and not a.startswith("--")) else a for a in argv]
