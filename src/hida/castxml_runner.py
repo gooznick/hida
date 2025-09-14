@@ -109,7 +109,13 @@ def find_castxml(user_path: Optional[str | os.PathLike] = None) -> Path:
         "Provide user_path, install castxml in PATH, or use the Windows-bundled binary."
     )
 
-
+def default_args() -> List[str]:
+    args = []
+    if _IS_WINDOWS:
+        args += ["-DHIDA_PARSER"]
+    else:
+        args += ["-DHIDA_PARSER"]
+    return args
 
 def run_castxml_for_header(
     header: Path,
@@ -117,8 +123,7 @@ def run_castxml_for_header(
     *,
     castxml_bin: Optional[str | Path] = None,
     include_dirs: Iterable[Path] = (),
-    extra_args: Sequence[str] = (),
-    cpp_std: str = "c++17",
+    extra_args: Sequence[str] = [],
     skip_env: bool = False,
     env_script: Optional[str | Path] = None,
 ) -> CastxmlResult:
@@ -153,7 +158,7 @@ def run_castxml_for_header(
             # MSVC front-end uses /std:c++17 style
             cmd += ["--castxml-cc-msvc", "cl"]
         else:
-            cmd += ["--castxml-cc-gnu", "g++", f"--std={cpp_std}"]
+            cmd += ["--castxml-cc-gnu", "g++"]
 
         # Includes
         for inc in include_dirs:
@@ -163,6 +168,7 @@ def run_castxml_for_header(
         cmd += ["-o", str(xml_out), str(tmp_cpp_path)]
 
         # Extra args (insert early so they’re visible in the printout)
+        extra_args += default_args()
         if extra_args:
             cmd[1:1] = list(extra_args)
 
@@ -215,7 +221,6 @@ def run_castxml_for_directory(
     castxml_bin: Optional[str | Path] = None,
     include_dirs: Iterable[Path] = (),
     extra_args: Sequence[str] = (),
-    cpp_std: str = "c++17",
     exts: Tuple[str, ...] = (".h", ".hpp", ".hh", ".hxx"),
 ) -> List[CastxmlResult]:
     """
@@ -238,7 +243,6 @@ def run_castxml_for_directory(
                     castxml_bin=castxml_bin,
                     include_dirs=include_dirs,
                     extra_args=extra_args,
-                    cpp_std=cpp_std,
                 )
                 results.append(r)
             except CastxmlRunError as e:

@@ -30,6 +30,6 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
-# Include the embedded Windows binary
+# Include the embedded binary and images
 [tool.setuptools.package-data]
-hida = ["bin/castxml.exe"]
+hida = ["bin/castxml.exe", "img/hida.jpg", "img/hida.ico"]

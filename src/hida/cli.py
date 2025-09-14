@@ -324,9 +324,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     args, unknown = parser.parse_known_args(argv)
     extra = list(unknown or [])
 
-    if args.version:
-        print(f"hida {__version__}")
-        return 0
+
     
     # Require at least one output
     if not any([args.python, args.header, args.c_header, args.json, args.xml_out]):
@@ -375,7 +373,6 @@ def main(argv: Optional[List[str]] = None) -> int:
             castxml_bin=find_castxml(args.castxml),
             include_dirs=args.include,
             extra_args=extra,
-            cpp_std=args.std,
         )
 
     # 2) Parse XML → defs

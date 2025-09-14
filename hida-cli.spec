@@ -9,10 +9,14 @@ datas = []
 if sys.platform == "win32":
     datas += collect_data_files(
         "hida.bin",
-        includes=["*.exe", "*.txt", "*.md"],
+        includes=["*.exe", "*.txt"],
         excludes=[],
     )
-
+datas += collect_data_files(
+    "hida.img",
+    includes=["*.ico", "*.jpg"],
+    excludes=[],
+)
 block_cipher = None
 
 a = Analysis(
@@ -47,5 +51,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,                 # set to 'assets/hida.ico' if you have one
+    icon="src/hida/img/hida.ico",
 )

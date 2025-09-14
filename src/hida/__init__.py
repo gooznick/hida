@@ -41,6 +41,7 @@ from .castxml_runner import (
     find_castxml,
     run_castxml_for_header,
     CastxmlRunError,
+    default_args
 )
 
 try:
@@ -57,6 +58,7 @@ except PackageNotFoundError:
     pass
 
 __all__ = [
+    "default_args"
     # functions
     "parse",
     # data_helpers

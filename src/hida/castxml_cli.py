@@ -63,11 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="Include directory for castxml (repeatable).",
     )
-    g_cx.add_argument(
-        "--std",
-        default="c++17",
-        help="C++ language standard to use (c++17, c++20, ...).",
-    )
+
     g_cx.add_argument(
         "--cx",
         action="append",
@@ -95,7 +91,6 @@ def main(argv: Optional[List[str]] = None) -> int:
             castxml_bin=args.castxml,
             include_dirs=args.include,
             extra_args=extra,
-            cpp_std=args.std,
             exts=tuple(args.ext),
         )
         ok = sum(1 for r in results if r.returncode == 0)
@@ -117,7 +112,6 @@ def main(argv: Optional[List[str]] = None) -> int:
             castxml_bin=find_castxml(args.castxml),
             include_dirs=args.include,
             extra_args=extra,
-            cpp_std=args.std,
         )
         print(f"Wrote: {xml_out}")
         return 0

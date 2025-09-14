@@ -10,6 +10,15 @@ from pathlib import Path
 
 from PyQt6 import QtCore, QtGui, QtWidgets as QW
 
+try:
+    # Python 3.9+
+    from importlib.resources import files, as_file
+    HAVE_FILES = True
+except ImportError:
+    # Python 3.8 and below
+    import importlib.resources as resources
+    HAVE_FILES = False
+    
 # Import your CLI entry
 from hida.cli import main as hida_main
 
@@ -100,13 +109,35 @@ class LabeledLine:
     def text(self) -> str:
         return self.edit.text().strip()
 
-
 class MainWindow(QW.QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("hida – GUI (PyQt6)")
         self.resize(1100, 860)
 
+        def get_icon_path() -> Path | None:
+            VENDOR_PKG = "hida.img"
+            ICON = "hida.ico"
+            if HAVE_FILES:
+                # Python 3.9+
+                target = files(VENDOR_PKG).joinpath(ICON)
+                with as_file(target) as real_path:
+                    ico_path = Path(real_path)
+                    if ico_path.is_file():
+                        return ico_path.resolve()
+            else:
+                # Python 3.8 fallback
+                import importlib.resources as resources
+                with resources.path(VENDOR_PKG, ICON) as real_path:
+                    ico_path = Path(real_path)
+                    if ico_path.is_file():
+                        return ico_path.resolve()
+            return None
+        # Set app/window icon
+        ico_path = get_icon_path()
+        if ico_path.is_file():
+            self.setWindowIcon(QtGui.QIcon(str(ico_path)))
+            
         cw = QW.QWidget()
         self.setCentralWidget(cw)
         v = QW.QVBoxLayout(cw)
@@ -130,8 +161,8 @@ class MainWindow(QW.QMainWindow):
         self.inp = LabeledLine("Input (XML / JSON / Header):", io_grid, 0, "open_file")
         self.inc = LabeledLine("Include dirs (-I, space/comma):", io_grid, 1)
         self.castxml = LabeledLine("CastXML path:", io_grid, 2, "open_file")
-        self.std = LabeledLine("C++ standard (--std):", io_grid, 3, None, placeholder="c++17")
-        self.std.edit.setText("c++17")
+
+        self.more = LabeledLine("More compiler arguments:", io_grid, 3, None)
 
         # Outputs
         out_box = QW.QGroupBox("Outputs")
@@ -266,7 +297,7 @@ class MainWindow(QW.QMainWindow):
     # Collect all interactive inputs for live preview
     def _all_inputs(self):
         return [
-            self.inp.edit, self.inc.edit, self.xml_out.edit, self.castxml.edit, self.std.edit,
+            self.inp.edit, self.inc.edit, self.xml_out.edit, self.castxml.edit, self.more.edit,
             self.use_bool, self.no_ignore_sys, self.verbose, self.no_skip_failed,
             self.name_inc.edit, self.name_exc.edit, self.src_inc.edit, self.src_exc.edit,
             self.resolve_typedefs, self.flatten_ns, self.remove_enums, 
@@ -289,8 +320,9 @@ class MainWindow(QW.QMainWindow):
 
         if self.castxml.text():
             argv += ["--castxml", self.castxml.text()]
-        if self.std.text():
-            argv += ["--std", self.std.text()]
+
+        for more in split_ws_csv(self.more.text()):
+            argv += [more]
 
         # DASH-CASE FLAGS HERE
         if self.use_bool.isChecked():
@@ -367,7 +399,7 @@ class MainWindow(QW.QMainWindow):
     def refresh_cmd(self):
         argv = self.build_argv()
         if argv:
-            parts = [f"\"{a}\"" if (" " in a and not a.startswith("--")) else a for a in argv]
+            parts = [a for a in argv]
             txt = "hida " + " ".join(parts)
             self.cmd_preview.setPlainText(txt)
             self.cmd_preview.setStyleSheet("color: green;")

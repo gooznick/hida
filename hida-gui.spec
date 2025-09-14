@@ -61,5 +61,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,                 # e.g. 'assets/hida.ico' (Windows) or '.icns' on macOS
+    icon="src/hida/img/hida.ico",
 )
