@@ -4,16 +4,26 @@
 import sys
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
+try:
+    import PyQt6  # noqa: F401
+except Exception as e:
+    raise SystemExit(
+        "PyQt6 is required to build the GUI executable.\n"
+        "Install it first: pip install '.[gui]'\n\n"
+        f"Original error: {e}"
+    )
+
+
 datas = []
 hidden = []
 
 # PyQt6 is optional at install-time, but required for the GUI exe build:
 hidden += collect_submodules("PyQt6")          # help PyInstaller find all Qt modules/hooks
 
-# Bundle the Windows-bundled castxml.exe (and LICENSE) only on Windows
+# Bundle the Windows-bundled castxml.exe only on Windows
 if sys.platform == "win32":
     datas += collect_data_files(
-        "hida._vendor.castxml.windows",
+        "hida.bin",
         includes=["*.exe", "*.txt", "*.md"],
         excludes=[],
     )
