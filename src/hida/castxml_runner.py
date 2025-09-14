@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Iterable, List, Optional, Sequence, Tuple
 import sys
 
+from . import msvc_runner
+
 _IS_WINDOWS = platform.system() == "Windows"
 
 
@@ -77,6 +79,8 @@ def run_castxml_for_header(
     include_dirs: Iterable[Path] = (),
     extra_args: Sequence[str] = (),
     cpp_std: str = "c++17",
+    skip_env: bool = False,
+    env_script: Optional[str | Path] = None,
 ) -> CastxmlResult:
     """
     Run castxml for a single header, writing XML to xml_out.
@@ -125,9 +129,13 @@ def run_castxml_for_header(
         # Show the full command
         print("Running castxml command:\n$", _format_cmd(cmd))
 
-        proc = subprocess.run(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
+        if _IS_WINDOWS:
+            # Use MSVC runner to set up env if needed
+            proc = msvc_runner.MSVCRunner(skip_env, env_script).run(cmd)
+        else:
+            proc = subprocess.run(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
 
         result = CastxmlResult(
             header=header,
