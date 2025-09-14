@@ -4,12 +4,26 @@ from __future__ import annotations
 import io
 import sys
 import traceback
+import platform
 from contextlib import redirect_stdout, redirect_stderr
+from pathlib import Path
 
 from PyQt6 import QtCore, QtGui, QtWidgets as QW
 
 # Import your CLI entry
 from hida.cli import main as hida_main
+
+# Version (from installed package metadata)
+try:
+    from hida import __version__ as HIDA_VERSION
+except Exception:
+    HIDA_VERSION = "0.0.0 (dev)"
+
+# Optional: castxml finder (handles bundled exe / PATH)
+try:
+    from hida.castxml_finder import find_castxml
+except Exception:
+    find_castxml = None  # gracefully handle missing helper
 
 
 def split_ws_csv(s: str) -> list[str]:
@@ -39,7 +53,6 @@ class Runner(QtCore.QThread):
         except SystemExit as e:
             rc = int(e.code) if isinstance(e.code, int) else 1
         except Exception:
-            # capture full traceback into stderr buffer
             buf_err.write(traceback.format_exc())
         finally:
             out_txt = buf_out.getvalue()
@@ -92,7 +105,7 @@ class MainWindow(QW.QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("hida – GUI (PyQt6)")
-        self.resize(1100, 820)
+        self.resize(1100, 860)
 
         cw = QW.QWidget()
         self.setCentralWidget(cw)
@@ -168,7 +181,6 @@ class MainWindow(QW.QMainWindow):
         pm_grid.addWidget(self.pad_struct, 7, 1)
         pm_grid.addWidget(self.fail_if_hole, 7, 2)
 
-
         # Typedefs/namespaces
         self.resolve_typedefs = QW.QCheckBox("Resolve typedefs")
         self.flatten_ns = QW.QCheckBox("Flatten namespaces")
@@ -176,7 +188,6 @@ class MainWindow(QW.QMainWindow):
         pm_grid.addWidget(self.resolve_typedefs, 8, 0)
         pm_grid.addWidget(self.flatten_ns, 8, 1)
         pm_grid.addWidget(self.remove_enums, 8, 2)
-
 
         # Flatten
         self.flatten_arrays = QW.QCheckBox("Flatten arrays of composites")
@@ -199,6 +210,24 @@ class MainWindow(QW.QMainWindow):
 
         manip_v.addStretch(1)
 
+        # ===== Tab 3: About / Version =====
+        tab_about = QW.QWidget()
+        tabs.addTab(tab_about, "About / Version")
+        about_v = QW.QVBoxLayout(tab_about)
+
+        self.about_text = QW.QTextBrowser()
+        self.about_text.setOpenExternalLinks(True)
+        self.about_text.setFont(mono)
+        about_v.addWidget(self.about_text, 1)
+
+        btns = QW.QHBoxLayout()
+        about_v.addLayout(btns)
+        self.btn_refresh_about = QW.QPushButton("Refresh")
+        btns.addStretch(1)
+        btns.addWidget(self.btn_refresh_about)
+
+        self.btn_refresh_about.clicked.connect(self.refresh_about)
+
         # ───────────── Command + Run ─────────────
         bottom = QW.QHBoxLayout()
         v.addLayout(bottom)
@@ -207,7 +236,7 @@ class MainWindow(QW.QMainWindow):
         self.cmd_preview.setReadOnly(True)
         self.cmd_preview.setFont(mono)
         self.cmd_preview.setLineWrapMode(QW.QPlainTextEdit.LineWrapMode.WidgetWidth)
-        self.cmd_preview.setMinimumHeight(70)  # multiline
+        self.cmd_preview.setMinimumHeight(70)
         self.cmd_preview.setStyleSheet("color: green;")
         bottom.addWidget(self.cmd_preview, 1)
 
@@ -215,11 +244,11 @@ class MainWindow(QW.QMainWindow):
         self.btn_run.setMinimumHeight(40)
         bottom.addWidget(self.btn_run, 0)
 
-        # ───────────── Log (QTextEdit so we can color) ─────────────
+        # ───────────── Log ─────────────
         self.log = QW.QTextEdit()
         self.log.setReadOnly(True)
         self.log.setFont(mono)
-        self.log.setMinimumHeight(360)  # bigger output box
+        self.log.setMinimumHeight(360)
         v.addWidget(self.log, 3)
 
         # Signals
@@ -230,7 +259,9 @@ class MainWindow(QW.QMainWindow):
                 w.toggled.connect(self.refresh_cmd)
         self.btn_run.clicked.connect(self.on_run)
 
+        # Initial state
         self.refresh_cmd()
+        self.refresh_about()
 
     # Collect all interactive inputs for live preview
     def _all_inputs(self):
@@ -255,7 +286,6 @@ class MainWindow(QW.QMainWindow):
 
         for inc in split_ws_csv(self.inc.text()):
             argv += ["-I", inc]
-
 
         if self.castxml.text():
             argv += ["--castxml", self.castxml.text()]
@@ -285,21 +315,18 @@ class MainWindow(QW.QMainWindow):
             argv += ["--resolve-typedefs"]
         if self.flatten_ns.isChecked():
             argv += ["--flatten-namespaces"]
-
         if self.remove_enums.isChecked():
             argv += ["--remove-enums"]
 
-
         fl = split_ws_csv(self.flatten_structs.text())
         if fl:
-            argv += ["--flatten-structs"] 
+            argv += ["--flatten-structs"]
         if self.flatten_arrays.isChecked():
             argv += ["--flatten-arrays"]
 
         foc = split_ws_csv(self.focus.text())
         if foc:
             argv += ["--focus"] + foc
-
 
         if self.pad_bit.isChecked():
             argv += ["--pad-bitfield-holes"]
@@ -352,7 +379,6 @@ class MainWindow(QW.QMainWindow):
         if not text:
             return
         self.log.setTextColor(QtGui.QColor("black"))
-        # preserve spacing
         self.log.append(text.rstrip("\n"))
 
     def _append_stderr(self, text: str):
@@ -381,9 +407,7 @@ class MainWindow(QW.QMainWindow):
 
     @QtCore.pyqtSlot(int, str, str)
     def on_finished(self, rc: int, out_txt: str, err_txt: str):
-        # Always show stdout (black)
         self._append_stdout(out_txt)
-        # Show stderr/exceptions in red
         self._append_stderr(err_txt)
 
         self.btn_run.setEnabled(True)
@@ -392,6 +416,53 @@ class MainWindow(QW.QMainWindow):
             QW.QMessageBox.information(self, "hida", "Done.")
         else:
             QW.QMessageBox.critical(self, "hida", f"Exited with code {rc}.")
+
+    # ───────────── About / Version helpers ─────────────
+
+    def _detect_castxml_path(self) -> str:
+        # 1) User-set in GUI
+        p = self.castxml.text().strip()
+        if p:
+            return p
+        # 2) Finder (bundled exe on Windows or PATH)
+        try:
+            if find_castxml:
+                return str(find_castxml())
+        except Exception as e:
+            return f"(not found) — {e}"
+        # 3) PATH fallback
+        from shutil import which
+        w = which("castxml")
+        return w or "(not found)"
+
+    def _diag_text(self) -> str:
+        qt_ver = QtCore.QT_VERSION_STR
+        pyqt_ver = QtCore.PYQT_VERSION_STR
+        lines = [
+            f"HIDA version: {HIDA_VERSION}",
+            f"Python: {platform.python_version()} ({sys.executable})",
+            f"Platform: {platform.platform()}",
+            f"Qt: {qt_ver}",
+            f"PyQt6: {pyqt_ver}",
+            f"CastXML: {self._detect_castxml_path()}",
+        ]
+        if sys.platform.startswith("win"):
+            lines.append("MSVC: uses environment from Developer Command Prompt / VsDevCmd if configured.")
+        return "\n".join(lines)
+
+    def refresh_about(self):
+        info = self._diag_text()
+        html = (
+            "<h2>HIDA</h2>"
+            f"<p><b>Version:</b> {HIDA_VERSION}</p>"
+            "<h3>Environment</h3>"
+            "<pre style='white-space:pre-wrap'>"
+            + info  # ensure safe text
+            + "</pre>"
+            "<p><i>Tip:</i> On Windows, if CastXML is not found, HIDA can use the bundled <code>castxml.exe</code> "
+            "or a path you provide above. On Linux/macOS, install CastXML via your OS package manager.</p>"
+        )
+        self.about_text.setHtml(html)
 
 
 def main():

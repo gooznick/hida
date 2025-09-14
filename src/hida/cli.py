@@ -32,10 +32,13 @@ from hida import (
     find_castxml,
     run_castxml_for_header,
     CastxmlRunError,
+    __version__,
 )
 
 
 # ---------- helpers ----------
+
+
 
 
 def _write_text(path: Path, text: str) -> None:
@@ -100,7 +103,12 @@ def build_parser() -> argparse.ArgumentParser:
             "If a header is given, hida will invoke CastXML (see CASTXML FORWARDING below)."
         ),
     )
-
+    p.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="Show hida version and exit."
+    )
     # INPUT
     g_in = p.add_argument_group("input")
 
@@ -316,6 +324,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     args, unknown = parser.parse_known_args(argv)
     extra = list(unknown or [])
 
+    if args.version:
+        print(f"hida {__version__}")
+        return 0
+    
     # Require at least one output
     if not any([args.python, args.header, args.c_header, args.json, args.xml_out]):
         parser.error(

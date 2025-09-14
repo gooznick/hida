@@ -42,6 +42,20 @@ from .castxml_runner import (
     run_castxml_for_header,
     CastxmlRunError,
 )
+
+try:
+    from importlib.metadata import version, PackageNotFoundError
+except ImportError:  # Python <3.8 backport
+    from importlib_metadata import version, PackageNotFoundError
+
+__version__ = "0.0.0"
+
+try:
+    __version__ = version("hida")
+except PackageNotFoundError:
+    # not installed, e.g. running from source tree
+    pass
+
 __all__ = [
     # functions
     "parse",
@@ -89,4 +103,5 @@ __all__ = [
     "find_castxml",
     "run_castxml_for_header",
     "CastxmlRunError",
+    "__version__",
 ]
