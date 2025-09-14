@@ -29,10 +29,6 @@ from hida import (
     flatten_structs,
     remove_enums,
     remove_source,
-)
-
-# CastXML runner
-from .castxml_runner import (
     find_castxml,
     run_castxml_for_header,
     CastxmlRunError,

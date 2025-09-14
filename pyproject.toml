@@ -12,6 +12,13 @@ license = { text = "MIT" }
 authors = [{ name = "gooznick" }]
 dependencies = []  # add your runtime deps here
 
+[project.optional-dependencies]
+gui = [
+  "PyQt6>=6.5",
+  # optional nice-to-haves:
+  # "PyQt6-Qt6>=6.5", "PyQt6-Qt6-Plugins", "qdarkstyle"
+]
+
 [project.scripts]
 hida-castxml = "hida.castxml_cli:main"
 hida = "hida.cli:main"

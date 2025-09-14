@@ -36,7 +36,12 @@ from .python_gen import (
 )
 from .python_gen import generate as python_generate
 from .ir_json import dump, dumps, load, loads
-
+# CastXML runner
+from .castxml_runner import (
+    find_castxml,
+    run_castxml_for_header,
+    CastxmlRunError,
+)
 __all__ = [
     # functions
     "parse",
@@ -80,4 +85,8 @@ __all__ = [
     "loads",
     "dump",
     "dumps",
+    # castxml_runner
+    "find_castxml",
+    "run_castxml_for_header",
+    "CastxmlRunError",
 ]
