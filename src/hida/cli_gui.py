@@ -21,18 +21,13 @@ except ImportError:
     
 # Import your CLI entry
 from hida.cli import main as hida_main
+from hida import find_castxml, find_msvc_env_script
 
 # Version (from installed package metadata)
 try:
     from hida import __version__ as HIDA_VERSION
 except Exception:
     HIDA_VERSION = "0.0.0 (dev)"
-
-# Optional: castxml finder (handles bundled exe / PATH)
-try:
-    from hida.castxml_finder import find_castxml
-except Exception:
-    find_castxml = None  # gracefully handle missing helper
 
 
 def split_ws_csv(s: str) -> list[str]:
@@ -452,20 +447,17 @@ class MainWindow(QW.QMainWindow):
     # ───────────── About / Version helpers ─────────────
 
     def _detect_castxml_path(self) -> str:
-        # 1) User-set in GUI
-        p = self.castxml.text().strip()
-        if p:
-            return p
-        # 2) Finder (bundled exe on Windows or PATH)
         try:
-            if find_castxml:
-                return str(find_castxml())
+            return str(find_castxml(user_path=self.castxml.text().strip()))
         except Exception as e:
             return f"(not found) — {e}"
-        # 3) PATH fallback
-        from shutil import which
-        w = which("castxml")
-        return w or "(not found)"
+
+    def _detect_msvc_env(self) -> str:
+        try:
+            return str(find_msvc_env_script(env_script=None))
+        except Exception as e:
+            return f"(not found) — {e}"
+
 
     def _diag_text(self) -> str:
         qt_ver = QtCore.QT_VERSION_STR
@@ -477,6 +469,7 @@ class MainWindow(QW.QMainWindow):
             f"Qt: {qt_ver}",
             f"PyQt6: {pyqt_ver}",
             f"CastXML: {self._detect_castxml_path()}",
+            f"MSVC env: {self._detect_msvc_env()}",
         ]
         if sys.platform.startswith("win"):
             lines.append("MSVC: uses environment from Developer Command Prompt / VsDevCmd if configured.")

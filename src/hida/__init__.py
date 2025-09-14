@@ -43,6 +43,7 @@ from .castxml_runner import (
     CastxmlRunError,
     default_args
 )
+from .msvc_runner import find_msvc_env_script
 
 try:
     from importlib.metadata import version, PackageNotFoundError
@@ -106,4 +107,5 @@ __all__ = [
     "run_castxml_for_header",
     "CastxmlRunError",
     "__version__",
+    "find_msvc_env_script",
 ]
