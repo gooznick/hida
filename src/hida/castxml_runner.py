@@ -9,6 +9,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence, Tuple
 import sys
+import shutil
+
+try:
+    # Python 3.9+
+    from importlib.resources import files, as_file
+    HAVE_FILES = True
+except ImportError:
+    # Python 3.8 and below
+    import importlib.resources as resources
+    HAVE_FILES = False
+    
 
 from . import msvc_runner
 
@@ -41,34 +52,63 @@ class CastxmlRunError(RuntimeError):
         super().__init__("\n".join(msg))
 
 
-def find_castxml(explicit: Optional[str | Path] = None) -> str:
+
+
+VENDOR_PKG = "hida.bin"
+BUNDLED_EXE = "castxml.exe"
+
+
+def find_castxml(user_path: Optional[str | os.PathLike] = None) -> Path:
     """
-    Resolve castxml executable:
-    1) explicit path argument
-    2) CASTXML_BIN env var
-    3) PATH lookup
+    Resolve a usable castxml executable path.
+
+    Precedence:
+    1) user_path (if provided and exists)
+    2) bundled Windows binary (only on Windows)
+    3) system PATH (shutil.which)
+
+    Returns:
+        Path to an executable. Raises FileNotFoundError if none found.
     """
-    if explicit:
-        p = Path(str(explicit))
-        return str(p)
+    # 1) User override
+    if user_path:
+        p = Path(user_path)
+        if p.is_file():
+            return p.resolve()
+        raise FileNotFoundError(f"castxml not found at user path: {p}")
 
-    env = os.getenv("CASTXML_BIN")
-    if env and Path(env).exists():
-        return env
+    # 2) Bundled exe (Windows only)
+    if _IS_WINDOWS:
+        try:
+            if HAVE_FILES:
+                # Python 3.9+
+                target = files(VENDOR_PKG).joinpath(BUNDLED_EXE)
+                with as_file(target) as real_path:
+                    rp = Path(real_path)
+                    if rp.is_file():
+                        return rp.resolve()
+            else:
+                # Python 3.8 fallback
+                import importlib.resources as resources
+                with resources.path(VENDOR_PKG, BUNDLED_EXE) as real_path:
+                    rp = Path(real_path)
+                    if rp.is_file():
+                        return rp.resolve()
+        except ModuleNotFoundError:
+            pass
+        except Exception:
+            pass
 
-    from shutil import which
-
-    exe_name = "castxml.exe" if _IS_WINDOWS else "castxml"
-    exe = which(exe_name) or which("castxml")
-    if exe:
-        return exe
+    # 3) PATH
+    found = shutil.which("castxml")
+    if found:
+        return Path(found).resolve()
 
     raise FileNotFoundError(
-        "castxml executable not found.\n"
-        "Hints:\n"
-        "  • On Linux: install via your package manager (e.g., `sudo apt install castxml`).\n"
-        "  • On Windows: download a release ZIP and set CASTXML_BIN or pass --castxml PATH.\n"
+        "castxml executable not found. "
+        "Provide user_path, install castxml in PATH, or use the Windows-bundled binary."
     )
+
 
 
 def run_castxml_for_header(
@@ -111,7 +151,7 @@ def run_castxml_for_header(
 
         if _IS_WINDOWS:
             # MSVC front-end uses /std:c++17 style
-            cmd += ["--castxml-cc-msvc", "cl", f"/std:{cpp_std}"]
+            cmd += ["--castxml-cc-msvc", "cl"]
         else:
             cmd += ["--castxml-cc-gnu", "g++", f"--std={cpp_std}"]
 
@@ -131,7 +171,7 @@ def run_castxml_for_header(
 
         if _IS_WINDOWS:
             # Use MSVC runner to set up env if needed
-            proc = msvc_runner.MSVCRunner(skip_env, env_script).run(cmd)
+            proc = msvc_runner.MSVCEnvRunner(skip_env, env_script).run(cmd)
         else:
             proc = subprocess.run(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
