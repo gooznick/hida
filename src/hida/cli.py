@@ -16,6 +16,7 @@ from hida import (
     write_header_from_definitions,
     write_c_header_from_definitions,
     python_generate,
+    plr_generate,
     dumps,
     load,
     filter_by_source_regexes,
@@ -283,6 +284,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--python", type=Path, default=None, help="Write generated Python to this file."
     )
     g_out.add_argument(
+        "--plr", type=Path, default=None, help="Write generated PLR to this file."
+    )
+    g_out.add_argument(
         "--header",
         "--h",
         dest="header",
@@ -327,9 +331,9 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     
     # Require at least one output
-    if not any([args.python, args.header, args.c_header, args.json, args.xml_out]):
+    if not any([args.python, args.plr, args.header, args.c_header, args.json, args.xml_out]):
         parser.error(
-            "Choose at least one output: --python / --header / -x / --json"
+            "Choose at least one output: --plr / --python / --header / -x / --json"
         )
 
     # 1) Get XML: path directly or generate from header via runner
@@ -453,6 +457,12 @@ def main(argv: Optional[List[str]] = None) -> int:
             assert_size=args.assert_size,
             verify=args.python_verify,
             verify_size=args.python_verify_size,
+        )
+        print(f"[hida] wrote {args.python}")
+    if args.plr:
+        plr_generate(
+            defs,
+            args.plr
         )
         print(f"[hida] wrote {args.python}")
 

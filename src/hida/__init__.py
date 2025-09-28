@@ -35,6 +35,10 @@ from .python_gen import (
     verify_struct_sizes,
 )
 from .python_gen import generate as python_generate
+from .plr_gen import (
+    generate_xml_from_definitions,
+    plr_generate,
+)
 from .ir_json import dump, dumps, load, loads
 # CastXML runner
 from .castxml_runner import (
@@ -108,4 +112,5 @@ __all__ = [
     "CastxmlRunError",
     "__version__",
     "find_msvc_env_script",
+    "plr_generate",
 ]
